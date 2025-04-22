@@ -1,118 +1,95 @@
 import os
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
-from telegram.ext import (
-    Application, CommandHandler, MessageHandler, filters,
-    ConversationHandler, ContextTypes
-)
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
+from dotenv import load_dotenv
 
-TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = os.getenv("ADMIN_ID")
+load_dotenv()
 
-CHOOSING, TYPING = range(2)
-user_state = {}
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_ID = int(os.getenv("ADMIN_ID"))
 
-main_keyboard = ReplyKeyboardMarkup(
-    [
-        [KeyboardButton("Запрос о помощи")],
-        [KeyboardButton("Предложить ресурс"), KeyboardButton("Сообщить о нарушении")],
-        [KeyboardButton("Стать волонтёром")]
-    ],
-    resize_keyboard=True
-)
+HELP_CATEGORIES = {
+    "urgent": "Срочная помощь",
+    "legal": "Юридическая помощь",
+    "psych": "Психологическая поддержка",
+    "medical": "Медицинская помощь",
+    "basic": "Финансовая помощь и жильё",
+    "other": "Другое"
+}
 
-help_keyboard = ReplyKeyboardMarkup(
-    [
-        [KeyboardButton("Срочная"), KeyboardButton("Юридическая")],
-        [KeyboardButton("Психологическая"), KeyboardButton("Другая")]
-    ],
-    one_time_keyboard=True,
-    resize_keyboard=True
-)
+HELP_RESPONSES = {
+    "urgent": "*Срочная помощь*\n\nЕсли вы находитесь в опасной или кризисной ситуации — не оставайтесь в этом одни. "
+              "Вы можете описать, что происходит, даже если не уверены, что именно вам нужно.\n\n"
+              "Мы постараемся найти инициативу, человека или организацию, которые смогут отреагировать быстро. "
+              "Всё, что вы напишете, будет обработано с вниманием.",
+    "legal": "*Юридическая помощь*\n\nЕсли вы столкнулись с дискриминацией, угрозами, отказом в услугах, "
+             "проблемами с документами — опишите ситуацию.\n\n"
+             "*Важно:* юридическая помощь не проводится анонимно — ID будет учтён. "
+             "Анонимно можно задать общий вопрос.",
+    "psych": "*Психологическая поддержка*\n\nВы можете:\n"
+             "— просто *выговориться* и оставить анонимное сообщение,\n"
+             "— или *запросить помощь психолога*.\n\n"
+             "Опишите, что вам нужно. Всё — по вашему желанию.",
+    "medical": "*Медицинская помощь*\n\nЕсли вам нужна информация о гормональной терапии, т-френдли врачах, операциях "
+               "или безопасном доступе к медицине — напишите, что вас интересует.",
+    "basic": "*Финансовая помощь и жильё*\n\nЕсли вы без дохода, жилья, под угрозой выселения или переезда — "
+             "опишите ситуацию. Мы постараемся найти ресурсы или инициативы.",
+    "other": "*Другое*\n\nЕсли ваш запрос не относится к основным категориям — просто опишите, с чем вы столкнулись."
+}
+
+user_states = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [[InlineKeyboardButton(name, callback_data=key)] for key, name in HELP_CATEGORIES.items()]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        "Здравствуйте! Это бот @t64helper_bot.\nЧто вы хотите отправить?",
-        reply_markup=main_keyboard
+        "Здравствуйте. Выберите категорию, по которой хотите обратиться за помощью:",
+        reply_markup=reply_markup
     )
-    return CHOOSING
 
-async def handle_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
-    user_id = update.message.from_user.id
+async def handle_category_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    category = query.data
+    user_states[query.from_user.id] = category
 
-    if text == "Запрос о помощи":
-        user_state[user_id] = {"type": "help"}
-        await update.message.reply_text("Пожалуйста, выберите вид помощи:", reply_markup=help_keyboard)
-    elif text == "Предложить ресурс":
-        user_state[user_id] = {"type": "resource"}
-        await update.message.reply_text("Опишите, какой ресурс вы хотите предложить:")
-    elif text == "Сообщить о нарушении":
-        user_state[user_id] = {"type": "report"}
-        await update.message.reply_text("Опишите ситуацию, о которой вы хотите сообщить:")
-    elif text == "Стать волонтёром":
-        user_state[user_id] = {"type": "volunteer"}
-        await update.message.reply_text("Расскажите, как вы могли бы помочь:")
-    else:
-        await update.message.reply_text("Пожалуйста, выберите одну из доступных опций.")
-        return CHOOSING
+    text = HELP_RESPONSES.get(category, "Опишите, чем мы можем помочь.")
+    keyboard = [[InlineKeyboardButton("↩️ Вернуться в меню", callback_data="restart")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-    return TYPING
+    await query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode="Markdown")
 
-async def help_type_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-    if user_id in user_state and user_state[user_id]["type"] == "help":
-        user_state[user_id]["subtype"] = update.message.text
-        await update.message.reply_text("Опишите вашу ситуацию, и мы передадим её модераторам.")
-        return TYPING
-    return CHOOSING
+async def handle_restart(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    return await start(query, context)
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    username = update.message.from_user.username or f"id:{user_id}"
     text = update.message.text
+    category = user_states.get(user_id, "не выбрана")
+    username = update.message.from_user.username or "без username"
 
-    if user_id not in user_state:
-        await update.message.reply_text("Пожалуйста, выберите, что вы хотите отправить.", reply_markup=main_keyboard)
-        return CHOOSING
+    admin_message = (
+        f"Новое сообщение от @{username} (ID: {user_id})\n"
+        f"Категория: {HELP_CATEGORIES.get(category, 'не указана')}\n\n{text}"
+    )
+    await context.bot.send_message(chat_id=ADMIN_ID, text=admin_message)
 
-    entry = user_state.pop(user_id)
-    entry["text"] = text
-
-    kind = entry["type"]
-    message = f"Новое сообщение от @{username} (анонимно):\n"
-
-    if kind == "help":
-        subtype = entry.get("subtype", "не указано")
-        message += f"Тип помощи: {subtype}\nСообщение:\n{text}"
-    elif kind == "resource":
-        message += f"Предложенный ресурс:\n{text}"
-    elif kind == "report":
-        message += f"Репорт о нарушении:\n{text}"
-    elif kind == "volunteer":
-        message += f"Желание стать волонтёром:\n{text}"
-
-    await context.bot.send_message(chat_id=int(ADMIN_ID), text=message)
-    await update.message.reply_text("Спасибо! Ваше сообщение отправлено модерации.", reply_markup=main_keyboard)
-
-    return CHOOSING
+    await update.message.reply_text(
+        "Спасибо! Ваше сообщение передано. Чтобы обратиться снова — введите /start."
+    )
+    user_states.pop(user_id, None)
 
 def main():
-    app = Application.builder().token(TOKEN).build()
+    app = Application.builder().token(BOT_TOKEN).build()
 
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
-        states={
-            CHOOSING: [
-                MessageHandler(filters.Regex("^(Запрос о помощи|Предложить ресурс|Сообщить о нарушении|Стать волонтёром)$"), handle_choice),
-                MessageHandler(filters.Regex("^(Срочная|Юридическая|Психологическая|Другая)$"), help_type_selected),
-            ],
-            TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)],
-        },
-        fallbacks=[CommandHandler("start", start)],
-    )
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(handle_category_selection))
+    app.add_handler(CallbackQueryHandler(handle_restart, pattern="^restart$"))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    app.add_handler(conv_handler)
     app.run_polling()
 
 if __name__ == "__main__":
-    main
+    main()
