@@ -1,27 +1,34 @@
-import os
-from telegram import Bot
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+import logging
+import asyncio
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = int(os.getenv("ADMIN_ID"))
+TOKEN = "8038993649:AAGgRyIAQQhaSCAp3hocmy3K8pQedXX-kJU"
 
-async def start(update, context):
-    await update.message.reply_text(
-        "Привет! Это бот приёма сообщений. Просто напиши сюда, что хочешь отправить."
-    )
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
-async def handle_message(update, context):
-    user = update.message.from_user
-    text = update.message.text
+# Обработчик команды /start
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Привет! Я бот.")
 
-    await context.bot.send_message(chat_id=ADMIN_ID, text=f"Сообщение от @{user.username or user.id}:\n{text}")
-    await update.message.reply_text("Спасибо! Твое сообщение отправлено.")
+# Обработчик всех текстовых сообщений
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Ты написал: " + update.message.text)
+
+# Удаление вебхука перед polling
+async def clear_webhook(bot):
+    await bot.delete_webhook(drop_pending_updates=True)
 
 def main():
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    asyncio.run(clear_webhook(app.bot))
 
     app.run_polling()
 
