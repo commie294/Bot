@@ -4,23 +4,24 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 from dotenv import load_dotenv
 
-# Загружаем .env переменные
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "1835516062"))
 
-# Логирование
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 
 # Команды
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Привет! Это бот t64helper — просто напиши сюда любое сообщение, и оно будет переслано модераторам.")
+    await update.message.reply_text(
+        "Привет! Это @t64helper_bot. Напиши сюда сообщение — и оно будет анонимно передано модератору."
+    )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Напиши сюда ресурс, идею, тревожный сигнал — и это анонимно будет передано модератору.")
+    await update.message.reply_text(
+        "Ты можешь отправить:\n— предложения и идеи\n— ресурсы\n— просьбы о помощи\n\nВсё это анонимно пересылается модерации."
+    )
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
@@ -29,10 +30,8 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=ADMIN_ID, text=log_text)
     await update.message.reply_text("Спасибо! Твоё сообщение получено.")
 
-# Удаление вебхука при запуске
-async def remove_webhook(application: Application):
-    await application.bot.delete_webhook(drop_pending_updates=True)
-    logging.info("Webhook удалён")
+async def on_startup(app: Application):
+    await app.bot.delete_webhook(drop_pending_updates=True)
 
 def main():
     app = Application.builder().token(TOKEN).build()
@@ -41,7 +40,7 @@ def main():
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    app.run_polling(post_init=remove_webhook)
+    app.run_polling(allowed_updates=Update.ALL_TYPES, close_loop=False, shutdown_polling_timeout=5)
 
 if __name__ == "__main__":
     main()
