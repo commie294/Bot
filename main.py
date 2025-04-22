@@ -1,11 +1,10 @@
 import os
 import logging
-import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 from dotenv import load_dotenv
 
-# Загружаем токен из .env (если есть)
+# Загружаем .env переменные
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "1835516062"))
@@ -16,25 +15,13 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# Команда /start
+# Команды
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Привет! Это @t64helper_bot — бот для приёма сообщений и ресурсов для трансгендерного сообщества СНГ.\n"
-        "Просто напиши сюда сообщение, и оно будет передано модерации анонимно.\n"
-        "Команды: /start /help"
-    )
+    await update.message.reply_text("Привет! Это бот t64helper — просто напиши сюда любое сообщение, и оно будет переслано модераторам.")
 
-# Команда /help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Ты можешь отправить:\n"
-        "- предложения и идеи\n"
-        "- полезные ресурсы\n"
-        "- срочные сигналы или просьбы о помощи\n\n"
-        "Бот пересылает их модератору, всё анонимно."
-    )
+    await update.message.reply_text("Напиши сюда ресурс, идею, тревожный сигнал — и это анонимно будет передано модератору.")
 
-# Обработка текстов
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     text = update.message.text
@@ -42,22 +29,19 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=ADMIN_ID, text=log_text)
     await update.message.reply_text("Спасибо! Твоё сообщение получено.")
 
-# Удаление вебхука перед запуском polling
-async def clear_webhook(application):
-    try:
-        await application.bot.delete_webhook(drop_pending_updates=True)
-        logging.info("Webhook удалён")
-    except Exception as e:
-        logging.warning(f"Ошибка при удалении вебхука: {e}")
+# Удаление вебхука при запуске
+async def remove_webhook(application: Application):
+    await application.bot.delete_webhook(drop_pending_updates=True)
+    logging.info("Webhook удалён")
 
-# Главный запуск
 def main():
-    application = Application.builder().token(TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-    asyncio.run(clear_webhook(application))
-    application.run_polling()
+    app = Application.builder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+
+    app.run_polling(post_init=remove_webhook)
 
 if __name__ == "__main__":
     main()
