@@ -4,10 +4,12 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 from dotenv import load_dotenv
 
+# Загружаем токен и ID из .env
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "1835516062"))
 
+# Логирование
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
@@ -30,9 +32,11 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=ADMIN_ID, text=log_text)
     await update.message.reply_text("Спасибо! Твоё сообщение получено.")
 
+# Удаляем старый вебхук (на случай, если был)
 async def on_startup(app: Application):
     await app.bot.delete_webhook(drop_pending_updates=True)
 
+# Запуск
 def main():
     app = Application.builder().token(TOKEN).build()
 
@@ -40,7 +44,7 @@ def main():
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    app.run_polling(allowed_updates=Update.ALL_TYPES, close_loop=False, shutdown_polling_timeout=5)
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
