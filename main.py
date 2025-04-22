@@ -1,62 +1,63 @@
 import os
+import logging
+import asyncio
 from telegram import Update
-from telegram.ext import (
-    ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
-)
+from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+from dotenv import load_dotenv
 
-# ID админа
-ADMIN_ID = 1835516062
+# Загружаем токен из .env (если есть)
+load_dotenv()
+TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_ID = int(os.getenv("ADMIN_ID", "1835516062"))
+
+# Логирование
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Привет! Это @t64helper_bot — бот для приёма анонимных сообщений и ресурсов для трансгендерного сообщества СНГ.\n\n"
-        "Ты можешь:\n"
-        "- просто отправить сообщение или ссылку\n"
-        "- использовать /help чтобы узнать больше"
+        "Привет! Это @t64helper_bot — бот для приёма сообщений и ресурсов для трансгендерного сообщества СНГ.\n"
+        "Просто напиши сюда сообщение, и оно будет передано модерации анонимно.\n"
+        "Команды: /start /help"
     )
 
 # Команда /help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Этот бот собирает сообщения, предложения и ресурсы для трансгендерного сообщества СНГ. "
-        "Все сообщения пересылаются админу анонимно.\n\n"
-        "Доступные команды:\n"
-        "/start — начать\n"
-        "/help — помощь\n"
-        "/info — о проекте"
+        "Ты можешь отправить:\n"
+        "- предложения и идеи\n"
+        "- полезные ресурсы\n"
+        "- срочные сигналы или просьбы о помощи\n\n"
+        "Бот пересылает их модератору, всё анонимно."
     )
 
-# Команда /info
-async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Проект создан для сбора и распространения информации, поддержки и ресурсов для трансгендерных персон "
-        "в условиях ограничений и давления в странах СНГ. Ты можешь отправить нам полезный ресурс, новость или предложение."
-    )
-
-# Обработка обычных сообщений
+# Обработка текстов
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = update.message.text
-    sender = update.message.from_user
+    user = update.message.from_user
+    text = update.message.text
+    log_text = f"Сообщение от @{user.username or user.id}:\n{text}"
+    await context.bot.send_message(chat_id=ADMIN_ID, text=log_text)
+    await update.message.reply_text("Спасибо! Твоё сообщение получено.")
 
-    # Пересылаем админу
-    admin_message = f"Новое сообщение от @{sender.username or sender.id}:\n{message}"
-    await context.bot.send_message(chat_id=ADMIN_ID, text=admin_message)
+# Удаление вебхука перед запуском polling
+async def clear_webhook(application):
+    try:
+        await application.bot.delete_webhook(drop_pending_updates=True)
+        logging.info("Webhook удалён")
+    except Exception as e:
+        logging.warning(f"Ошибка при удалении вебхука: {e}")
 
-    await update.message.reply_text("Спасибо! Твое сообщение получено.")
-
-# Запуск бота
+# Главный запуск
 def main():
-    token = os.getenv("BOT_TOKEN") or "8038993649:AAGXZMo5nMMJA3A00ZRyg_jpQVXMmdRUyxY"
-    app = ApplicationBuilder().token(token).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("info", info))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-
-    print("Бот запущен...")
-    app.run_polling()
+    application = Application.builder().token(TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    asyncio.run(clear_webhook(application))
+    application.run_polling()
 
 if __name__ == "__main__":
     main()
