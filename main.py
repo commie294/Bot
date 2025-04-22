@@ -51,13 +51,13 @@ async def choose_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_states[user_id] = categories[text]
 
     prompts = {
-        "help_request": "Выбери вид помощи:
+        "help_request": """Выбери вид помощи:
 1. Срочная
 2. Юридическая
 3. Психологическая
 4. Другая
 
-И опиши ситуацию.",
+И опиши ситуацию.""",
         "resource": "Опиши ресурс: ссылка, описание, город и т.д.",
         "report": "Опиши, что произошло. Мы передадим это модерации — анонимно.",
         "volunteer": "Расскажи, чем ты можешь помочь: юридическая, психологическая, перевод и т.д."
@@ -81,8 +81,7 @@ async def handle_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     }
 
     header = labels.get(category, "[ОБРАЩЕНИЕ]")
-    message = f"{header}
-{text}"
+    message = f"{header}\n{text}"
 
     await context.bot.send_message(chat_id=ADMIN_ID, text=message)
     await update.message.reply_text("Спасибо! Твоё сообщение передано анонимно модерации.", reply_markup=markup)
@@ -92,12 +91,10 @@ async def handle_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Команда /help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Бот принимает анонимные сообщения, предложения, ресурсы и сигналы.
-Просто выбери нужную кнопку.")
-
-# Удаление вебхука
-async def remove_webhook(app: Application):
-    await app.bot.delete_webhook(drop_pending_updates=True)
+    await update.message.reply_text(
+        "Бот принимает анонимные сообщения, предложения, ресурсы и сигналы.\n"
+        "Просто выбери нужную кнопку."
+    )
 
 # Запуск
 def main():
