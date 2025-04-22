@@ -1,22 +1,23 @@
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import Message
-from aiogram.utils import executor
 import os
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
-API_TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = int(os.getenv("ADMIN_ID"))
+# Получаем токен из переменной окружения
+TOKEN = os.getenv("BOT_TOKEN")
 
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+async def start(update, context):
+    await update.message.reply_text("Привет! Это бот для приёма предложений и ресурсов для трансгендерного сообщества. Напиши сюда, что ты хочешь предложить.")
 
-@dp.message_handler(content_types=types.ContentTypes.ANY)
-async def forward_message(message: Message):
-    try:
-        text = f"Новое сообщение от пользователя:\n\n{message.text}"
-        await bot.send_message(chat_id=ADMIN_ID, text=text)
-        await message.reply("Спасибо! Ваше сообщение отправлено модератору.")
-    except Exception as e:
-        await message.reply("Произошла ошибка. Попробуйте позже.")
+async def echo(update, context):
+    user = update.message.from_user
+    text = update.message.text
+    print(f"Сообщение от {user.username or user.id}: {text}")
+    await update.message.reply_text("Спасибо! Твое сообщение получено.")
 
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+def main():
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
