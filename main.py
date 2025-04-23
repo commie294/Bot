@@ -1,5 +1,7 @@
 import os
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+import csv
+from datetime import datetime
+from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -31,7 +33,6 @@ help_keyboard = [
 ]
 help_markup = ReplyKeyboardMarkup(help_keyboard, resize_keyboard=True)
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         "Привет. Это бот проекта «Переход в неположенном месте».\n"
@@ -41,11 +42,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     return CHOOSING
 
-
 async def help_request(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text("Выберите тип помощи:", reply_markup=help_markup)
     return TYPING
-
 
 async def help_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     category = update.message.text
@@ -78,18 +77,15 @@ async def help_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     await update.message.reply_text(responses.get(category, "Опишите ваш запрос:"), reply_markup=main_markup)
     return TYPING
 
-
 async def anon_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["type"] = "Анонимное сообщение"
     await update.message.reply_text("Напишите сообщение. Оно будет передано без указания отправителя.")
     return TYPING
 
-
 async def resource(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["type"] = "Предложение ресурса"
     await update.message.reply_text("Опишите ресурс, который вы хотите предложить.")
     return TYPING
-
 
 async def volunteer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
@@ -99,27 +95,35 @@ async def volunteer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     return CHOOSING
 
-
 async def donate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        ""Вы можете поддержать проект следующими способами:\n\n"
+        "Вы можете поддержать проект следующими способами:\n\n"
         "— Boosty: https://boosty.to/t64/donate\n"
         "— USDT (TRC-20): TLTBoXCSifWGBeuiRkxkPtH9M9mfwSf1sf\n\n"
         "Для перевода криптовалюты используйте любой удобный кошелёк (Trust Wallet, Binance, TronLink и др.). Спасибо за вашу поддержку!",
-       
-        reply_markup=main_markup
+        reply_markup=main_markup,
+        disable_web_page_preview=True
     )
     return CHOOSING
-
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
     user = update.effective_user
     msg_type = context.user_data.get("type", "Не указано")
+    user_id = user.id
+    username = user.username or 'без username'
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    file_exists = os.path.isfile("requests.csv")
+    with open("requests.csv", "a", encoding="utf-8", newline="") as file:
+        writer = csv.writer(file)
+        if not file_exists:
+            writer.writerow(["Тип", "Дата", "User ID", "Username", "Текст"])
+        writer.writerow([msg_type, date, user_id, f"@{username}", text])
 
     message = f"Новое сообщение:\nТип: {msg_type}\n"
     if msg_type != "Анонимное сообщение":
-        message += f"От: @{user.username or 'без username'} (ID: {user.id})\n"
+        message += f"От: @{username} (ID: {user_id})\n"
     message += f"\n{text}"
 
     await context.bot.send_message(chat_id=ADMIN_ID, text=message)
@@ -128,11 +132,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     context.user_data.clear()
     return CHOOSING
 
-
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text("Действие отменено.", reply_markup=main_markup)
     return CHOOSING
-
 
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
@@ -158,7 +160,6 @@ def main():
 
     app.add_handler(conv)
     app.run_polling()
-
 
 if __name__ == "__main__":
     main()
