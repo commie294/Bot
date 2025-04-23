@@ -8,7 +8,8 @@ from telegram.ext import (
     ContextTypes,
     ConversationHandler
 )
-from telegram.utils.helpers import escape_markdown
+from telegram.helpers import escape_markdown
+
 
 from dotenv import load_dotenv
 import logging
