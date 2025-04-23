@@ -135,6 +135,7 @@ medical_faq_kb = ReplyKeyboardMarkup([
     ["Диагноз F64", "Где делают операции?"],
     ["Консультация врача", "🔙 Назад"]
 ], resize_keyboard=True)
+
 # Старт
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
@@ -228,6 +229,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню помощи.")
         return HELP_MENU
+
 # Ответы FAQ
 async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE, mode: str) -> int:
     question = update.message.text
@@ -289,6 +291,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text("Операция отменена.", reply_markup=main_kb)
     return MAIN_MENU
+
 # Запуск
 def main():
     app = Application.builder().token(TOKEN).build()
@@ -297,7 +300,8 @@ def main():
         states={
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
             HELP_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)],
-            FAQ_LEGAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_legal_faq)],
+            FAQ_LEGAL: [MessageHandler(filters.TEXT & ~filters
+            & ~filters.COMMAND, handle_legal_faq)],
             FAQ_MED: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_medical_faq)],
             TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)]
         },
