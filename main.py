@@ -203,6 +203,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "🆘 Срочная помощь":
+        context.user_data["type"] = "Срочная"
         await update.message.reply_text(
             "Опишите срочную ситуацию (мы постараемся ответить в течение 15 минут). Пожалуйста, помните, что мы не являемся экстренной службой. В критических ситуациях, угрожающих жизни или здоровью, немедленно обратитесь в соответствующие службы экстренного реагирования или на телефон доверия.",
             reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True)
@@ -212,15 +213,18 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text("Выберите вопрос:", reply_markup=legal_faq_kb)
         return FAQ_LEGAL
     elif choice == "🏥 Медицинская помощь":
+        context.user_data["type"] = "Медицинская"
         await update.message.reply_text("Выберите вопрос:", reply_markup=medical_faq_kb)
         return FAQ_MED
     elif choice == "🧠 Психологическая помощь":
+        context.user_data["type"] = "Психологическая помощь"
         await update.message.reply_text(
             "Опишите ваш запрос и, если у вас есть особые пожелания к специалисту (например, опыт работы с определенными темами), пожалуйста, укажите их.",
             reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True)
         )
         return TYPING
     elif choice == "🏠 Жилье/финансы":
+        context.user_data["type"] = "Срочная"  # Или "Остальное", если вам так удобнее
         await update.message.reply_text(
             "Пожалуйста, опишите вашу ситуацию подробно, укажите информацию о себе (например, регион, возраст, краткую историю вопроса) и ваши потребности. Обратите внимание, что супер-экстренные случаи (например, угроза безопасности) рассматриваются в приоритетном порядке. Мы постараемся помочь вам в рамках наших возможностей и ресурсов.",
             reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True)
@@ -231,6 +235,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню помощи.")
         return HELP_MENU
+
 
 # Ответы FAQ
 async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE, mode: str) -> int:
