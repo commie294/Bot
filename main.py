@@ -1,11 +1,11 @@
 import os
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     MessageHandler,
-    filters,
     ConversationHandler,
+    filters,
     ContextTypes,
 )
 from dotenv import load_dotenv
@@ -13,9 +13,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = os.getenv("ADMIN_ID")
 
-CHOOSING, TYPING = range(2)
+CHOOSING, TYPING, MED_HORMONE_TYPE, FAQ_JUR, FAQ_MED = range(5)
 
 main_keyboard = [
     ["Запрос о помощи", "Предложить ресурс"],
@@ -31,7 +30,26 @@ help_keyboard = [
 ]
 help_markup = ReplyKeyboardMarkup(help_keyboard, resize_keyboard=True)
 
-# Chat IDs твоих каналов
+faq_jur_keyboard = [
+    ["Как сейчас сменить документы?"],
+    ["Браки и смена пола"],
+    ["Что такое ЛГБТ-пропаганда?"],
+    ["Миграция и убежище"],
+    ["Задать свой вопрос"]
+]
+faq_jur_markup = ReplyKeyboardMarkup(faq_jur_keyboard, resize_keyboard=True)
+
+faq_med_keyboard = [
+    ["Что такое F64?"],
+    ["Как начать гормональную терапию?"],
+    ["Где делают операции?"],
+    ["Задать свой вопрос"]
+]
+faq_med_markup = ReplyKeyboardMarkup(faq_med_keyboard, resize_keyboard=True)
+
+med_hormone_keyboard = [["Женская гормональная терапия", "Мужская гормональная терапия"]]
+med_hormone_markup = ReplyKeyboardMarkup(med_hormone_keyboard, resize_keyboard=True)
+
 CHANNELS = {
     "Медицинская": -1002051399111,
     "Юридическая": -1002092079550,
@@ -40,41 +58,36 @@ CHANNELS = {
     "Анонимное сообщение": -1002107093300,
     "Предложение ресурса": -1002107093300
 }
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Привет. Это бот проекта «Переход в неположенном месте».\n"
-        "Здесь можно попросить помощи, оставить сообщение, предложить ресурс или поддержать нас.\n\n"
-        "Выберите, с чего хотите начать:",
+        "Привет! Это бот поддержки проекта «Переход в неположенном месте».\n"
+        "Вы можете запросить помощь, оставить сообщение, предложить ресурс или поддержать нас.",
         reply_markup=main_markup
     )
     return CHOOSING
 
-async def help_request(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Выберите тип помощи:", reply_markup=help_markup)
-    return TYPING
+async def help_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Выберите категорию запроса:", reply_markup=help_markup)
+    return CHOOSING
 
-async def help_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def help_category(update: Update, context: ContextTypes.DEFAULT_TYPE):
     category = update.message.text
     context.user_data["type"] = f"Запрос о помощи ({category})"
 
+    if category == "Юридическая":
+        await update.message.reply_text("Вы можете выбрать один из популярных вопросов или сразу задать свой.",
+                                        reply_markup=faq_jur_markup)
+        return FAQ_JUR
+
+    elif category == "Медицинская":
+        await update.message.reply_text("Выберите один из популярных вопросов или задайте свой:",
+                                        reply_markup=faq_med_markup)
+        return FAQ_MED
+
     responses = {
-        "Срочная": "Опишите вашу ситуацию. Мы постараемся помочь как можно скорее.",
-        "Юридическая": (
-            "Опишите ваш вопрос. Мы постараемся связать вас с ЛГБТ-френдли юристом.\n"
-            "Это может быть консультация по смене документов, семейным вопросам, административным и уголовным делам, миграции, притеснению и другим ситуациям."
-        ),
-        "Психологическая": (
-            "Если вы хотите поговорить, обсудить личную ситуацию или просто почувствовать поддержку — опишите, пожалуйста, что вас беспокоит.\n"
-            "Вы можете указать, какой формат помощи вам ближе, и есть ли предпочтения к специалисту (например, по опыту или гендеру)."
-        ),
-        "Медицинская": (
-            "Опишите, с чем вы столкнулись — будь то здоровье, доступ к врачам, обследования, терапия или другие темы.\n"
-            "Мы постараемся найти специалистов (эндокринологи, психиатры, хирурги и др.) или полезную информацию."
-        ),
-        "Жильё и финансы": (
-            "Опишите свою ситуацию. Мы постараемся найти ресурсы или людей, которые смогут помочь с временным жильём, продуктами или финансовой поддержкой."
-        ),
+        "Срочная": "Опишите вашу ситуацию, и мы постараемся помочь как можно быстрее.",
+        "Психологическая": "Опишите, что вас беспокоит. Вы можете указать предпочтения к специалисту.",
+        "Жильё и финансы": "Опишите свою ситуацию, и мы попробуем найти поддержку.",
         "Назад": "Вы вернулись в главное меню."
     }
 
@@ -83,91 +96,48 @@ async def help_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
     await update.message.reply_text(responses.get(category, "Опишите ваш запрос:"), reply_markup=main_markup)
     return TYPING
-
-async def anon_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data["type"] = "Анонимное сообщение"
-    await update.message.reply_text("Напишите сообщение. Оно будет передано без указания отправителя.")
-    return TYPING
-
-async def resource(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data["type"] = "Предложение ресурса"
-    await update.message.reply_text("Опишите ресурс, который вы хотите предложить.")
-    return TYPING
-
-async def volunteer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(
-        "Если вы хотите присоединиться к нашей команде, пожалуйста, заполните анкету волонтёра:\n"
-        "https://forms.gle/n2mZdRA2fYBeeCUY7",
-        reply_markup=main_markup
-    )
-    return CHOOSING
-
-async def donate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(
-        "Вы можете поддержать проект следующими способами:\n\n"
-        "— Boosty: https://boosty.to/t64/donate\n"
-        "— USDT (TRC-20): TLTBoXCSifWGBeuiRkxkPtH9M9mfwSf1sf\n\n"
-        "Для перевода криптовалюты используйте любой удобный кошелёк (Trust Wallet, Binance, TronLink и др.). Спасибо за вашу поддержку!",
-        reply_markup=main_markup,
-        disable_web_page_preview=True
-    )
-    return CHOOSING
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    async def handle_faq_jur(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    user = update.effective_user
-    msg_type = context.user_data.get("type", "Не указано")
+    if text == "Как сейчас сменить документы?":
+        await update.message.reply_text(
+            "В РФ смена гендерного маркера возможна только через суд. Это сложно и часто требует операций. "
+            "Имя меняют не всегда, особенно если оно не соответствует маркеру. Отчество можно убрать не во всех ЗАГСах."
+        )
+    elif text == "Браки и смена пола":
+        await update.message.reply_text(
+            "После смены пола брак автоматически расторгается. Новый можно заключить только с партнёром противоположного гендерного маркера. "
+            "Подробности зависят от страны и документов."
+        )
+    elif text == "Что такое ЛГБТ-пропаганда?":
+        await update.message.reply_text(
+            "Под неё могут подпадать:\n— Публичные высказывания\n— Посты о своём опыте\n— Поддержка т-персон\n\n"
+            "Переписка и личные сообщения не подпадают. Паниковать не стоит — мы поможем оценить риски."
+        )
+    elif text == "Миграция и убежище":
+        await update.message.reply_text(
+            "Опишите страну, где вы находитесь, и вашу ситуацию. Мы поможем с консультацией или поиском юриста."
+        )
+    else:
+        await update.message.reply_text("Опишите ваш вопрос. Мы передадим его юристу.", reply_markup=main_markup)
+        return TYPING
+    await update.message.reply_text("Хотите задать свой вопрос?", reply_markup=main_markup)
+    return TYPING
 
-    username = user.username or "аноним"
-    user_id = user.id
-
-    # Выбор канала по типу
-    channel_key = msg_type.split("(")[-1].replace(")", "") if "Запрос" in msg_type else msg_type
-    chat_id = CHANNELS.get(channel_key)
-
-    if not chat_id:
-        await update.message.reply_text("Произошла ошибка. Попробуйте ещё раз.", reply_markup=main_markup)
-        return CHOOSING
-
-    message = f"Новое сообщение:\nТип: {msg_type}\n"
-    if msg_type != "Анонимное сообщение":
-        message += f"От: @{username} (ID: {user_id})\n"
-    message += f"\n{text}"
-
-    await context.bot.send_message(chat_id=chat_id, text=message)
-    await update.message.reply_text("Спасибо! Ваше сообщение отправлено.", reply_markup=main_markup)
-
-    context.user_data.clear()
-    return CHOOSING
-
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Действие отменено.", reply_markup=main_markup)
-    return CHOOSING
-
-def main():
-    app = ApplicationBuilder().token(TOKEN).build()
-
-    conv = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
-        states={
-            CHOOSING: [
-                MessageHandler(filters.Regex("^Запрос о помощи$"), help_request),
-                MessageHandler(filters.Regex("^Анонимное сообщение$"), anon_message),
-                MessageHandler(filters.Regex("^Предложить ресурс$"), resource),
-                MessageHandler(filters.Regex("^Стать волонтёром$"), volunteer),
-                MessageHandler(filters.Regex("^Пожертвовать$"), donate),
-            ],
-            TYPING: [
-                MessageHandler(filters.Regex("^(Срочная|Юридическая|Психологическая|Медицинская|Жильё и финансы|Назад)$"), help_category),
-                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
-            ]
-        },
-        fallbacks=[CommandHandler("cancel", cancel)],
-        allow_reentry=True
-    )
-
-    app.add_handler(conv)
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+async def handle_faq_med(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    if text == "Что такое F64?":
+        await update.message.reply_text(
+            "Это диагноз из МКБ-10, обозначающий гендерную дисфорию. В РФ он не даёт доступ к терапии или документам, "
+            "но может быть нужен для операций за границей."
+        )
+    elif text == "Где делают операции?":
+        await update.message.reply_text(
+            "В РФ операции не проводятся. За границей их делают в Таиланде, Турции, Корее, Армении, Сербии и др. "
+            "Обычно требуют F64 и курс ГТ от 6 месяцев."
+        )
+    elif text == "Как начать гормональную терапию?":
+        await update.message.reply_text("Какую терапию вы ищете?", reply_markup=med_hormone_markup)
+        return MED_HORMONE_TYPE
+    else:
+        await update.message.reply_text("Опишите ваш медицинский вопрос.", reply_markup=main_markup)
+        return TYPING
