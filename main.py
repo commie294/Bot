@@ -2,107 +2,83 @@ import os
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes
 
-TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = int(os.getenv("ADMIN_ID"))
+TOKEN = os.getenv("TOKEN")
+ADMIN_ID = os.getenv("ADMIN_ID")
 
-(
-    CHOOSING,
-    TYPING_MESSAGE,
-    HELP_REQUEST,
-    VOLUNTEER,
-) = range(4)
+CHOOSING, TYPING = range(2)
 
-main_keyboard = [
-    ["Запрос о помощи", "Предложить ресурс"],
-    ["Сообщить о нарушении", "Стать волонтёром"],
-    ["Оставить анонимное сообщение", "Поддержать проект"],
+reply_keyboard = [
+    ["Запрос о помощи", "Сообщить о нарушении"],
+    ["Предложить ресурс", "Анонимное сообщение"],
+    ["Хочу помочь"]
 ]
-main_markup = ReplyKeyboardMarkup(main_keyboard, resize_keyboard=True)
+markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True)
 
-help_keyboard = [
-    ["Срочная", "Юридическая"],
-    ["Психологическая", "Медицинская"],
-    ["Финансовая/Жильё", "Назад"],
+help_types = [
+    "Срочная", "Юридическая", "Психологическая", "Медицинская", "Финансовая и жильё", "Другое"
 ]
-help_markup = ReplyKeyboardMarkup(help_keyboard, resize_keyboard=True)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+help_markup = ReplyKeyboardMarkup(
+    [[t] for t in help_types], one_time_keyboard=True, resize_keyboard=True
+)
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Здравствуйте! Это @t64helper_bot.\n"
-        "Пожалуйста, выберите, что вы хотите сделать:",
-        reply_markup=main_markup
+        "Здравствуйте! Это @t64helper_bot. Пожалуйста, выберите, что вы хотите отправить:",
+        reply_markup=markup
     )
     return CHOOSING
 
-async def main_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def choose_option(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     context.user_data["choice"] = text
 
-    if text == "Оставить анонимное сообщение":
-        await update.message.reply_text("Пожалуйста, введите сообщение. Оно будет передано анонимно.")
-        return TYPING_MESSAGE
-    elif text == "Поддержать проект":
+    if text == "Запрос о помощи":
+        await update.message.reply_text("Выберите категорию помощи:", reply_markup=help_markup)
+        return TYPING
+    elif text == "Сообщить о нарушении":
+        await update.message.reply_text("Опишите ситуацию с нарушением.")
+        return TYPING
+    elif text == "Предложить ресурс":
+        await update.message.reply_text("Опишите ресурс, который вы хотите предложить.")
+        return TYPING
+    elif text == "Анонимное сообщение":
+        await update.message.reply_text("Напишите ваше сообщение. Оно будет передано модерации.")
+        return TYPING
+    elif text == "Хочу помочь":
         await update.message.reply_text(
-            "Спасибо за желание помочь!\n"
-            "Вы можете поддержать нас по ссылке:\n"
-            "https://boosty.to/t64helper"
+            "Чтобы стать волонтёром, ответьте на несколько вопросов.\n"
+            "1. Как вы хотите помогать?\n"
+            "2. Есть ли у вас опыт?\n"
+            "3. Уточните ваши контакты, по желанию."
         )
-        return CHOOSING
-    elif text == "Стать волонтёром":
-        await update.message.reply_text(
-            "Пожалуйста, расскажите немного о себе и чем вы можете помочь. Мы свяжемся с вами при необходимости."
-        )
-        return VOLUNTEER
-    elif text == "Запрос о помощи":
-        await update.message.reply_text("Выберите вид помощи:", reply_markup=help_markup)
-        return HELP_REQUEST
-    else:
-        await update.message.reply_text("Опишите, пожалуйста, ваш запрос или сообщение.")
-        return TYPING_MESSAGE
+        return TYPING
 
-async def help_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    text = update.message.text
-    if text == "Назад":
-        await update.message.reply_text("Возврат в главное меню:", reply_markup=main_markup)
-        return CHOOSING
-
-    context.user_data["help_type"] = text
-    await update.message.reply_text(
-        f"Вы выбрали: {text} помощь.\nОпишите ситуацию, и мы постараемся вам помочь."
-    )
-    return TYPING_MESSAGE
-
-async def received_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_input = update.message.text
-    user_id = update.message.from_user.id
+async def receive_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     choice = context.user_data.get("choice", "Сообщение")
-    help_type = context.user_data.get("help_type")
+    user_id = update.effective_user.id
+    username = update.effective_user.username or "Без username"
+    message = update.message.text
 
-    if choice == "Запрос о помощи":
-        header = f"Запрос помощи: {help_type}"
+    # В случае юридической помощи — не анонимно
+    if choice == "Запрос о помощи" and context.user_data.get("subcategory") == "Юридическая":
+        send_text = f"Юридический запрос от @{username} (ID {user_id}):\n\n{message}"
     else:
-        header = f"{choice}"
+        send_text = f"{choice}:\n\n{message}"
 
-    message = f"{header}\n\n{user_input}"
-    if choice != "Оставить анонимное сообщение":
-        message += f"\n\nUser ID: {user_id}"
+    if choice == "Запрос о помощи" and not context.user_data.get("subcategory"):
+        context.user_data["subcategory"] = message
+        await update.message.reply_text("Теперь опишите вашу ситуацию.")
+        return TYPING
 
-    await context.bot.send_message(chat_id=ADMIN_ID, text=message)
-    await update.message.reply_text("Спасибо, ваше сообщение получено!", reply_markup=main_markup)
-    return CHOOSING
+    await context.bot.send_message(chat_id=ADMIN_ID, text=send_text)
+    await update.message.reply_text("Спасибо! Ваше сообщение отправлено.")
+    context.user_data.clear()
+    return ConversationHandler.END
 
-async def volunteer_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_input = update.message.text
-    user_id = update.message.from_user.id
-    message = f"Заявка волонтёра:\n\n{user_input}\n\nUser ID: {user_id}"
-
-    await context.bot.send_message(chat_id=ADMIN_ID, text=message)
-    await update.message.reply_text("Спасибо! Мы свяжемся с вами при необходимости.", reply_markup=main_markup)
-    return CHOOSING
-
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Действие отменено.", reply_markup=main_markup)
-    return CHOOSING
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Отменено. Напишите /start, чтобы начать заново.")
+    return ConversationHandler.END
 
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
@@ -110,10 +86,8 @@ if __name__ == "__main__":
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            CHOOSING: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_choice)],
-            HELP_REQUEST: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_type)],
-            TYPING_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, received_message)],
-            VOLUNTEER: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_info)],
+            CHOOSING: [MessageHandler(filters.TEXT & ~filters.COMMAND, choose_option)],
+            TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_text)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
