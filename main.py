@@ -295,4 +295,9 @@ def main():
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
             HELP_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)],
             FAQ_LEGAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_legal_faq)],
-            FAQ_MED:
+            FAQ_MED: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_medical_faq)],
+            TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)]
+        },
+        fallbacks=[CommandHandler("cancel", cancel)]
+    )
+    app.add_handler(conv_handler)
