@@ -1,5 +1,4 @@
 import os
-import asyncio
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     Application,
@@ -8,6 +7,9 @@ from telegram.ext import (
     filters,
     ContextTypes,
     ConversationHandler
+)
+from telegram.utils.helpers import escape_markdown
+
 )
 from dotenv import load_dotenv
 import logging
