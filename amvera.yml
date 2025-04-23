@@ -1,7 +1,7 @@
 entrypoint: python main.py
 
 secrets:
-  - TOKEN
+  - BOT_TOKEN
   - ADMIN_ID
 
 requirementsPath: requirements.txt
