@@ -1,4 +1,5 @@
 import os
+import asyncio
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     Application,
@@ -9,11 +10,16 @@ from telegram.ext import (
     ConversationHandler
 )
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
+
+# Настройка логирования
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Состояния
 START, MAIN_MENU, HELP_MENU, TYPING, FAQ_LEGAL, FAQ_MED = range(6)
@@ -129,7 +135,6 @@ medical_faq_kb = ReplyKeyboardMarkup([
     ["Диагноз F64", "Где делают операции?"],
     ["Консультация врача", "🔙 Назад"]
 ], resize_keyboard=True)
-
 # Старт
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
@@ -223,7 +228,6 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню помощи.")
         return HELP_MENU
-
 # Ответы FAQ
 async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE, mode: str) -> int:
     question = update.message.text
@@ -276,8 +280,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await context.bot.send_message(chat_id=chat_id, text=text, parse_mode="Markdown")
         await update.message.reply_text("✅ Ваше сообщение отправлено!", reply_markup=main_kb)
     except Exception as e:
+        logger.error(f"Ошибка отправки сообщения: {e}", exc_info=True) # Добавлено логирование ошибки отправки
         await update.message.reply_text(f"⚠️ Ошибка отправки: {e}. Попробуйте позже.", reply_markup=main_kb)
-        # Желательно здесь добавить логирование ошибки для отладки
 
     return MAIN_MENU
 
@@ -285,7 +289,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text("Операция отменена.", reply_markup=main_kb)
     return MAIN_MENU
-
 # Запуск
 def main():
     app = Application.builder().token(TOKEN).build()
@@ -298,6 +301,13 @@ def main():
             FAQ_MED: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_medical_faq)],
             TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)]
         },
-        fallbacks=[CommandHandler("cancel", cancel)]
+        fallbacks=[CommandHandler("cancel", cancel)],
     )
+
     app.add_handler(conv_handler)
+
+    # Запуск бота в режиме ожидания
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
+
+if __name__ == "__main__":
+    main()
