@@ -10,7 +10,6 @@ from telegram.ext import (
 )
 from telegram.utils.helpers import escape_markdown
 
-)
 from dotenv import load_dotenv
 import logging
 
