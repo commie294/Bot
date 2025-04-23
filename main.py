@@ -18,35 +18,6 @@ ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 # Состояния диалога
 START, MENU, HELP_TYPE, TYPING, FAQ_LEGAL, FAQ_MED = range(6)
 
-# Предупреждения
-WARNING_URGENT = """
-🚨 *Срочная помощь* 
-
-Важно:
-1. Если есть угроза жизни - сразу звоните в экстренные службы
-2. Мы отвечаем в течение 1-3 часов
-3. Для анонимности не указывайте личные данные
-
-Напишите кратко:
-• Что произошло
-• Где вы находитесь (город/страна)
-• Какая помощь нужна
-"""
-
-WARNING_HOUSING = """
-🏠 *Жильё и финансовая помощь*
-
-Условия:
-1. Помощь доступна только в некоторых регионах
-2. Жильё предоставляется на 1-3 месяца
-3. Приоритет - опасные ситуации (угроза жизни, насилие)
-
-Опишите:
-• Вашу ситуацию
-• Город проживания
-• Срок, на который нужно жильё
-"""
-
 # Ответы на FAQ
 FAQ_RESPONSES = {
     # Юридические вопросы
@@ -62,10 +33,10 @@ FAQ_RESPONSES = {
 
 # Клавиатуры
 main_kb = ReplyKeyboardMarkup([
-    ["Срочная помощь", "Юридическая помощь"],
-    ["Медицинская помощь", "Психологическая поддержка"],
-    ["Жильё и финансы", "Анонимное сообщение"],
-    ["Ресурсы"]
+    ["Запрос о помощи"],
+    ["Предложить ресурс", "Пожертвовать"],
+    ["Анонимное сообщение", "Стать волонтёром"],
+    ["Назад"]
 ], resize_keyboard=True)
 
 help_kb = ReplyKeyboardMarkup([
@@ -91,54 +62,60 @@ CHANNELS = {
     "Психологическая": -100789012,
     "Медицинская": -100345678,
     "Жильё и финансы": -100901234,
-    "Срочная": -100901234,
     "Анонимное сообщение": -100567890,
     "Ресурсы": -100567890
 }
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        "Действие отменено. Возврат в главное меню.",
+        "Действие отменено.",
         reply_markup=main_kb
     )
     return MENU
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        "Привет! Это бот поддержки. Выберите нужную категорию:",
+        "Привет! Это бот поддержки проекта 'Переход в неположенном месте'.\n\n"
+        "Вы можете:\n"
+        "- Запросить помощь\n"
+        "- Предложить полезный ресурс\n"
+        "- Поддержать проект финансово\n"
+        "- Стать волонтёром\n"
+        "- Отправить анонимное сообщение",
         reply_markup=main_kb
     )
     return MENU
 
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    if choice == "Срочная помощь":
-        context.user_data["type"] = "СРОЧНО - Запрос"
-        await update.message.reply_text(
-            WARNING_URGENT,
-            parse_mode="Markdown",
-            reply_markup=ReplyKeyboardRemove()
-        )
-        return TYPING
-    elif choice == "Жильё и финансы":
-        await update.message.reply_text(
-            WARNING_HOUSING,
-            parse_mode="Markdown",
-            reply_markup=ReplyKeyboardRemove()
-        )
-        context.user_data["type"] = "Жильё/финансы"
-        return TYPING
-    elif choice in ["Юридическая помощь", "Медицинская помощь"]:
-        await update.message.reply_text("Выберите категорию:", reply_markup=help_kb)
+    if choice == "Запрос о помощи":
+        await update.message.reply_text("Выберите категорию помощи:", reply_markup=help_kb)
         return HELP_TYPE
+    elif choice == "Предложить ресурс":
+        context.user_data["type"] = "Предложение ресурса"
+        await update.message.reply_text("Опишите ресурс, который хотите предложить:", reply_markup=ReplyKeyboardRemove())
+        return TYPING
+    elif choice == "Пожертвовать":
+        await update.message.reply_text(
+            "Вы можете поддержать проект:\n\n"
+            "• Boosty: https://boosty.to/t64/donate\n"
+            "• USDT (TRC-20): TLTBoXCSifWGBeuiRkxkPtH9M9mfwSf1sf",
+            reply_markup=main_kb
+        )
+        return MENU
+    elif choice == "Стать волонтёром":
+        await update.message.reply_text(
+            "Заполните анкету волонтёра:\n"
+            "https://forms.gle/n2mZdRA2fYBeeCUY7",
+            reply_markup=main_kb
+        )
+        return MENU
     elif choice == "Анонимное сообщение":
         context.user_data["type"] = "Анонимное сообщение"
         await update.message.reply_text("Напишите ваше сообщение:", reply_markup=ReplyKeyboardRemove())
         return TYPING
-    elif choice == "Ресурсы":
-        context.user_data["type"] = "Ресурсы"
-        await update.message.reply_text("Опишите ресурс, который хотите предложить:", reply_markup=ReplyKeyboardRemove())
-        return TYPING
+    elif choice == "Назад":
+        return await start(update, context)
     return MENU
 
 async def help_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -187,8 +164,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     request_type = context.user_data.get("type", "Неизвестно")
     
     channel_key = request_type.split()[0]
-    if "СРОЧНО" in request_type:
-        channel_key = "Срочная"
     chat_id = CHANNELS.get(channel_key, ADMIN_CHAT_ID)
     
     text = f"📩 *{request_type}*\n"
