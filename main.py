@@ -1,6 +1,4 @@
 import os
-import csv
-from datetime import datetime
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -33,6 +31,16 @@ help_keyboard = [
 ]
 help_markup = ReplyKeyboardMarkup(help_keyboard, resize_keyboard=True)
 
+# Chat IDs твоих каналов
+CHANNELS = {
+    "Медицинская": -1002051399111,
+    "Юридическая": -1002092079550,
+    "Психологическая": -1002085456901,
+    "Жильё и финансы": -1002089296069,
+    "Анонимное сообщение": -1002107093300,
+    "Предложение ресурса": -1002107093300
+}
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         "Привет. Это бот проекта «Переход в неположенном месте».\n"
@@ -54,8 +62,7 @@ async def help_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         "Срочная": "Опишите вашу ситуацию. Мы постараемся помочь как можно скорее.",
         "Юридическая": (
             "Опишите ваш вопрос. Мы постараемся связать вас с ЛГБТ-френдли юристом.\n"
-            "Это может быть консультация по смене документов, семейным вопросам, административным и уголовным делам, миграции, притеснению и другим ситуациям.\n"
-            "Обратите внимание: юридическая помощь не является анонимной — будет использован ваш Telegram ID."
+            "Это может быть консультация по смене документов, семейным вопросам, административным и уголовным делам, миграции, притеснению и другим ситуациям."
         ),
         "Психологическая": (
             "Если вы хотите поговорить, обсудить личную ситуацию или просто почувствовать поддержку — опишите, пожалуйста, что вас беспокоит.\n"
@@ -110,23 +117,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     text = update.message.text
     user = update.effective_user
     msg_type = context.user_data.get("type", "Не указано")
-    user_id = user.id
-    username = user.username or 'без username'
-    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    file_exists = os.path.isfile("requests.csv")
-    with open("requests.csv", "a", encoding="utf-8", newline="") as file:
-        writer = csv.writer(file)
-        if not file_exists:
-            writer.writerow(["Тип", "Дата", "User ID", "Username", "Текст"])
-        writer.writerow([msg_type, date, user_id, f"@{username}", text])
+    username = user.username or "аноним"
+    user_id = user.id
+
+    # Выбор канала по типу
+    channel_key = msg_type.split("(")[-1].replace(")", "") if "Запрос" in msg_type else msg_type
+    chat_id = CHANNELS.get(channel_key)
+
+    if not chat_id:
+        await update.message.reply_text("Произошла ошибка. Попробуйте ещё раз.", reply_markup=main_markup)
+        return CHOOSING
 
     message = f"Новое сообщение:\nТип: {msg_type}\n"
     if msg_type != "Анонимное сообщение":
         message += f"От: @{username} (ID: {user_id})\n"
     message += f"\n{text}"
 
-    await context.bot.send_message(chat_id=ADMIN_ID, text=message)
+    await context.bot.send_message(chat_id=chat_id, text=message)
     await update.message.reply_text("Спасибо! Ваше сообщение отправлено.", reply_markup=main_markup)
 
     context.user_data.clear()
