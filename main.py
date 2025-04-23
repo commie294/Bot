@@ -56,7 +56,8 @@ FAQ_RESPONSES = {
     # Медицинские вопросы
     "Женская ГТ": """Полный текст ответа...""",
     "Мужская ГТ": """Полный текст ответа...""",
-    "Диагноз F64": """Полный текст ответа..."""
+    "Диагноз F64": """Полный текст ответа...""",
+    "Где делают операции?": """Полный текст ответа..."""
 }
 
 # Клавиатуры
@@ -80,8 +81,8 @@ legal_faq_kb = ReplyKeyboardMarkup([
 
 medical_faq_kb = ReplyKeyboardMarkup([
     ["Женская ГТ", "Мужская ГТ"],
-    ["Диагноз F64", "Консультация врача"],
-    ["Назад"]
+    ["Диагноз F64", "Где делают операции?"],
+    ["Консультация врача", "Назад"]
 ], resize_keyboard=True)
 
 # ID каналов
@@ -94,6 +95,13 @@ CHANNELS = {
     "Анонимное сообщение": -100567890,
     "Ресурсы": -100567890
 }
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text(
+        "Действие отменено. Возврат в главное меню.",
+        reply_markup=main_kb
+    )
+    return MENU
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
@@ -123,7 +131,15 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     elif choice in ["Юридическая помощь", "Медицинская помощь"]:
         await update.message.reply_text("Выберите категорию:", reply_markup=help_kb)
         return HELP_TYPE
-    # Остальные обработчики...
+    elif choice == "Анонимное сообщение":
+        context.user_data["type"] = "Анонимное сообщение"
+        await update.message.reply_text("Напишите ваше сообщение:", reply_markup=ReplyKeyboardRemove())
+        return TYPING
+    elif choice == "Ресурсы":
+        context.user_data["type"] = "Ресурсы"
+        await update.message.reply_text("Опишите ресурс, который хотите предложить:", reply_markup=ReplyKeyboardRemove())
+        return TYPING
+    return MENU
 
 async def help_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     category = update.message.text
@@ -133,33 +149,48 @@ async def help_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     elif category == "Медицинская":
         await update.message.reply_text("Выберите вопрос:", reply_markup=medical_faq_kb)
         return FAQ_MED
-    # Остальные категории...
+    elif category == "Назад":
+        return await start(update, context)
+    else:
+        context.user_data["type"] = f"Запрос - {category}"
+        await update.message.reply_text("Опишите вашу ситуацию:", reply_markup=ReplyKeyboardRemove())
+        return TYPING
 
 async def handle_legal_faq(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     question = update.message.text
     if question == "Назад":
         await update.message.reply_text("Выберите категорию:", reply_markup=help_kb)
         return HELP_TYPE
-    # Обработка юридических FAQ...
+    elif question == "Консультация юриста":
+        context.user_data["type"] = "Юридическая - Консультация"
+        await update.message.reply_text("Опишите ваш вопрос юристу:", reply_markup=ReplyKeyboardRemove())
+        return TYPING
+    else:
+        await update.message.reply_text(FAQ_RESPONSES.get(question, "Ответ не найден"), reply_markup=legal_faq_kb)
+        return FAQ_LEGAL
 
 async def handle_medical_faq(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     question = update.message.text
     if question == "Назад":
         await update.message.reply_text("Выберите категорию:", reply_markup=help_kb)
         return HELP_TYPE
-    # Обработка медицинских FAQ...
+    elif question == "Консультация врача":
+        context.user_data["type"] = "Медицинская - Консультация"
+        await update.message.reply_text("Опишите ваш медицинский вопрос:", reply_markup=ReplyKeyboardRemove())
+        return TYPING
+    else:
+        await update.message.reply_text(FAQ_RESPONSES.get(question, "Ответ не найден"), reply_markup=medical_faq_kb)
+        return FAQ_MED
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     msg = update.message.text
     request_type = context.user_data.get("type", "Неизвестно")
     
-    # Определение канала
     channel_key = request_type.split()[0]
     if "СРОЧНО" in request_type:
         channel_key = "Срочная"
     chat_id = CHANNELS.get(channel_key, ADMIN_CHAT_ID)
     
-    # Формирование сообщения
     text = f"📩 *{request_type}*\n"
     if "Анонимное" not in request_type:
         text += f"От: @{update.message.from_user.username or 'нет'} (ID: {update.message.from_user.id})\n\n"
