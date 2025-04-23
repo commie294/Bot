@@ -279,7 +279,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         chat_id = ADMIN_CHAT_ID
 
     safe_msg = escape_markdown(msg, version=2)
-    text = f"📩 *{request_type}*\nОт @{username}\n\n{safe_msg}"
+        text = f"📩 {request_type}\nОт @{username}\n\n{safe_msg}"
+
 
     try:
         await context.bot.send_message(chat_id=chat_id, text=text, parse_mode="MarkdownV2")
