@@ -16,7 +16,7 @@ TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 
 # Состояния
-START, MENU, HELP_TYPE, TYPING, FAQ_LEGAL, FAQ_MED = range(6)
+START, MAIN_MENU, HELP_MENU, TYPING, FAQ_LEGAL, FAQ_MED = range(6)
 
 # Каналы
 CHANNELS = {
@@ -113,16 +113,15 @@ F64 — код в МКБ-10 для гендерной дисфории. В РФ:
 
 # Клавиатуры
 main_kb = ReplyKeyboardMarkup([
-    ["🆘 Срочная помощь", "💼 Юридическая помощь"],
-    ["🏥 Медицинская помощь", "💬 Анонимное сообщение"],
-    ["📚 Ресурсы", "💖 Стать волонтером"],
-    ["💸 Поддержать проект"]
+    ["Попросить о помощи"],
+    ["Предложить ресурс", "Стать волонтером"],
+    ["Поддержать проект"]
 ], resize_keyboard=True)
 
 help_kb = ReplyKeyboardMarkup([
-    ["🆘 Срочная помощь", "💼 Юридическая"],
-    ["🏥 Медицинская", "🏠 Жилье/финансы"],
-    ["🧠 Психологическая", "🔙 Назад"]
+    ["🆘 Срочная помощь", "💼 Юридическая помощь"],
+    ["🏥 Медицинская помощь", "🏠 Жилье/финансы"],
+    ["🧠 Психологическая помощь", "🔙 Назад"]
 ], resize_keyboard=True)
 
 legal_faq_kb = ReplyKeyboardMarkup([
@@ -141,25 +140,69 @@ medical_faq_kb = ReplyKeyboardMarkup([
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
     await update.message.reply_text(
-        "Привет! Это бот поддержки. Выберите нужную опцию:",
+        "Привет! Мы — проект «Переход в неположенном месте». Этот бот создан для поддержки трансгендерных людей и их близких в России.\n\n"
+        "Здесь вы можете:\n"
+        "• 🆘 **Попросить о помощи** в различных ситуациях.\n"
+        "• 📚 **Предложить ресурс**, который может быть полезен сообществу.\n"
+        "• 💖 **Стать волонтером** и помочь проекту.\n"
+        "• 💸 **Поддержать проект**, чтобы мы могли продолжать нашу работу.\n\n"
+        "Пожалуйста, выберите нужную опцию:",
         reply_markup=main_kb
     )
-    return MENU
+    return MAIN_MENU
 
-# Меню
-async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+# Главное меню
+async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    if "🆘 Срочная помощь" in choice:
-        context.user_data["type"] = "🚨 СРОЧНО - Запрос"
+    if choice == "Попросить о помощи":
+        await update.message.reply_text("Выберите категорию помощи:", reply_markup=help_kb)
+        return HELP_MENU
+    elif choice == "Предложить ресурс":
+        context.user_data["type"] = "💡 Предложение ресурса"
+        await update.message.reply_text("Опишите, какой ресурс вы хотите предложить:", reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True))
+        return TYPING
+    elif choice == "Стать волонтером":
+        volunteer_text = (
+            "Мы очень рады твоему желанию присоединиться к нашей команде волонтеров! "
+            "Твоя помощь может стать неоценимым вкладом в поддержку нашего сообщества.\n\n"
+            "Пожалуйста, заполни эту форму, чтобы мы могли узнать тебя лучше и предложить подходящие задачи:\n"
+            "[Форма для волонтеров](https://docs.google.com/forms/d/1kFHSQ05lQyL6s7WDdqTqqY-Il6La3Sehhj_1iVTNgus/edit)\n\n"
+            "Мы свяжемся с тобой в ближайшее время после получения твоей заявки. "
+            "Спасибо за твою готовность помогать!"
+        )
         await update.message.reply_text(
-            "Опишите срочную ситуацию (мы ответим в течение 15 минут):",
-            reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True)
+            volunteer_text,
+            reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True),
+            parse_mode="Markdown",
+            disable_web_page_preview=True
         )
         return TYPING
-    elif "💬 Анонимное сообщение" in choice:
-        context.user_data["type"] = "👤 Анонимное сообщение"
+    elif choice == "Поддержать проект":
+        donate_text = (
+            "Ваша поддержка помогает нам продолжать нашу работу и оказывать помощь тем, кто в ней нуждается. "
+            "Даже небольшой вклад может сделать большую разницу!\n\n"
+            "Вы можете поддержать наш проект следующими способами:\n\n"
+            "💖 **Через Boosty:** [Поддержать на Boosty](https://boosty.to/t64/donate)\n\n"
+            "💰 **USDT (TRC-20):** `TLTBoXCSifWGBeuiRkxkPtH9M9mfwSf1sf`\n\n"
+            "Мы благодарны за любую вашу поддержку!"
+        )
         await update.message.reply_text(
-            "Напишите сообщение (ваши данные не сохранятся):",
+            donate_text,
+            reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True),
+            parse_mode="Markdown",
+            disable_web_page_preview=True
+        )
+        return TYPING
+    else:
+        await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
+        return MAIN_MENU
+
+# Меню помощи
+async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    choice = update.message.text
+    if choice == "🆘 Срочная помощь":
+        await update.message.reply_text(
+            "Опишите срочную ситуацию (мы постараемся ответить в течение 15 минут). Пожалуйста, помните, что мы не являемся экстренной службой. В критических ситуациях, угрожающих жизни или здоровью, немедленно обратитесь в соответствующие службы экстренного реагирования или на телефон доверия.",
             reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True)
         )
         return TYPING
@@ -169,52 +212,33 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     elif choice == "🏥 Медицинская помощь":
         await update.message.reply_text("Выберите вопрос:", reply_markup=medical_faq_kb)
         return FAQ_MED
-    else:
-        await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
-        return MENU
-
-# Категории помощи
-async def help_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    category = update.message.text
-
-    if category == "💼 Юридическая":
+    elif choice == "🧠 Психологическая помощь":
         await update.message.reply_text(
-            "Выберите вопрос или нажмите «Консультация юриста»:",
-            reply_markup=legal_faq_kb
-        )
-        return FAQ_LEGAL
-
-    elif category == "🏥 Медицинская":
-        await update.message.reply_text(
-            "Выберите вопрос или нажмите «Консультация врача»:",
-            reply_markup=medical_faq_kb
-        )
-        return FAQ_MED
-
-    elif category in ["🏠 Жилье/финансы", "🧠 Психологическая"]:
-        context.user_data["type"] = category
-        await update.message.reply_text(
-            "Опишите ваш запрос:",
+            "Опишите ваш запрос и, если у вас есть особые пожелания к специалисту (например, опыт работы с определенными темами), пожалуйста, укажите их.",
             reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True)
         )
         return TYPING
-
-    elif category == "🔙 Назад":
+    elif choice == "🏠 Жилье/финансы":
+        await update.message.reply_text(
+            "Пожалуйста, опишите вашу ситуацию подробно, укажите информацию о себе (например, регион, возраст, краткую историю вопроса) и ваши потребности. Обратите внимание, что супер-экстренные случаи (например, угроза безопасности) рассматриваются в приоритетном порядке. Мы постараемся помочь вам в рамках наших возможностей и ресурсов.",
+            reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True)
+        )
+        return TYPING
+    elif choice == "🔙 Назад":
         return await start(update, context)
-
     else:
-        await update.message.reply_text("Выберите корректную категорию.")
-        return HELP_TYPE
+        await update.message.reply_text("Пожалуйста, выберите опцию из меню помощи.")
+        return HELP_MENU
 
 # Ответы FAQ
 async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE, mode: str) -> int:
     question = update.message.text
     if question == "🔙 Назад":
-        await update.message.reply_text("Выберите категорию:", reply_markup=help_kb)
-        return HELP_TYPE
+        await update.message.reply_text("Выберите категорию помощи:", reply_markup=help_kb)
+        return HELP_MENU
     elif "Консультация" in question:
         context.user_data["type"] = f"{mode} - Консультация"
-        await update.message.reply_text("Опишите ваш вопрос:", reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True))
+        await update.message.reply_text("Опишите ваш вопрос. Мы постараемся связать вас со специалистом в ближайшее время.", reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True))
         return TYPING
     else:
         await update.message.reply_text(FAQ_RESPONSES.get(question, "Ответ не найден"), parse_mode="Markdown")
@@ -231,7 +255,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     msg = update.message.text
     if msg == "🔙 Назад":
         await update.message.reply_text("Вы вернулись в главное меню.", reply_markup=main_kb)
-        return MENU
+        return MAIN_MENU
 
     request_type = context.user_data.get("type", "Запрос")
     username = update.message.from_user.username or "нет"
@@ -255,12 +279,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     except:
         await update.message.reply_text("⚠️ Ошибка отправки. Попробуйте позже.", reply_markup=main_kb)
 
-    return MENU
+    return MAIN_MENU
 
 # Отмена
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text("Операция отменена.", reply_markup=main_kb)
-    return MENU
+    return MAIN_MENU
 
 # Запуск
 def main():
@@ -268,8 +292,8 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, menu)],
-            HELP_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_category)],
+            MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
+            HELP_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)],
             FAQ_LEGAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_legal_faq)],
             FAQ_MED: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_medical_faq)],
             TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)]
