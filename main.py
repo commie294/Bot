@@ -278,12 +278,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         chat_id = ADMIN_CHAT_ID
 
-    safe_msg = escape_markdown(msg, version=2)
-        text = f"📩 {request_type}\nОт @{username}\n\n{safe_msg}"
-
+    text = f"📩 {request_type}\nОт @{username}\n\n{msg}"
 
     try:
-        await context.bot.send_message(chat_id=chat_id, text=text, parse_mode="MarkdownV2")
+        await context.bot.send_message(chat_id=chat_id, text=text)
         await update.message.reply_text("✅ Ваше сообщение отправлено!", reply_markup=main_kb)
     except Exception as e:
         logger.error(f"Ошибка отправки сообщения: {e}", exc_info=True)
