@@ -278,14 +278,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         chat_id = ADMIN_CHAT_ID
 
-    text = f"📩 *{request_type}*\nОт @{username}\n\n{msg}"
+    safe_msg = escape_markdown(msg, version=2)
+    text = f"📩 *{request_type}*\nОт @{username}\n\n{safe_msg}"
 
-    safe_msg = escape_markdown(msg)
-text = f"📩 *{request_type}*\nОт @{username}\n\n{safe_msg}"
+    try:
+        await context.bot.send_message(chat_id=chat_id, text=text, parse_mode="MarkdownV2")
+        await update.message.reply_text("✅ Ваше сообщение отправлено!", reply_markup=main_kb)
+    except Exception as e:
+        logger.error(f"Ошибка отправки сообщения: {e}", exc_info=True)
+        await update.message.reply_text(f"⚠️ Ошибка отправки: {e}. Попробуйте позже.", reply_markup=main_kb)
 
-try:
-    await context.bot.send_message(chat_id=chat_id, text=text, parse_mode="Markdown")
     return MAIN_MENU
+
 
 # Отмена
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
