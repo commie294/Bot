@@ -102,8 +102,11 @@ async def volunteer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def donate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        "Вы можете поддержать нас по ссылке: https://boosty.to/t64helper\n"
-        "или уточнить криптовалютные способы у админа.",
+        ""Вы можете поддержать проект следующими способами:\n\n"
+        "— Boosty: https://boosty.to/t64/donate\n"
+        "— USDT (TRC-20): TLTBoXCSifWGBeuiRkxkPtH9M9mfwSf1sf\n\n"
+        "Для перевода криптовалюты используйте любой удобный кошелёк (Trust Wallet, Binance, TronLink и др.). Спасибо за вашу поддержку!",
+       
         reply_markup=main_markup
     )
     return CHOOSING
