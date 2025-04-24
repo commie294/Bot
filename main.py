@@ -15,7 +15,16 @@ sys.path.append('/data/data/com.termux/files/usr/lib/python3.12/site-packages')
 import gspread
 
 from google.oauth2.service_account import Credentials
+import sys
 
+# Добавляем путь к директории, где установлены библиотеки
+sys.path.append('/data/data/com.termux/files/usr/lib/python3.12/site-packages')
+
+# Теперь можно импортировать библиотеку
+from telegram import Bot, Update
+from telegram.ext import Updater, CommandHandler, CallbackContext, JobQueue
+
+# Остальной код
 # Загрузка переменных окружения
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
