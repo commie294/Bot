@@ -248,32 +248,10 @@ def get_gsheet_data():
 
     """Периодически проверяет новые ответы в Google Sheets и отправляет уведомления."""
     global LAST_PROCESSED_ROW
+    global LAST_PROCESSED_ROW
     new_volunteers_data = get_gsheet_data()
-    if new_volunteers_data:
+    if new_volunteers_data:  # Проверяем, что данные были получены
         for i, volunteer_data in enumerate(new_volunteers_data):
-            row_number = i + 2  # +2, потому что enumerate начинается с 0, а данные со строки 2
-            if row_number > LAST_PROCESSED_ROW:
-                help_direction = volunteer_data.get("d") # Используем индекс столбца "d"
-
-                target_chat_id = CHANNELS.get("Волонтеры Остальные") # По умолчанию в "Остальные"
-
-                if help_direction == "Психологическая помощь":
-                    target_chat_id = CHANNELS.get("Волонтеры Психология")
-                elif help_direction == "Юридическая помощь":
-                    target_chat_id = CHANNELS.get("Волонтеры Юристы")
-                elif help_direction == "Информационная поддержка":
-                    target_chat_id = CHANNELS.get("Волонтеры Инфо")
-                # Можно добавить больше условий для других направлений
-
-                volunteer_info = f"Новый волонтер (ID: {row_number})!\n\n"
-                for key, value in volunteer_data.items():
-                    volunteer_info += f"{key}: {value}\n"
-
-                try:
-                    await context.bot.send_message(chat_id=target_chat_id, text=volunteer_info)
-                    LAST_PROCESSED_ROW = row_number
-                except Exception as e:    if new_volunteers_data:
-        for if, volunteer_data in enumerate(new_volunteers_data):
             row_number = i + 2
             if row_number > LAST_PROCESSED_ROW:
                 help_direction = volunteer_data.get("d")
