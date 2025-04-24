@@ -273,7 +273,7 @@ def get_gsheet_data():
                     await context.bot.send_message(chat_id=target_chat_id, text=volunteer_info)
                     LAST_PROCESSED_ROW = row_number
                 except Exception as e:    if new_volunteers_data:
-        for i, volunteer_data in enumerate(new_volunteers_data):
+        for if, volunteer_data in enumerate(new_volunteers_data):
             row_number = i + 2
             if row_number > LAST_PROCESSED_ROW:
                 help_direction = volunteer_data.get("d")
