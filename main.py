@@ -272,18 +272,9 @@ async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
                     logger.error(f"Ошибка при отправке уведомления о волонтере: {e}", exc_info=True)
 
 # Обработчик команды /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data.clear()
-    await update.message.reply_text(START_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
-    return MAIN_MENU
-
-# Обработчик главного меню
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    if choice == "Попросить
-update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    choice = update.message.text
-    if choice == "Попросить о помощи":
+    if choice == "Попросить":
         await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True))
         return HELP_MENU
     elif choice == "Предложить ресурс":
@@ -299,6 +290,7 @@ update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     else:
         await update.message.reply_text(CHOOSE_FROM_MENU)
         return MAIN_MENU
+
 
 # Обработчик меню помощи
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
