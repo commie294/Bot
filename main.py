@@ -222,17 +222,27 @@ CHOOSE_HELP_CATEGORY = "Пожалуйста, выберите опцию из �
 def get_gsheet_data():
     """Получает все записи из Google Sheets."""
     try:
-        creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"])
+        from oauth2client.service_account import ServiceAccountCredentials
+        import gspread
+
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        CREDENTIALS_FILE = '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json'
+        SPREADSHEET_ID = '1w21-rrE7j5QATYtq8IixK79rQxN-LOC8tic827TT8ts'
+        WORKSHEET_NAME = 'Ответы на форму (1)'
+
+        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
         gc = gspread.authorize(creds)
         spreadsheet = gc.open_by_key(SPREADSHEET_ID)
         worksheet = spreadsheet.worksheet(WORKSHEET_NAME)
         data = worksheet.get_all_records()
         return data
     except Exception as e:
-        logger.error(f"Ошибка при получении данных из Google Sheets: {e}", exc_info=True)
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Ошибка при получении данных из Google Sheets (oauth2client): {e}", exc_info=True)
+        print(f"Ошибка Google Sheets (oauth2client): {e}")
         return None
-        print(f"Ошибка Google Sheets: {e}")
-async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
+
     """Периодически проверяет новые ответы в Google Sheets и отправляет уведомления."""
     global LAST_PROCESSED_ROW
     new_volunteers_data = get_gsheet_data()
