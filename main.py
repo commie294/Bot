@@ -261,9 +261,7 @@ async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
                     target_chat_id = CHANNELS.get("Волонтеры Юристы")
                 elif help_direction == "Информационная поддержка":
                     target_chat_id = CHANNELS.get("Волонтеры Инфо")
-                                volunteer_info = f"Новый волонтер (ID: {row_number})!\n\n"
-                for key, value in volunteer_data.items():
-                    volunteer_info += f"{key}: {value}\n"
+                                volunteer_info = f"Новый волон""
 
 
                 try:
