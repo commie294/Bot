@@ -30,7 +30,11 @@ load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 # --- НОВЫЙ БЛОК: Интеграция с Google Sheets ---
-CREDENTIALS_FILE = '/Внутреннее хранилище/Download/rapid-goal-457809-n6-9e1bda1dc23c.json' # <--- ВСТАВЬ СВОЙ ПУТЬ
+CREDENTIALS_FILE = ServiceAccountCredentials.from_json_keyfile_name(
+    '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json',
+    scope
+)
+# <--- ВСТАВЬ СВОЙ ПУТЬ
 SPREADSHEET_ID = '1w21-rrE7j5QATYtq8IixK79rQxN-LOC8tic827TT8ts'
 WORKSHEET_NAME = 'Ответы на форму (1)'
 # --- НОВЫЙ БЛОК: Отслеживание обработанных ID ---
