@@ -290,6 +290,51 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), disable_web_page_preview=True)
         context.user_data["type"] = "Срочная"
         return TYPING
+        async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    message_text = update.message.text
+    if message_text == BACK_BUTTON:
+        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+        return MAIN_MENU
+
+    request_type = context.user_data.get("type", "Запрос")
+    username = update.message.from_user.username or "нет"
+    forward_text = f"📩 {request_type}\nОт @{username}\n\n{message_text}"
+
+    target_channel_id = ADMIN_CHAT_ID  # По умолчанию отправляем админу
+
+    if "Срочная" in request_type:
+        target_channel_id = CHANNELS["Срочная"]
+        # Отправляем уведомление администраторам
+        admin_notification = f"🚨 НОВЫЙ СРОЧНЫЙ ЗАПРОС!\nОт пользователя: @{username}\nСообщение: {message_text}"
+        try:
+            await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_notification)
+        except Exception as e:
+            logger.error(f"Ошибка отправки уведомления администратору о срочном запросе: {e}", exc_info=True)
+
+    elif "Анонимное" in request_type:
+        target_channel_id = CHANNELS["Анонимные"]
+    elif "Юридическая" in request_type:
+        target_channel_id = CHANNELS["Юридические"]
+    elif "Медицинская" in request_type:
+        target_channel_id = CHANNELS["Медицинские"]
+    elif "Психологическая помощь" in request_type:
+        target_channel_id = CHANNELS["Психологическая помощь"]
+    elif "Предложение ресурса" in request_type:
+        target_channel_id = CHANNELS["Предложение ресурса"]
+    elif "Юридическая консультация" in request_type:
+        target_channel_id = CHANNELS["Юридические"]
+    elif "Медицинская консультация" in request_type:
+        target_channel_id = CHANNELS["Медицинские"]
+
+    try:
+        await context.bot.send_message(chat_id=target_channel_id, text=forward_text)
+        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+    except Exception as e:
+        logger.error(f"Ошибка отправки сообщения: {e}", exc_info=True)
+        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+
+    return MAIN_MENU
+
     elif choice == "💼 Юридическая помощь":
         await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(LEGAL_FAQ_BUTTONS, resize_keyboard=True))
         return FAQ_LEGAL
