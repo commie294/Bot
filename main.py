@@ -1,4 +1,4 @@
-import os
+Import os
 import logging
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
@@ -14,8 +14,8 @@ import sys
 sys.path.append('/data/data/com.termux/files/usr/lib/python3.12/site-packages')
 import gspread
 
-from google.oauth2.service_account import ServiceAccountCredentials # <--- ДОБАВЬ ЭТУ СТРОКУ
-from google.oauth2.service_account import Credentials # Возможно, эта строка тебе тоже нужна
+from google.oauth2.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 import sys
 
 # Добавляем путь к директории, где установлены библиотеки
@@ -31,12 +31,11 @@ load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 # --- НОВЫЙ БЛОК: Интеграция с Google Sheets ---
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"] # Определи scope здесь
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials = ServiceAccountCredentials.from_json_keyfile_name(
     '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json',
     scope
 )
-
 
 # <--- ВСТАВЬ СВОЙ ПУТЬ
 SPREADSHEET_ID = '1w21-rrE7j5QATYtq8IixK79rQxN-LOC8tic827TT8ts'
@@ -246,11 +245,11 @@ def get_gsheet_data():
         print(f"Ошибка Google Sheets (oauth2client): {e}")
         return None
 
+async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
     """Периодически проверяет новые ответы в Google Sheets и отправляет уведомления."""
     global LAST_PROCESSED_ROW
-    global LAST_PROCESSED_ROW
     new_volunteers_data = get_gsheet_data()
-    if new_volunteers_data:  # Проверяем, что данные были получены
+    if new_volunteers_data:
         for i, volunteer_data in enumerate(new_volunteers_data):
             row_number = i + 2
             if row_number > LAST_PROCESSED_ROW:
@@ -272,7 +271,6 @@ def get_gsheet_data():
                 except Exception as e:
                     logger.error(f"Ошибка при отправке уведомления о волонтере: {e}", exc_info=True)
 
-
 # Обработчик команды /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
@@ -281,6 +279,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 # Обработчик главного меню
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    choice = update.message.text
+    if choice == "Попросить
+update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "Попросить о помощи":
         await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True))
