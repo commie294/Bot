@@ -1,4 +1,4 @@
-import os
+Import os
 import logging
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
@@ -261,7 +261,8 @@ async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
                     target_chat_id = CHANNELS.get("Волонтеры Юристы")
                 elif help_direction == "Информационная поддержка":
                     target_chat_id = CHANNELS.get("Волонтеры Инфо")
-                volunteer_info = f"Новый волонтер (ID: {row_number})!\n\n"
+                volunteer_info = f"Новый волон
+тер (ID: {row_number})!\n\n"
                 for key, value in volunteer_data.items():
                     volunteer_info += f"{key}: {value}\n"
 
@@ -272,9 +273,15 @@ async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
                     logger.error(f"Ошибка при отправке уведомления о волонтере: {e}", exc_info=True)
 
 # Обработчик команды /start
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data.clear()
+    await update.message.reply_text(START_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+    return MAIN_MENU
+
+# Обработчик главного меню
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    if choice == "Попросить":
+    if choice == "Попросить о помощи":
         await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True))
         return HELP_MENU
     elif choice == "Предложить ресурс":
@@ -290,7 +297,6 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     else:
         await update.message.reply_text(CHOOSE_FROM_MENU)
         return MAIN_MENU
-
 
 # Обработчик меню помощи
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
