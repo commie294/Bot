@@ -1,21 +1,18 @@
 import os
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+import logging
+from dotenv import load_dotenv
+from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     Application,
     CommandHandler,
     MessageHandler,
     filters,
     ContextTypes,
-    ConversationHandler
+    ConversationHandler,
 )
-from telegram.helpers import escape_markdown
 
-
-from dotenv import load_dotenv
-import logging
-
+# Загрузка переменных окружения
 load_dotenv()
-
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 
@@ -23,20 +20,50 @@ ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Состояния
-START, MAIN_MENU, HELP_MENU, TYPING, FAQ_LEGAL, FAQ_MED = range(6)
+# Состояния диалога
+(
+    START,
+    MAIN_MENU,
+    HELP_MENU,
+    TYPING,
+    FAQ_LEGAL,
+    FAQ_MED,
+) = range(6)
 
-# Каналы
+# Константы
+BACK_BUTTON = "🔙 Назад"
+MAIN_MENU_BUTTONS = [
+    ["Попросить о помощи"],
+    ["Предложить ресурс", "Стать волонтером"],
+    ["Поддержать проект"],
+]
+HELP_MENU_BUTTONS = [
+    ["🆘 Срочная помощь", "💼 Юридическая помощь"],
+    ["🏥 Медицинская помощь", "🏠 Жилье/финансы"],
+    ["🧠 Психологическая помощь", BACK_BUTTON],
+]
+LEGAL_FAQ_BUTTONS = [
+    ["Как сменить документы?", "Брак после смены пола"],
+    ["Что такое пропаганда ЛГБТ?", "Консультация юриста"],
+    [BACK_BUTTON],
+]
+MEDICAL_FAQ_BUTTONS = [
+    ["Женская гормональная терапия", "Мужская гормональная терапия"],
+    ["Диагноз F64", "Где делают операции?"],
+    ["Консультация врача", BACK_BUTTON],
+]
+
+# Каналы для пересылки сообщений
 CHANNELS = {
     "Срочная": -1002507059500,  # t64_gen (остальное)
-    "Анонимные": -1002507059500, # t64_gen (остальное) - пока используем этот же, если нет отдельного
+    "Анонимные": -1002507059500, # t64_gen (остальное) - пока используем этот же
     "Юридические": -1002523489451, # t64_legal
-    "Медицинские": -1002507059500, # t64_gen (остальное) - пока используем этот же, если нет отдельного
+    "Медицинские": -1002507059500, # t64_gen (остальное) - пока используем этот же
     "Психологическая помощь": -1002677526813, # t64_psych
     "Предложение ресурса": -1002645097441 # t4_misc
 }
 
-# Ответы FAQ
+# Ответы на часто задаваемые вопросы
 FAQ_RESPONSES = {
     # Юридические вопросы
     "Как сменить документы?": """
@@ -113,214 +140,190 @@ FAQ_RESPONSES = {
 F64 — это код в Международной классификации болезней 10-го пересмотра (МКБ-10), обозначающий транссексуализм или гендерную дисфорию. В Российской Федерации сам по себе диагноз F64 **не дает никаких юридических прав**, кроме того, что он может быть основанием для обращения в суд с целью смены гендерного маркера в документах. Также наличие диагноза F64 является одним из обязательных требований для проведения хирургических операций по коррекции пола за рубежом."""
 }
 
-# Клавиатуры
-main_kb = ReplyKeyboardMarkup([
-    ["Попросить о помощи"],
-    ["Предложить ресурс", "Стать волонтером"],
-    ["Поддержать проект"]
-], resize_keyboard=True)
+# Сообщения бота
+START_MESSAGE = (
+    "Привет! Мы — проект «Переход в неположенном месте». Этот бот создан для поддержки трансгендерных людей и их близких в России.\n\n"
+    "Здесь вы можете:\n"
+    "• 🆘 **Попросить о помощи** в различных ситуациях.\n"
+    "• 📚 **Предложить ресурс**, который может быть полезен сообществу.\n"
+    "• 💖 **Стать волонтером** и помочь проекту.\n"
+    "• 💸 **Поддержать проект**, чтобы мы могли продолжать нашу работу.\n\n"
+    "Пожалуйста, выберите нужную опцию:"
+)
+HELP_MENU_MESSAGE = "Выберите категорию помощи:"
+RESOURCE_PROMPT_MESSAGE = "Опишите, какой ресурс вы хотите предложить:"
+VOLUNTEER_MESSAGE = (
+    "Мы очень рады твоему желанию присоединиться к нашей команде волонтеров! "
+    "Твоя помощь может стать неоценимым вкладом в поддержку нашего сообщества.\n\n"
+    "Пожалуйста, заполни эту форму, чтобы мы могли узнать тебя лучше и предложить подходящие задачи:\n"
+    "[Форма для волонтеров](https://docs.google.com/forms/d/1kFHSQ05lQyL6s7WDdqTqqY-Il6La3Sehhj_1iVTNgus/edit)\n\n"
+    "Мы свяжемся с тобой в ближайшее время после получения твоей заявки. "
+    "Спасибо за твою готовность помогать!"
+)
+DONATE_MESSAGE = (
+    "Ваша поддержка помогает нам продолжать нашу работу и оказывать помощь тем, кто в ней нуждается. "
+    "Даже небольшой вклад может сделать большую разницу!\n\n"
+    "Вы можете поддержать наш проект следующими способами:\n\n"
+    "💖 **Через Boosty:** [Поддержать на Boosty](https://boosty.to/t64/donate)\n\n"
+    "💰 **USDT (TRC-20):** `TLTBoXCSifWGBeuiRkxkPtH9M9mfwSf1sf`\n\n"
+    "Мы благодарны за любую вашу поддержку!"
+)
+EMERGENCY_MESSAGE = (
+    "⚠️ **ВНИМАНИЕ! В экстренной ситуации, угрожающей вашей жизни или здоровью, действуйте немедленно:**\n\n"
+    "📞 **Позвоните по номеру 112** (единый номер вызова экстренных оперативных служб на территории РФ).\n\n"
+    "**Памятка при звонке в экстренные службы:**\n"
+    "1. **Сохраняйте спокойствие** и говорите четко.\n"
+    "2. **Сообщите, что случилось** (кратко и ясно).\n"
+    "3. **Укажите точный адрес** места происшествия (город, улица, номер дома, этаж, ориентиры).\n"
+    "4. **Назовите свою фамилию, имя** (если можете).\n"
+    "5. **Отвечайте на вопросы диспетчера**.\n"
+    "6. **Не вешайте трубку первым**, пока диспетчер не скажет, что вызов принят.\n\n"
+    "Опишите вашу ситуацию кратко, и мы постараемся передать информацию волонтерам для поддержки, но помните, что ответ может быть не мгновенным. **В критической ситуации ваш первый шаг - звонок 112.**"
+)
+HOUSING_FINANCE_PROMPT = (
+    "Пожалуйста, опишите вашу ситуацию подробно, укажите информацию о себе (например, регион, возраст, краткую историю вопроса) и ваши потребности. Обратите внимание, что супер-экстренные случаи (например, угроза безопасности) рассматриваются в приоритетном порядке. Мы постараемся помочь вам в рамках наших возможностей и ресурсов."
+)
+PSYCHOLOGICAL_HELP_PROMPT = (
+    "Опишите ваш запрос и, если у вас есть особые пожелания к специалисту (например, опыт работы с определенными темами), пожалуйста, укажите их."
+)
+CONSULTATION_PROMPT = "Опишите ваш вопрос. Мы постараемся связать вас со специалистом в ближайшее время."
+MESSAGE_SENT_SUCCESS = "✅ Ваше сообщение отправлено!"
+MESSAGE_SEND_ERROR = "⚠️ Ошибка отправки: {}. Попробуйте позже."
+CANCEL_MESSAGE = "Операция отменена."
+BACK_TO_MAIN_MENU = "Вы вернулись в главное меню."
+CHOOSE_FROM_MENU = "Пожалуйста, выберите опцию из меню."
+CHOOSE_HELP_CATEGORY = "Пожалуйста, выберите опцию из меню помощи."
 
-help_kb = ReplyKeyboardMarkup([
-    ["🆘 Срочная помощь", "💼 Юридическая помощь"],
-    ["🏥 Медицинская помощь", "🏠 Жилье/финансы"],
-    ["🧠 Психологическая помощь", "🔙 Назад"]
-], resize_keyboard=True)
-
-legal_faq_kb = ReplyKeyboardMarkup([
-    ["Как сменить документы?", "Брак после смены пола"],
-    ["Что такое пропаганда ЛГБТ?", "Консультация юриста"],
-    ["🔙 Назад"]
-], resize_keyboard=True)
-
-medical_faq_kb = ReplyKeyboardMarkup([
-    ["Женская гормональная терапия", "Мужская гормональная терапия"],
-    ["Диагноз F64", "Где делают операции?"],
-    ["Консультация врача", "🔙 Назад"]
-], resize_keyboard=True)
-
-# Старт
+# Обработчик команды /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
-    await update.message.reply_text(
-        "Привет! Мы — проект «Переход в неположенном месте». Этот бот создан для поддержки трансгендерных людей и их близких в России.\n\n"
-        "Здесь вы можете:\n"
-        "• 🆘 **Попросить о помощи** в различных ситуациях.\n"
-        "• 📚 **Предложить ресурс**, который может быть полезен сообществу.\n"
-        "• 💖 **Стать волонтером** и помочь проекту.\n"
-        "• 💸 **Поддержать проект**, чтобы мы могли продолжать нашу работу.\n\n"
-        "Пожалуйста, выберите нужную опцию:",
-        reply_markup=main_kb
-    )
+    await update.message.reply_text(START_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
     return MAIN_MENU
 
-# Главное меню
+# Обработчик главного меню
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "Попросить о помощи":
-        await update.message.reply_text("Выберите категорию помощи:", reply_markup=help_kb)
+        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True))
         return HELP_MENU
     elif choice == "Предложить ресурс":
         context.user_data["type"] = "💡 Предложение ресурса"
-        await update.message.reply_text("Опишите, какой ресурс вы хотите предложить:", reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True))
+        await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
         return TYPING
     elif choice == "Стать волонтером":
-        volunteer_text = (
-            "Мы очень рады твоему желанию присоединиться к нашей команде волонтеров! "
-            "Твоя помощь может стать неоценимым вкладом в поддержку нашего сообщества.\n\n"
-            "Пожалуйста, заполни эту форму, чтобы мы могли узнать тебя лучше и предложить подходящие задачи:\n"
-            "[Форма для волонтеров](https://docs.google.com/forms/d/1kFHSQ05lQyL6s7WDdqTqqY-Il6La3Sehhj_1iVTNgus/edit)\n\n"
-            "Мы свяжемся с тобой в ближайшее время после получения твоей заявки. "
-            "Спасибо за твою готовность помогать!"
-        )
-        await update.message.reply_text(
-            volunteer_text,
-            reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True),
-            parse_mode="Markdown",
-            disable_web_page_preview=True
-        )
+        await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="Markdown", disable_web_page_preview=True)
         return TYPING
     elif choice == "Поддержать проект":
-        donate_text = (
-            "Ваша поддержка помогает нам продолжать нашу работу и оказывать помощь тем, кто в ней нуждается. "
-            "Даже небольшой вклад может сделать большую разницу!\n\n"
-            "Вы можете поддержать наш проект следующими способами:\n\n"
-            "💖 **Через Boosty:** [Поддержать на Boosty](https://boosty.to/t64/donate)\n\n"
-            "💰 **USDT (TRC-20):** `TLTBoXCSifWGBeuiRkxkPtH9M9mfwSf1sf`\n\n"
-            "Мы благодарны за любую вашу поддержку!"
-        )
-        await update.message.reply_text(
-            donate_text,
-            reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True),
-            parse_mode="Markdown",
-            disable_web_page_preview=True
-        )
+        await update.message.reply_text(DONATE_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="Markdown", disable_web_page_preview=True)
         return TYPING
     else:
-        await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
+        await update.message.reply_text(CHOOSE_FROM_MENU)
         return MAIN_MENU
 
-# Меню помощи
+# Обработчик меню помощи
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "🆘 Срочная помощь":
-        await update.message.reply_text(
-            "⚠️ **ВНИМАНИЕ! В экстренной ситуации, угрожающей вашей жизни или здоровью, действуйте немедленно:**\n\n"
-            "📞 **Позвоните по номеру 112** (единый номер вызова экстренных оперативных служб на территории РФ).\n\n"
-            "**Памятка при звонке в экстренные службы:**\n"
-            "1. **Сохраняйте спокойствие** и говорите четко.\n"
-            "2. **Сообщите, что случилось** (кратко и ясно).\n"
-            "3. **Укажите точный адрес** места происшествия (город, улица, номер дома, этаж, ориентиры).\n"
-            "4. **Назовите свою фамилию, имя** (если можете).\n"
-            "5. **Отвечайте на вопросы диспетчера**.\n"
-            "6. **Не вешайте трубку первым**, пока диспетчер не скажет, что вызов принят.\n\n"
-            "Опишите вашу ситуацию кратко, и мы постараемся передать информацию волонтерам для поддержки, но помните, что ответ может быть не мгновенным. **В критической ситуации ваш первый шаг - звонок 112.**",
-            reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True),
-            disable_web_page_preview=True
-        )
+        await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), disable_web_page_preview=True)
         context.user_data["type"] = "Срочная"
         return TYPING
     elif choice == "💼 Юридическая помощь":
-        await update.message.reply_text("Выберите вопрос:", reply_markup=legal_faq_kb)
+        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(LEGAL_FAQ_BUTTONS, resize_keyboard=True))
         return FAQ_LEGAL
     elif choice == "🏥 Медицинская помощь":
         context.user_data["type"] = "Медицинская"
-        await update.message.reply_text("Выберите вопрос:", reply_markup=medical_faq_kb)
+        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(MEDICAL_FAQ_BUTTONS, resize_keyboard=True))
         return FAQ_MED
     elif choice == "🧠 Психологическая помощь":
         context.user_data["type"] = "Психологическая помощь"
-        await update.message.reply_text(
-            "Опишите ваш запрос и, если у вас есть особые пожелания к специалисту (например, опыт работы с определенными темами), пожалуйста, укажите их.",
-            reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True)
-        )
+        await update.message.reply_text(PSYCHOLOGICAL_HELP_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
         return TYPING
     elif choice == "🏠 Жилье/финансы":
-        context.user_data["type"] = "Срочная"  # Или "Остальное", если вам так удобнее
-        await update.message.reply_text(
-            "Пожалуйста, опишите вашу ситуацию подробно, укажите информацию о себе (например, регион, возраст, краткую историю вопроса) и ваши потребности. Обратите внимание, что супер-экстренные случаи (например, угроза безопасности) рассматриваются в приоритетном порядке. Мы постараемся помочь вам в рамках наших возможностей и ресурсов.",
-            reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True)
-        )
+        context.user_data["type"] = "Срочная"  # Или "Остальное"
+        await update.message.reply_text(HOUSING_FINANCE_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
         return TYPING
-    elif choice == "🔙 Назад":
+    elif choice == BACK_BUTTON:
         return await start(update, context)
     else:
-        await update.message.reply_text("Пожалуйста, выберите опцию из меню помощи.")
+        await update.message.reply_text(CHOOSE_HELP_CATEGORY)
         return HELP_MENU
 
-
-# Ответы FAQ
-async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE, mode: str) -> int:
+# Обработчик FAQ (юридические и медицинские)
+async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE, faq_type: str) -> int:
     question = update.message.text
-    if question == "🔙 Назад":
-        await update.message.reply_text("Выберите категорию помощи:", reply_markup=help_kb)
+    if question == BACK_BUTTON:
+        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True))
         return HELP_MENU
     elif "Консультация" in question:
-        channel_type = "Юридическая" if mode == "Юридическая" else "Медицинская"
-        context.user_data["type"] = f"{channel_type} консультация"
-        await update.message.reply_text("Опишите ваш вопрос. Мы постараемся связать вас со специалистом в ближайшее время.", reply_markup=ReplyKeyboardMarkup([["🔙 Назад"]], resize_keyboard=True))
+        context.user_data["type"] = f"{faq_type.capitalize()} консультация"
+        await update.message.reply_text(CONSULTATION_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
         return TYPING
     else:
-        await update.message.reply_text(FAQ_RESPONSES.get(question, "Ответ не найден"), parse_mode="Markdown")
-        return FAQ_LEGAL if mode == "Юридическая" else FAQ_MED
+        response = FAQ_RESPONSES.get(question, "Ответ не найден")
+        await update.message.reply_text(response, parse_mode="Markdown")
+        return FAQ_LEGAL if faq_type == "юридическая" else FAQ_MED
 
 async def handle_legal_faq(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    return await handle_faq(update, context, "Юридическая")
+    return await handle_faq(update, context, "юридическая")
 
 async def handle_medical_faq(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    return await handle_faq(update, context, "Медицинская")
-
-# Приём сообщений
+    return await handle_faq(update, context, "медицинская")
+# Обработчик ввода текста пользователя
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    msg = update.message.text
-    if msg == "🔙 Назад":
-        await update.message.reply_text("Вы вернулись в главное меню.", reply_markup=main_kb)
+    message_text = update.message.text
+    if message_text == BACK_BUTTON:
+        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
         return MAIN_MENU
 
     request_type = context.user_data.get("type", "Запрос")
     username = update.message.from_user.username or "нет"
+    forward_text = f"📩 {request_type}\nОт @{username}\n\n{message_text}"
 
-    if "СРОЧНО" in request_type:
-        chat_id = CHANNELS["Срочная"]
+    target_channel_id = ADMIN_CHAT_ID  # По умолчанию отправляем админу
+
+    if "Срочная" in request_type:
+        target_channel_id = CHANNELS["Срочная"]
     elif "Анонимное" in request_type:
-        chat_id = CHANNELS["Анонимные"]
+        target_channel_id = CHANNELS["Анонимные"]
     elif "Юридическая" in request_type:
-        chat_id = CHANNELS["Юридические"]
+        target_channel_id = CHANNELS["Юридические"]
     elif "Медицинская" in request_type:
-        chat_id = CHANNELS["Медицинские"]
+        target_channel_id = CHANNELS["Медицинские"]
     elif "Психологическая помощь" in request_type:
-        chat_id = CHANNELS["Психологическая помощь"]
+        target_channel_id = CHANNELS["Психологическая помощь"]
     elif "Предложение ресурса" in request_type:
-        chat_id = CHANNELS["Предложение ресурса"]
-    else:
-        chat_id = ADMIN_CHAT_ID
-
-    text = f"📩 {request_type}\nОт @{username}\n\n{msg}"
+        target_channel_id = CHANNELS["Предложение ресурса"]
+    elif "Юридическая консультация" in request_type:
+        target_channel_id = CHANNELS["Юридические"]
+    elif "Медицинская консультация" in request_type:
+        target_channel_id = CHANNELS["Медицинские"]
 
     try:
-        await context.bot.send_message(chat_id=chat_id, text=text)
-        await update.message.reply_text("✅ Ваше сообщение отправлено!", reply_markup=main_kb)
+        await context.bot.send_message(chat_id=target_channel_id, text=forward_text)
+        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
     except Exception as e:
         logger.error(f"Ошибка отправки сообщения: {e}", exc_info=True)
-        await update.message.reply_text(f"⚠️ Ошибка отправки: {e}. Попробуйте позже.", reply_markup=main_kb)
+        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
 
     return MAIN_MENU
 
-
-# Отмена
+# Обработчик команды /cancel
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Операция отменена.", reply_markup=main_kb)
-    return MAIN_MENU
+    await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+    return START
 
-# Запуск
+# Запуск бота
 def main():
     app = Application.builder().token(TOKEN).build()
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
+            START: [CommandHandler("start", start)],
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
             HELP_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)],
             FAQ_LEGAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_legal_faq)],
             FAQ_MED: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_medical_faq)],
-            TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)]
+            TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
