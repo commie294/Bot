@@ -272,8 +272,28 @@ def get_gsheet_data():
                 try:
                     await context.bot.send_message(chat_id=target_chat_id, text=volunteer_info)
                     LAST_PROCESSED_ROW = row_number
+                except Exception as e:    if new_volunteers_data:
+        for i, volunteer_data in enumerate(new_volunteers_data):
+            row_number = i + 2
+            if row_number > LAST_PROCESSED_ROW:
+                help_direction = volunteer_data.get("d")
+                target_chat_id = CHANNELS.get("Волонтеры Остальные")
+                if help_direction == "Психологическая помощь":
+                    target_chat_id = CHANNELS.get("Волонтеры Психология")
+                elif help_direction == "Юридическая помощь":
+                    target_chat_id = CHANNELS.get("Волонтеры Юристы")
+                elif help_direction == "Информационная поддержка":
+                    target_chat_id = CHANNELS.get("Волонтеры Инфо")
+                volunteer_info = f"Новый волонтер (ID: {row_number})!\n\n"
+                for key, value in volunteer_data.items():
+                    volunteer_info += f"{key}: {value}\n"
+
+                try:
+                    await context.bot.send_message(chat_id=target_chat_id, text=volunteer_info)
+                    LAST_PROCESSED_ROW = row_number
                 except Exception as e:
                     logger.error(f"Ошибка при отправке уведомления о волонтере: {e}", exc_info=True)
+
 
 # Обработчик команды /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
