@@ -1,4 +1,4 @@
-import os
+Import os
 import logging
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
@@ -14,7 +14,8 @@ import sys
 sys.path.append('/data/data/com.termux/files/usr/lib/python3.12/site-packages')
 import gspread
 
-from google.oauth2.service_account import Credentials
+from google.oauth2.service_account import ServiceAccountCredentials # <--- ДОБАВЬ ЭТУ СТРОКУ
+from google.oauth2.service_account import Credentials # Возможно, эта строка тебе тоже нужна
 import sys
 
 # Добавляем путь к директории, где установлены библиотеки
@@ -30,10 +31,12 @@ load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 # --- НОВЫЙ БЛОК: Интеграция с Google Sheets ---
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"] # Определи scope здесь
 credentials = ServiceAccountCredentials.from_json_keyfile_name(
     '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json',
     scope
 )
+
 
 # <--- ВСТАВЬ СВОЙ ПУТЬ
 SPREADSHEET_ID = '1w21-rrE7j5QATYtq8IixK79rQxN-LOC8tic827TT8ts'
