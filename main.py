@@ -13,7 +13,7 @@ from telegram.ext import (
 import sys
 sys.path.append('/data/data/com.termux/files/usr/lib/python3.12/site-packages')
 import gspread
-import gspread
+
 from google.oauth2.service_account import Credentials
 
 # Загрузка переменных окружения
