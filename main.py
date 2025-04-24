@@ -10,11 +10,19 @@ from telegram.ext import (
     ContextTypes,
     ConversationHandler,
 )
+import gspread
+from google.oauth2.service_account import Credentials
 
 # Загрузка переменных окружения
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
+# --- НОВЫЙ БЛОК: Интеграция с Google Sheets ---
+CREDENTIALS_FILE = '/Внутреннее хранилище/Download/rapid-goal-457809-n6-9e1bda1dc23c.json' # <--- ВСТАВЬ СВОЙ ПУТЬ
+SPREADSHEET_ID = '1w21-rrE7j5QATYtq8IixK79rQxN-LOC8tic827TT8ts'
+WORKSHEET_NAME = 'Ответы на форму (1)'
+# --- НОВЫЙ БЛОК: Отслеживание обработанных ID ---
+LAST_PROCESSED_ROW = 1  # Инициализируем с первой строкой данных
 
 # Настройка логирования
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -194,6 +202,48 @@ BACK_TO_MAIN_MENU = "Вы вернулись в главное меню."
 CHOOSE_FROM_MENU = "Пожалуйста, выберите опцию из меню."
 CHOOSE_HELP_CATEGORY = "Пожалуйста, выберите опцию из меню помощи."
 
+def get_gsheet_data():
+    """Получает все записи из Google Sheets."""
+    try:
+        creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"])
+        gc = gspread.authorize(creds)
+        spreadsheet = gc.open_by_key(SPREADSHEET_ID)
+        worksheet = spreadsheet.worksheet(WORKSHEET_NAME)
+        data = worksheet.get_all_records()
+        return data
+    except Exception as e:
+        logger.error(f"Ошибка при получении данных из Google Sheets: {e}", exc_info=True)
+        return None
+async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
+    """Периодически проверяет новые ответы в Google Sheets и отправляет уведомления."""
+    global LAST_PROCESSED_ROW
+    new_volunteers_data = get_gsheet_data()
+    if new_volunteers_data:
+        for i, volunteer_data in enumerate(new_volunteers_data):
+            row_number = i + 2  # +2, потому что enumerate начинается с 0, а данные со строки 2
+            if row_number > LAST_PROCESSED_ROW:
+                help_direction = volunteer_data.get("d") # Используем индекс столбца "d"
+
+                target_chat_id = CHANNELS.get("Волонтеры Остальные") # По умолчанию в "Остальные"
+
+                if help_direction == "Психологическая помощь":
+                    target_chat_id = CHANNELS.get("Волонтеры Психология")
+                elif help_direction == "Юридическая помощь":
+                    target_chat_id = CHANNELS.get("Волонтеры Юристы")
+                elif help_direction == "Информационная поддержка":
+                    target_chat_id = CHANNELS.get("Волонтеры Инфо")
+                # Можно добавить больше условий для других направлений
+
+                volunteer_info = f"Новый волонтер (ID: {row_number})!\n\n"
+                for key, value in volunteer_data.items():
+                    volunteer_info += f"{key}: {value}\n"
+
+                try:
+                    await context.bot.send_message(chat_id=target_chat_id, text=volunteer_info)
+                    LAST_PROCESSED_ROW = row_number
+                except Exception as e:
+                    logger.error(f"Ошибка при отправке уведомления о волонтере: {e}", exc_info=True)
+
 # Обработчик команды /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
@@ -329,6 +379,9 @@ def main():
     )
 
     app.add_handler(conv_handler)
+    # --- НОВЫЙ БЛОК: Периодическая проверка новых волонтеров ---
+    # Запускаем задачу, которая будет выполняться каждые N секунд (например, 60 секунд)
+    app.job_queue.run_repeating(process_new_volunteers, interval=60, first=10)
 
     # Запуск бота в режиме ожидания
     app.run_polling(allowed_updates=Update.ALL_TYPES)
