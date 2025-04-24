@@ -214,6 +214,7 @@ def get_gsheet_data():
     except Exception as e:
         logger.error(f"Ошибка при получении данных из Google Sheets: {e}", exc_info=True)
         return None
+        print(f"Ошибка Google Sheets: {e}")
 async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
     """Периодически проверяет новые ответы в Google Sheets и отправляет уведомления."""
     global LAST_PROCESSED_ROW
