@@ -254,7 +254,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("Не удалось определить целевой канал для вашего запроса.", reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
     return MAIN_MENU
 
-async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def unknown(update: Update, context: ContextTypes.
+DEFAULT_TYPE)) -> None:
     await update.message.reply_text("Извините, я не понимаю эту команду.")
 
 def main() -> None:
@@ -263,7 +264,7 @@ def main() -> None:
     application = Application.builder().token(TOKEN).build()
 
     # Set up conversation handler
-    conv_handler = ConversationHandler
+    conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
