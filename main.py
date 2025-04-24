@@ -267,8 +267,7 @@ async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
                     volunteer_info += f"{key}: {value}\n"
 
                 try:
-                    await context.bot.send_message(chat_id=target_chat_id, text=volunteer_info)
-                    LAST_PROCESSED_ROW = row_number
+                                        await context.bot.send_message(chat_id=target_chat_id, text=volunteer_info)
                 except Exception as e:
                     logger.error(f"Ошибка при отправке уведомления о волонтере: {e}", exc_info=True)
 
@@ -281,7 +280,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 # Обработчик главного меню
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    if choice == "Попросить о помощи":
+        if choice == "Попросить о помощи":
+
         await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True))
         return HELP_MENU
     elif choice == "Предложить ресурс":
