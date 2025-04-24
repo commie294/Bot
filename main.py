@@ -290,7 +290,29 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), disable_web_page_preview=True)
         context.user_data["type"] = "Срочная"
         return TYPING
-        async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    elif choice == "💼 Юридическая помощь":
+        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(LEGAL_FAQ_BUTTONS, resize_keyboard=True))
+        return FAQ_LEGAL
+    elif choice == "🏥 Медицинская помощь":
+        context.user_data["type"] = "Медицинская"
+        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(MEDICAL_FAQ_BUTTONS, resize_keyboard=True))
+        return FAQ_MED
+    elif choice == "🧠 Психологическая помощь":
+        context.user_data["type"] = "Психологическая помощь"
+        await update.message.reply_text(PSYCHOLOGICAL_HELP_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+        return TYPING
+    elif choice == "🏠 Жилье/финансы":
+        context.user_data["type"] = "Срочная"  # Или "Остальное"
+        await update.message.reply_text(HOUSING_FINANCE_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+        return TYPING
+    elif choice == BACK_BUTTON:
+        return await start(update, context)
+    else:
+        await update.message.reply_text(CHOOSE_HELP_CATEGORY)
+        return HELP_MENU
+
+# Функция handle_message должна быть определена здесь, на том же уровне
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message_text = update.message.text
     if message_text == BACK_BUTTON:
         await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
@@ -310,7 +332,6 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_notification)
         except Exception as e:
             logger.error(f"Ошибка отправки уведомления администратору о срочном запросе: {e}", exc_info=True)
-
     elif "Анонимное" in request_type:
         target_channel_id = CHANNELS["Анонимные"]
     elif "Юридическая" in request_type:
@@ -335,26 +356,6 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     return MAIN_MENU
 
-    elif choice == "💼 Юридическая помощь":
-        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(LEGAL_FAQ_BUTTONS, resize_keyboard=True))
-        return FAQ_LEGAL
-    elif choice == "🏥 Медицинская помощь":
-        context.user_data["type"] = "Медицинская"
-        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(MEDICAL_FAQ_BUTTONS, resize_keyboard=True))
-        return FAQ_MED
-    elif choice == "🧠 Психологическая помощь":
-        context.user_data["type"] = "Психологическая помощь"
-        await update.message.reply_text(PSYCHOLOGICAL_HELP_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
-        return TYPING
-    elif choice == "🏠 Жилье/финансы":
-        context.user_data["type"] = "Срочная"  # Или "Остальное"
-        await update.message.reply_text(HOUSING_FINANCE_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
-        return TYPING
-    elif choice == BACK_BUTTON:
-        return await start(update, context)
-    else:
-        await update.message.reply_text(CHOOSE_HELP_CATEGORY)
-        return HELP_MENU
 
 # Обработчик FAQ (юридические и медицинские)
 async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE, faq_type: str) -> int:
