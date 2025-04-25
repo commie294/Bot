@@ -163,7 +163,6 @@ START_MESSAGE = (
     "Пожалуйста, выберите нужную опцию:"
 )
 
-
 HELP_MENU_MESSAGE = "Выберите категорию помощи:"
 RESOURCE_PROMPT_MESSAGE = "Опишите, какой ресурс вы хотите предложить:"
 VOLUNTEER_MESSAGE = (
@@ -257,13 +256,15 @@ async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     if target_channel_id:
         try:
             await context.bot.send_message(chat_id=target_channel_id, text=volunteer_info)
-            await update.message.reply_text("Ваша заявка отправлена администраторам соответствующего направления. С вами свяжутся в ближайшее время.", reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+            keyboard = ReplyKeyboardMarkup([["🔙 Назад в главное меню"]], resize_keyboard=True)
+            await update.message.reply_text("Спасибо! Ваша информация передана. Мы свяжемся с вами при необходимости.", reply_markup=keyboard)
         except Exception as e:
             logger.error(f"Ошибка при отправке информации о волонтере в канал: {e}", exc_info=True)
-            await update.message.reply_text("Произошла ошибка при отправке вашей заявки. Пожалуйста, попробуйте позже.", reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+            await update.message.reply_text(f"Произошла ошибка при отправке вашей заявки: {e}", reply_markup=ReplyKeyboardMarkup([["🔙 Назад в главное меню"]], resize_keyboard=True))
     else:
         await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Новый волонтер (неопределенное направление):\n{volunteer_info}") # Отправка админам для обработки (на всякий случай)
-        await update.message.reply_text("Ваша заявка отправлена администраторам. С вами свяжутся в ближайшее время.", reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+        keyboard = ReplyKeyboardMarkup([["🔙 Назад в главное меню"]], resize_keyboard=True)
+        await update.message.reply_text("Ваша заявка отправлена администраторам. С вами свяжутся в ближайшее время.", reply_markup=keyboard)
 
     context.user_data.clear() # Очищаем данные интервью
     return MAIN_MENU
