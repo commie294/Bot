@@ -7,7 +7,7 @@ from telegram.ext import (
     Application,
     CommandHandler,
     MessageHandler,
-    filters as Filters,  # Исправленный импорт
+    filters as Filters,
     ContextTypes,
     ConversationHandler,
 )
@@ -22,7 +22,7 @@ TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 # --- НОВЫЙ БЛОК: Интеграция с Google Sheets ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-CREDENTIALS_FILE = '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json' # Единственное определение пути
+CREDENTIALS_FILE = '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json'
 credentials = ServiceAccountCredentials.from_json_keyfile_name(
     CREDENTIALS_FILE,
     scope
@@ -80,9 +80,17 @@ CHANNELS = {
     "Психологическая помощь": -1002677526813,
     "Предложение ресурса": -1002645097441,
     "Волонтеры Остальные": -1002507059500,
-    "Волонтеры Психология": -1002677526813,
-    "Волонтеры Юристы": -1002523489451,
+    "Волонтеры Психология": -1001234567890,  # Обновлено из DIRECTION_TO_CHANNEL_ID
+    "Волонтеры Юристы": -1001122334455,   # Обновлено из DIRECTION_TO_CHANNEL_ID
     "Волонтеры Инфо": -1002645097441,
+}
+
+# Словарь для связи направлений с ID каналов (для новых заявок)
+DIRECTION_TO_CHANNEL_ID = {
+    'Психологическая поддержка': -1001234567890,
+    'Медицинская помощь': -1009876543210,
+    'Юридическая помощь': -1001122334455,
+    # добавь другие направления при необходимости
 }
 
 # Ответы на часто задаваемые вопросы
@@ -240,56 +248,57 @@ def get_gsheet_data():
         print(f"Ошибка Google Sheets (google.oauth2): {e}")
         return None
 
-async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
-    """Периодически проверяет новые ответы в Google Sheets и отправляет уведомления."""
-    global LAST_PROCESSED_ROW
-    new_volunteers_data = get_gsheet_data()
-    if new_volunteers_data:
-        for i, volunteer_data in enumerate(new_volunteers_data):
-            row_number = i + 2
-            if row_number > LAST_PROCESSED_ROW:
-                help_direction = volunteer_data.get("d")
-                target_chat_id = CHANNELS.get("Волонтеры Остальные")
-                if help_direction == "Психологическая помощь":
-                    target_chat_id = CHANNELS.get("Волонтеры Психология")
-                elif help_direction == "Юридическая помощь":
-                    target_chat_id = CHANNELS.get("Волонтеры Юристы")
-                elif help_direction == "Информационная поддержка":
-                    target_chat_id = CHANNELS.get("Волонтеры Инфо")
-                volunteer_info = f"Новый волонтер (ID: {row_number})!\n\n"
+async def process_new_volunteers(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    gc = gspread.service_account(CREDENTIALS_FILE)
+    sh = gc.open_by_key('1GYcGq9ZuYZvxyc5kxlRD44HGZ-3vbFb8ds6dErq9nRo')
+    worksheet = sh.worksheet('Волонтеры')
+    data = worksheet.get_all_records()
 
+    for i, row in enumerate(data, start=2):  # i = 2, т.к. первая строка — заголовки
+        if row.get('Статус') != 'Да':
+            message = (
+                f"<b>Имя:</b> {row['Имя']}\n"
+                f"<b>Город:</b> {row['Город']}\n"
+                f"<b>Направление:</b> {row['Направление']}\n"
+                f"<b>Контакты:</b> {row['Контакты']}"
+            )
+            direction = row['Направление']
+            channel_id = DIRECTION_TO_CHANNEL_ID.get(direction)
+
+            if channel_id:
                 try:
-                    await context.bot.send_message(chat_id=target_chat_id, text=volunteer_info)
-                    LAST_PROCESSED_ROW = row_number  # Обновляем ID последней обработанной строки после успешной отправки
+                    await context.bot.send_message(chat_id=channel_id, text=message, parse_mode='HTML')
+                    worksheet.update_cell(i, 6, 'Да')  # Отметка, что отправлено
                 except Exception as e:
-                    logger.error(f"Ошибка при отправке уведомления о волонтере (строка {row_number}): {e}", exc_info=True)
+                    print(f"Ошибка при отправке: {e}")
 
 
 # Обработчик команды /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
-    await update.message.reply_text(START_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+    await update.message.reply_text(START_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2
+")
     return MAIN_MENU
 
 # Обработчик главного меню
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "Попросить о помощи":
-        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
         return HELP_MENU
     elif choice == "Предложить ресурс":
         context.user_data["type"] = "💡 Предложение ресурса"
-        await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
         return TYPING
     elif choice == "Стать волонтером":
         context.user_data["type"] = "Стать волонтером"
-        await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2", disable_web_page_preview=True) # Обновлено
+        await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2", disable_web_page_preview=True)
         return TYPING
     elif choice == "Поддержать проект":
-        await update.message.reply_text(DONATE_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2", disable_web_page_preview=True) # Обновлено
+        await update.message.reply_text(DONATE_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2", disable_web_page_preview=True)
         return TYPING
     else:
-        await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="MarkdownV2")
         return MAIN_MENU
 
 
@@ -297,35 +306,35 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "🆘 Срочная помощь":
-        await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), disable_web_page_preview=True, parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), disable_web_page_preview=True, parse_mode="MarkdownV2")
         context.user_data["type"] = "Срочная"
         return TYPING
     elif choice == "💼 Юридическая помощь":
-        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(LEGAL_FAQ_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(LEGAL_FAQ_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
         return FAQ_LEGAL
     elif choice == "🏥 Медицинская помощь":
         context.user_data["type"] = "Медицинская"
-        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(MEDICAL_FAQ_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(MEDICAL_FAQ_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
         return FAQ_MED
     elif choice == "🧠 Психологическая помощь":
         context.user_data["type"] = "Психологическая помощь"
-        await update.message.reply_text(PSYCHOLOGICAL_HELP_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(PSYCHOLOGICAL_HELP_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
         return TYPING
     elif choice == "🏠 Жилье/финансы":
         context.user_data["type"] = "Срочная"  # Или "Остальное"
-        await update.message.reply_text(HOUSING_FINANCE_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(HOUSING_FINANCE_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
         return TYPING
     elif choice == BACK_BUTTON:
         return await start(update, context)
     else:
-        await update.message.reply_text(CHOOSE_HELP_CATEGORY, parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(CHOOSE_HELP_CATEGORY, parse_mode="MarkdownV2")
         return HELP_MENU
 
 # Функция handle_message должна быть определена здесь, на том же уровне
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message_text = update.message.text
     if message_text == BACK_BUTTON:
-        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
         return MAIN_MENU
 
     request_type = context.user_data.get("type", "Запрос")
@@ -339,7 +348,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # Отправляем уведомление администраторам
         admin_notification = f"🚨 НОВЫЙ СРОЧНЫЙ ЗАПРОС!\nОт пользователя: @{username}\nСообщение: {message_text}"
         try:
-            await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_notification, parse_mode="MarkdownV2") # Обновлено
+            await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_notification, parse_mode="MarkdownV2")
         except Exception as e:
             logger.error(f"Ошибка отправки уведомления администратору о срочном запросе: {e}", exc_info=True)
     elif "Анонимное" in request_type:
@@ -358,11 +367,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         target_channel_id = CHANNELS["Медицинские"]
 
     try:
-        await context.bot.send_message(chat_id=target_channel_id, text=forward_text, parse_mode="MarkdownV2") # Обновлено
-        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await context.bot.send_message(chat_id=target_channel_id, text=forward_text, parse_mode="MarkdownV2")
+        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
     except Exception as e:
         logger.error(f"Ошибка отправки сообщения: {e}", exc_info=True)
-        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
 
     return MAIN_MENU
 
@@ -371,15 +380,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE, faq_type: str) -> int:
     question = update.message.text
     if question == BACK_BUTTON:
-        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
         return HELP_MENU
     elif "Консультация" in question:
         context.user_data["type"] = f"{faq_type.capitalize()} консультация"
-        await update.message.reply_text(CONSULTATION_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(CONSULTATION_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
         return TYPING
     else:
         response = FAQ_RESPONSES.get(question, "Ответ не найден")
-        await update.message.reply_text(response, parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(response, parse_mode="MarkdownV2")
         return FAQ_LEGAL if faq_type == "юридическая" else FAQ_MED
 
 async def handle_legal_faq(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -391,7 +400,7 @@ async def handle_medical_faq(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message_text = update.message.text
     if message_text == BACK_BUTTON:
-        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
         return MAIN_MENU
 
     request_type = context.user_data.get("type", "Запрос")
@@ -418,18 +427,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         target_channel_id = CHANNELS["Медицинские"]
 
     try:
-        await context.bot.send_message(chat_id=target_channel_id, text=forward_text, parse_mode="MarkdownV2") # Обновлено
-        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await context.bot.send_message(chat_id=target_channel_id, text=forward_text, parse_mode="MarkdownV2")
+        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
     except Exception as e:
         logger.error(f"Ошибка отправки сообщения: {e}", exc_info=True)
-        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
 
     return MAIN_MENU
 
 # Обработчик команды /cancel
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
+    await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
     return START
+
+# Функция для периодической проверки новых волонтеров (теперь использует новую логику)
+async def check_new_volunteers_job(context: ContextTypes.DEFAULT_TYPE):
+    await process_new_volunteers(context=context, update=None) # update=None, т.к. это фоновая задача
 
 # Запуск бота
 def main():
@@ -438,23 +451,24 @@ def main():
         entry_points=[CommandHandler("start", start)],
         states={
             START: [CommandHandler("start", start)],
-            MAIN_MENU: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, main_menu)], # Обновлено
-            HELP_MENU: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, help_menu)], # Обновлено
-            FAQ_LEGAL: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_legal_faq)], # Обновлено
-            FAQ_MED: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_medical_faq)], # Обновлено
-            TYPING: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_message)], # Обновлено
+            MAIN_MENU: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, main_menu)],
+            HELP_MENU: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, help_menu)],
+            FAQ_LEGAL: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_legal_faq)],
+            FAQ_MED: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_medical_faq)],
+            TYPING: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_message)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
 
     app.add_handler(conv_handler)
+    app.add_handler(CommandHandler('check', process_new_volunteers)) # Добавлена команда /check
+
     # --- НОВЫЙ БЛОК: Периодическая проверка новых волонтеров ---
-    # Запускаем задачу, которая будет выполняться каждые N секунд (например, 60 секунд)
-    app.job_queue.run_repeating(process_new_volunteers, interval=60, first=10)
+    # Запускаем задачу, которая будет выполняться каждые N секунд (например, каждые 5 минут = 300 секунд)
+    app.job_queue.run_repeating(check_new_volunteers_job, interval=300, first=10)
 
     # Запуск бота в режиме ожидания
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
-
