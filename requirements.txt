@@ -1,6 +1,2 @@
 python-telegram-bot==20.3
 python-dotenv
-gspread
-oauth2client
-python-telegram-bot[job-queue]
-google-auth
