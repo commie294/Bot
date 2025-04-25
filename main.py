@@ -262,13 +262,14 @@ async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
                     target_chat_id = CHANNELS.get("Волонтеры Юристы")
                 elif help_direction == "Информационная поддержка":
                     target_chat_id = CHANNELS.get("Волонтеры Инфо")
-                                >volunteer_info = f"Новый волонтер (ID: {row_number})!\n\n"
+                volunteer_info = f"Новый волонтер (ID: {row_number})!\n\n"  # Убран лишний отступ
 
 
                 try:
-                                        await context.bot.send_message(chat_id=target_chat_id, text=volunteer_info)
+                    await context.bot.send_message(chat_id=target_chat_id, text=volunteer_info)
                 except Exception as e:
                     logger.error(f"Ошибка при отправке уведомления о волонтере: {e}", exc_info=True)
+
 
 # Обработчик команды /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
