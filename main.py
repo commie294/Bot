@@ -205,175 +205,218 @@ CHOOSE_FROM_MENU = "Пожалуйста, выберите опцию из ме�
 CHOOSE_HELP_CATEGORY = "Пожалуйста, выберите опцию из меню помощи\\."
 
 async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Давайте начнем небольшое интервью\\. Как вас зовут?")
-    return VOLUNTEER_NAME
+    try:
+        await update.message.reply_text("Давайте начнем небольшое интервью\\. Как вас зовут?")
+        return VOLUNTEER_NAME
+    except Exception as e:
+        logger.error(f"Ошибка в volunteer_start: {e}", exc_info=True)
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="MarkdownV2")
+        return MAIN_MENU
 
 async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data["volunteer_name"] = update.message.text
-    await update.message.reply_text("Из какого вы региона?")
-    return VOLUNTEER_REGION
+    try:
+        context.user_data["volunteer_name"] = update.message.text
+        await update.message.reply_text("Из какого вы региона?")
+        return VOLUNTEER_REGION
+    except Exception as e:
+        logger.error(f"Ошибка в volunteer_name: {e}", exc_info=True)
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="MarkdownV2")
+        return MAIN_MENU
 
 async def volunteer_region(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data["volunteer_region"] = update.message.text
-    keyboard = [
-        ["Психологическая помощь"],
-        ["Юридические услуги"],
-        ["Медицинские услуги"],
-        ["Информационные услуги (тексты, модерация)"],
-        ["Финансовая поддержка"],
-        ["Другое..."],
-    ]
-    await update.message.reply_text("Какую помощь вы готовы предоставить?", reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True))
-    return VOLUNTEER_HELP_TYPE
+    try:
+        context.user_data["volunteer_region"] = update.message.text
+        keyboard = [
+            ["Психологическая помощь"],
+            ["Юридические услуги"],
+            ["Медицинские услуги"],
+            ["Информационные услуги (тексты, модерация)"],
+            ["Финансовая поддержка"],
+            ["Другое..."],
+        ]
+        await update.message.reply_text("Какую помощь вы готовы предоставить?", reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True))
+        return VOLUNTEER_HELP_TYPE
+    except Exception as e:
+        logger.error(f"Ошибка в volunteer_region: {e}", exc_info=True)
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="MarkdownV2")
+        return MAIN_MENU
 
 async def volunteer_help_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data["volunteer_help_type"] = update.message.text
-    await update.message.reply_text("Пожалуйста, укажите ваш Telegram-ник для связи\\.")
-    return VOLUNTEER_CONTACT
+    try:
+        context.user_data["volunteer_help_type"] = update.message.text
+        await update.message.reply_text("Пожалуйста, укажите ваш Telegram-ник для связи\\.")
+        return VOLUNTEER_CONTACT
+    except Exception as e:
+        logger.error(f"Ошибка в volunteer_help_type: {e}", exc_info=True)
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="MarkdownV2")
+        return MAIN_MENU
 
 async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data["volunteer_contact"] = update.message.text
-    volunteer_info = (
-        f"Новый потенциальный волонтер:\n"
-        f"Имя: {context.user_data.get('volunteer_name', 'не указано')}\n"
-        f"Регион: {context.user_data.get('volunteer_region', 'не указано')}\n"
-        f"Направление: {context.user_data.get('volunteer_help_type', 'не указано')}\n"
-        f"Контакт: @{context.user_data.get('volunteer_contact', 'не указано')}"
-    )
+    try:
+        context.user_data["volunteer_contact"] = update.message.text
+        volunteer_info = (
+            f"Новый потенциальный волонтер:\n"
+            f"Имя: {context.user_data.get('volunteer_name', 'не указано')}\n"
+            f"Регион: {context.user_data.get('volunteer_region', 'не указано')}\n"
+            f"Направление: {context.user_data.get('volunteer_help_type', 'не указано')}\n"
+            f"Контакт: @{context.user_data.get('volunteer_contact', 'не указано')}"
+        )
 
-    help_type = context.user_data.get("volunteer_help_type")
-    target_channel_id = None
-    if help_type == "Психологическая помощь":
-        target_channel_id = CHANNELS["Волонтеры Психология"]
-    elif help_type == "Юридические услуги":
-        target_channel_id = CHANNELS["Волонтеры Юристы"]
-    elif help_type == "Информационные услуги (тексты, модерация)":
-        target_channel_id = CHANNELS["Волонтеры Инфо"]
-    elif help_type in ["Медицинские услуги", "Финансовая поддержка", "Другое..."]:
-        target_channel_id = CHANNELS["Волонтеры Остальные"]
+        help_type = context.user_data.get("volunteer_help_type")
+        target_channel_id = None
+        if help_type == "Психологическая помощь":
+            target_channel_id = CHANNELS["Волонтеры Психология"]
+        elif help_type == "Юридические услуги":
+            target_channel_id = CHANNELS["Волонтеры Юристы"]
+        elif help_type == "Информационные услуги (тексты, модерация)":
+            target_channel_id = CHANNELS["Волонтеры Инфо"]
+        elif help_type in ["Медицинские услуги", "Финансовая поддержка", "Другое..."]:
+            target_channel_id = CHANNELS["Волонтеры Остальные"]
 
-    if target_channel_id:
-        try:
+        if target_channel_id:
             await context.bot.send_message(chat_id=target_channel_id, text=volunteer_info)
             keyboard = ReplyKeyboardMarkup([["🔙 Назад в главное меню"]], resize_keyboard=True)
             await update.message.reply_text("Спасибо\\! Ваша информация передана\\. Мы свяжемся с вами при необходимости\\.", reply_markup=keyboard, parse_mode="MarkdownV2")
-        except Exception as e:
-            logger.error(f"Ошибка при отправке информации о волонтере в канал: {e}", exc_info=True)
-            await update.message.reply_text(f"Произошла ошибка при отправке вашей заявки: {e}", reply_markup=ReplyKeyboardMarkup([["🔙 Назад в главное меню"]], resize_keyboard=True), parse_mode="MarkdownV2")
-    else:
-        await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Новый волонтер (неопределенное направление):\n{volunteer_info}") # Отправка админам для обработки (на всякий случай)
-        keyboard = ReplyKeyboardMarkup([["🔙 Назад в главное меню"]], resize_keyboard=True)
-        await update.message.reply_text("Ваша заявка отправлена администраторам\\. С вами свяжутся в ближайшее время\\.", reply_markup=keyboard, parse_mode="MarkdownV2")
+        else:
+            await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Новый волонтер (неопределенное направление):\n{volunteer_info}") # Отправка админам для обработки (на всякий случай)
+            keyboard = ReplyKeyboardMarkup([["🔙 Назад в главное меню"]], resize_keyboard=True)
+            await update.message.reply_text("Ваша заявка отправлена администраторам\\. С вами свяжутся в ближайшее время\\.", reply_markup=keyboard, parse_mode="MarkdownV2")
 
-    context.user_data.clear() # Очищаем данные интервью
-    return MAIN_MENU
+        context.user_data.clear() # Очищаем данные интервью
+        return MAIN
+        context.user_data.clear() # Очищаем данные интервью
+        return MAIN_MENU
+    except Exception as e:
+        logger.error(f"Ошибка в volunteer_contact: {e}", exc_info=True)
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="MarkdownV2")
+        return MAIN_MENU
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data.clear()
-    await update.message.reply_text(START_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
-    return MAIN_MENU
+    try:
+        context.user_data.clear()
+        await update.message.reply_text(START_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
+        return MAIN_MENU
+    except Exception as e:
+        logger.error(f"Ошибка в start: {e}", exc_info=True)
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="MarkdownV2")
+        return START
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    choice = update.message.text
-    if choice == "Попросить о помощи":
-        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
-        return HELP_MENU
-    elif choice == "Предложить
-        await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
-        return TYPING
-    elif choice == "Стать волонтером":
-        return await volunteer_start(update, context) # Запускаем интервью
-    elif choice == "Поддержать проект":
-        await update.message.reply_text(DONATE_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2", disable_web_page_preview=True)
-        return TYPING
-    else:
-        await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="MarkdownV2")
+    try:
+        choice = update.message.text
+        if choice == "Попросить о помощи":
+            await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
+            return HELP_MENU
+        elif choice == "Предложить ресурс":
+            await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
+            return TYPING
+        elif choice == "Стать волонтером":
+            return await volunteer_start(update, context) # Запускаем интервью
+        elif choice == "Поддержать проект":
+            await update.message.reply_text(DONATE_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2", disable_web_page_preview=True)
+            return TYPING
+        else:
+            await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="MarkdownV2")
+            return MAIN_MENU
+    except Exception as e:
+        logger.error(f"Ошибка в main_menu: {e}", exc_info=True)
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="MarkdownV2")
         return MAIN_MENU
 
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    choice = update.message.text
-    if choice == "🆘 Срочная помощь":
-        await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), disable_web_page_preview=True, parse_mode="MarkdownV2")
-        context.user_data["type"] = "Срочная"
-        return TYPING
-    elif choice == "💼 Юридическая помощь":
-        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(LEGAL_FAQ_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
-        return FAQ_LEGAL
-    elif choice == "🏥 Медицинская помощь":
-        context.user_data["type"] = "Медицинская"
-        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(MEDICAL_FAQ_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
-        return FAQ_MED
-    elif choice == "🧠 Психологическая помощь":
-        context.user_data["type"] = "Психологическая помощь"
-        await update.message.reply_text(PSYCHOLOGICAL_HELP_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
-        return TYPING
-    elif choice == "🏠 Жилье/финансы":
-        context.user_data["type"] = "Срочная"  # Или "Остальное"
-        await update.message.reply_text(HOUSING_FINANCE_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
-        return TYPING
-    elif choice == BACK_BUTTON:
-        return await start(update, context)
-    else:
-        await update.message.reply_text(CHOOSE_HELP_CATEGORY, parse_mode="MarkdownV2")
+    try:
+        choice = update.message.text
+        if choice == "🆘 Срочная помощь":
+            await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), disable_web_page_preview=True, parse_mode="MarkdownV2")
+            context.user_data["type"] = "Срочная"
+            return TYPING
+        elif choice == "💼 Юридическая помощь":
+            await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(LEGAL_FAQ_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
+            return FAQ_LEGAL
+        elif choice == "🏥 Медицинская помощь":
+            context.user_data["type"] = "Медицинская"
+            await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(MEDICAL_FAQ_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
+            return FAQ_MED
+        elif choice == "🧠 Психологическая помощь":
+            context.user_data["type"] = "Психологическая помощь"
+            await update.message.reply_text(PSYCHOLOGICAL_HELP_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
+            return TYPING
+        elif choice == "🏠 Жилье/финансы":
+            context.user_data["type"] = "Срочная"  # Или "Остальное"
+            await update.message.reply_text(HOUSING_FINANCE_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
+            return TYPING
+        elif choice == BACK_BUTTON:
+            return await start(update, context)
+        else:
+            await update.message.reply_text(CHOOSE_HELP_CATEGORY, parse_mode="MarkdownV2")
+            return HELP_MENU
+    except Exception as e:
+        logger.error(f"Ошибка в help_menu: {e}", exc_info=True)
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="MarkdownV2")
         return HELP_MENU
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    message_text = update.message.text
-    if message_text == BACK_BUTTON:
-        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
-        return MAIN_MENU
-
-    request_type = context.user_data.get("type", "Запрос")
-    username = update.message.from_user.username or "нет"
-    forward_text = f"📩 {request_type}\nОт @{username}\n\n{message_text}"
-
-    target_channel_id = ADMIN_CHAT_ID  # По умолчанию отправляем админу
-
-    if "Срочная" in request_type:
-        target_channel_id = CHANNELS["Срочная"]
-        # Отправляем уведомление администраторам
-        admin_notification = f"🚨 НОВЫЙ СРОЧНЫЙ ЗАПРОС\\!\nОт пользователя: @{username}\nСообщение: {message_text}"
-        try:
-            await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_notification, parse_mode="MarkdownV2")
-        except Exception as e:
-            logger.error(f"Ошибка отправки уведомления администратору о срочном запросе: {e}", exc_info=True)
-    elif "Анонимное" in request_type:
-        target_channel_id = CHANNELS["Анонимные"]
-    elif "Юридическая" in request_type:
-        target_channel_id = CHANNELS["Юридические"]
-    elif "Медицинская" in request_type:
-        target_channel_id = CHANNELS["Медицинские"]
-    elif "Психологическая помощь" in request_type:
-        target_channel_id = CHANNELS["Психологическая помощь"]
-    elif "Предложение ресурса" in request_type:
-        target_channel_id = CHANNELS["Предложение ресурса"]
-    elif "Юридическая консультация" in request_type:
-        target_channel_id = CHANNELS["Юридические"]
-    elif "Медицинская консультация" in request_type:
-        target_channel_id = CHANNELS["Медицинские"]
-
     try:
+        message_text = update.message.text
+        if message_text == BACK_BUTTON:
+            await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
+            return MAIN_MENU
+
+        request_type = context.user_data.get("type", "Запрос")
+        username = update.message.from_user.username or "нет"
+        forward_text = f"📩 {request_type}\nОт @{username}\n\n{message_text}"
+
+        target_channel_id = ADMIN_CHAT_ID  # По умолчанию отправляем админу
+
+        if "Срочная" in request_type:
+            target_channel_id = CHANNELS["Срочная"]
+            admin_notification = f"🚨 НОВЫЙ СРОЧНЫЙ ЗАПРОС\\!\nОт пользователя: @{username}\nСообщение: {message_text}"
+            try:
+                await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_notification, parse_mode="MarkdownV2")
+            except Exception as e:
+                logger.error(f"Ошибка отправки уведомления администратору о срочном запросе: {e}", exc_info=True)
+        elif "Анонимное" in request_type:
+            target_channel_id = CHANNELS["Анонимные"]
+        elif "Юридическая" in request_type:
+            target_channel_id = CHANNELS["Юридические"]
+        elif "Медицинская" in request_type:
+            target_channel_id = CHANNELS["Медицинские"]
+        elif "Психологическая помощь" in request_type:
+            target_channel_id = CHANNELS["Психологическая помощь"]
+        elif "Предложение ресурса" in request_type:
+            target_channel_id = CHANNELS["Предложение ресурса"]
+        elif "Юридическая консультация" in request_type:
+            target_channel_id = CHANNELS["Юридические"]
+        elif "Медицинская консультация" in request_type:
+            target_channel_id = CHANNELS["Медицинские"]
+
         await context.bot.send_message(chat_id=target_channel_id, text=forward_text, parse_mode="MarkdownV2")
         await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
-    except Exception as e:
-        logger.error(f"Ошибка отправки сообщения: {e}", exc_info=True)
-        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
 
-    return MAIN_MENU
+        return MAIN_MENU
+    except Exception as e:
+        logger.error(f"Ошибка в handle_message: {e}", exc_info=True)
+        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
+        return MAIN_MENU
 
 async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE, faq_type: str) -> int:
-    question = update.message.text
-    if question == BACK_BUTTON:
-        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
+    try:
+        question = update.message.text
+        if question == BACK_BUTTON:
+            await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
+            return HELP_MENU
+        elif "Консультация" in question:
+            context.user_data["type"] = f"{faq_type.capitalize()} консультация"
+            await update.message.reply_text(CONSULTATION_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
+            return TYPING
+        else:
+            response = FAQ_RESPONSES.get(question, "Ответ не найден")
+            await update.message.reply_text(response, parse_mode="MarkdownV2")
+            return FAQ_LEGAL if faq_type == "юридическая" else FAQ_MED
+    except Exception as e:
+        logger.error(f"Ошибка в handle_faq ({faq_type}): {e}", exc_info=True)
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="MarkdownV2")
         return HELP_MENU
-    elif "Консультация" in question:
-        context.user_data["type"] = f"{faq_type.capitalize()} консультация"
-        await update.message.reply_text(CONSULTATION_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
-        return TYPING
-    else:
-        response = FAQ_RESPONSES.get(question, "Ответ не найден")
-        await update.message.reply_text(response, parse_mode="MarkdownV2")
-        return FAQ_LEGAL if faq_type == "юридическая" else FAQ_MED
 
 async def handle_legal_faq(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return await handle_faq(update, context, "юридическая")
@@ -382,8 +425,13 @@ async def handle_medical_faq(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return await handle_faq(update, context, "медицинская")
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
-    return START
+    try:
+        await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
+        return START
+    except Exception as e:
+        logger.error(f"Ошибка в cancel: {e}", exc_info=True)
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="MarkdownV2")
+        return START
 
 def main():
     app = Application.builder().token(TOKEN).build()
