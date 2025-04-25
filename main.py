@@ -277,7 +277,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return HELP_MENU
     elif choice == "Предложить ресурс":
         context.user_data["type"] = "💡 Предложение ресурса"
-        await update.message.
+        await update.message
 update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
         return TYPING
     elif choice == "Стать волонтером":
