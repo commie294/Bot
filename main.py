@@ -13,26 +13,11 @@ from telegram.ext import (
 )
 import sys
 sys.path.append('/data/data/com.termux/files/usr/lib/python3.12/site-packages')
-import gspread
-from google.oauth2.service_account import ServiceAccountCredentials
 
 # Загрузка переменных окружения
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
-# --- НОВЫЙ БЛОК: Интеграция с Google Sheets ---
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-CREDENTIALS_FILE = '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json'
-credentials = ServiceAccountCredentials.from_json_keyfile_name(
-    CREDENTIALS_FILE,
-    scope
-)
-
-# <--- ВСТАВЬ СВОЙ ПУТЬ
-SPREADSHEET_ID = '1w21-rrE7j5QATYtq8IixK79rQxN-LOC8tic827TT8ts'
-WORKSHEET_NAME = 'Ответы на форму (1)'
-# --- НОВЫЙ БЛОК: Отслеживание обработанных ID ---
-LAST_PROCESSED_ROW = 1  # Инициализируем с первой строкой данных
 
 # Настройка логирования
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -46,7 +31,12 @@ logger = logging.getLogger(__name__)
     TYPING,
     FAQ_LEGAL,
     FAQ_MED,
-) = range(6)
+    VOLUNTEER_START,
+    VOLUNTEER_NAME,
+    VOLUNTEER_REGION,
+    VOLUNTEER_HELP_TYPE,
+    VOLUNTEER_CONTACT,
+) = range(11)
 
 # Константы
 BACK_BUTTON = "🔙 Назад"
@@ -80,17 +70,9 @@ CHANNELS = {
     "Психологическая помощь": -1002677526813,
     "Предложение ресурса": -1002645097441,
     "Волонтеры Остальные": -1002507059500,
-    "Волонтеры Психология": -1001234567890,  # Обновлено из DIRECTION_TO_CHANNEL_ID
-    "Волонтеры Юристы": -1001122334455,   # Обновлено из DIRECTION_TO_CHANNEL_ID
+    "Волонтеры Психология": -1002677526813,
+    "Волонтеры Юристы": -1002523489451,
     "Волонтеры Инфо": -1002645097441,
-}
-
-# Словарь для связи направлений с ID каналов (для новых заявок)
-DIRECTION_TO_CHANNEL_ID = {
-    'Психологическая поддержка': -1001234567890,
-    'Медицинская помощь': -1009876543210,
-    'Юридическая помощь': -1001122334455,
-    # добавь другие направления при необходимости
 }
 
 # Ответы на часто задаваемые вопросы
@@ -185,10 +167,7 @@ RESOURCE_PROMPT_MESSAGE = "Опишите, какой ресурс вы хоти
 VOLUNTEER_MESSAGE = (
     "Мы очень рады твоему желанию присоединиться к нашей команде волонтеров! "
     "Твоя помощь может стать неоценимым вкладом в поддержку нашего сообщества.\n\n"
-    "Пожалуйста, заполни эту форму, чтобы мы могли узнать тебя лучше и предложить подходящие задачи:\n"
-    "[Форма для волонтеров](https://docs.google.com/forms/d/1kFHSQ05lQyL6s7WDdqTqqY-Il6La3Sehhj_1iVTNgus/viewform)\n\n"
-    "Мы свяжемся с тобой в ближайшее время после получения твоей заявки. "
-    "Спасибо за твою готовность помогать!"
+    "Пожалуйста, ответьте на несколько вопросов:"
 )
 DONATE_MESSAGE = (
     "Ваша поддержка помогает нам продолжать нашу работу и оказывать помощь тем, кто в ней нуждается. "
@@ -224,76 +203,85 @@ BACK_TO_MAIN_MENU = "Вы вернулись в главное меню."
 CHOOSE_FROM_MENU = "Пожалуйста, выберите опцию из меню."
 CHOOSE_HELP_CATEGORY = "Пожалуйста, выберите опцию из меню помощи."
 
-def get_gsheet_data():
-    """Получает все записи из Google Sheets."""
-    try:
-        from google.oauth2.service_account import ServiceAccountCredentials
-        import gspread
+async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("Давайте начнем небольшое интервью. Как вас зовут?")
+    return VOLUNTEER_NAME
 
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        CREDENTIALS_FILE = '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json'
-        SPREADSHEET_ID = '1w21-rrE7j5QATYtq8IixK79rQxN-LOC8tic827TT8ts'
-        WORKSHEET_NAME = 'Ответы на форму (1)'
+async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data["volunteer_name"] = update.message.text
+    await update.message.reply_text("Из какого вы региона?")
+    return VOLUNTEER_REGION
 
-        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
-        gc = gspread.authorize(creds)
-        spreadsheet = gc.open_by_key(SPREADSHEET_ID)
-        worksheet = spreadsheet.worksheet(WORKSHEET_NAME)
-        data = worksheet.get_all_records()
-        return data
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Ошибка при получении данных из Google Sheets (google.oauth2): {e}", exc_info=True)
-        print(f"Ошибка Google Sheets (google.oauth2): {e}")
-        return None
+async def volunteer_region(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data["volunteer_region"] = update.message.text
+    keyboard = [
+        ["Психологическая помощь"],
+        ["Юридические услуги"],
+        ["Медицинские услуги"],
+        ["Информационные услуги (тексты, модерация)"],
+        ["Финансовая поддержка"],
+        ["Другое..."],
+    ]
+    await update.message.reply_text("Какую помощь вы готовы предоставить?", reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True))
+    return VOLUNTEER_HELP_TYPE
 
-async def process_new_volunteers(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    gc = gspread.service_account(CREDENTIALS_FILE)
-    sh = gc.open_by_key('1GYcGq9ZuYZvxyc5kxlRD44HGZ-3vbFb8ds6dErq9nRo')
-    worksheet = sh.worksheet('Волонтеры')
-    data = worksheet.get_all_records()
+async def volunteer_help_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data["volunteer_help_type"] = update.message.text
+    await update.message.reply_text("Пожалуйста, укажите ваш Telegram-ник для связи.")
+    return VOLUNTEER_CONTACT
 
-    for i, row in enumerate(data, start=2):  # i = 2, т.к. первая строка — заголовки
-        if row.get('Статус') != 'Да':
-            message = (
-                f"<b>Имя:</b> {row['Имя']}\n"
-                f"<b>Город:</b> {row['Город']}\n"
-                f"<b>Направление:</b> {row['Направление']}\n"
-                f"<b>Контакты:</b> {row['Контакты']}"
-            )
-            direction = row['Направление']
-            channel_id = DIRECTION_TO_CHANNEL_ID.get(direction)
+async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data["volunteer_contact"] = update.message.text
+    volunteer_info = (
+        f"Новый потенциальный волонтер:\n"
+        f"Имя: {context.user_data.get('volunteer_name', 'не указано')}\n"
+        f"Регион: {context.user_data.get('volunteer_region', 'не указано')}\n"
+        f"Направление: {context.user_data.get('volunteer_help_type', 'не указано')}\n"
+        f"Контакт: @{context.user_data.get('volunteer_contact', 'не указано')}"
+    )
 
-            if channel_id:
-                try:
-                    await context.bot.send_message(chat_id=channel_id, text=message, parse_mode='HTML')
-                    worksheet.update_cell(i, 6, 'Да')  # Отметка, что отправлено
-                except Exception as e:
-                    print(f"Ошибка при отправке: {e}")
+    help_type = context.user_data.get("volunteer_help_type")
+    target_channel_id = None
+    if help_type == "Психологическая помощь":
+        target_channel_id = CHANNELS["Волонтеры Психология"]
+    elif help_type == "Юридические услуги":
+        target_channel_id = CHANNELS["Волонтеры Юристы"]
+    elif help_type == "Информационные услуги (тексты, модерация)":
+        target_channel_id = CHANNELS["Волонтеры Инфо"]
+    elif help_type in ["Медицинские услуги", "Финансовая поддержка", "Другое..."]:
+        target_channel_id = CHANNELS["Волонтеры Остальные"]
 
+    if target_channel_id:
+        try:
+            await context.bot.send_message(chat_id=target_channel_id, text=volunteer_info)
+            await update.message.reply_text("Ваша заявка отправлена администраторам соответствующего направления. С вами свяжутся в ближайшее время.", reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+        except Exception as e:
+            logger.error(f"Ошибка при отправке информации о волонтере в канал: {e}", exc_info=True)
+            await update.message.reply_text("Произошла ошибка при отправке вашей заявки. Пожалуйста, попробуйте позже.", reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+    else:
+        await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Новый волонтер (неопределенное направление):\n{volunteer_info}") # Отправка админам для обработки (на всякий случай)
+        await update.message.reply_text("Ваша заявка отправлена администраторам. С вами свяжутся в ближайшее время.", reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
 
-# Обработчик команды /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data.clear()
-    await update.message.reply_text(START_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2
-")
+    context.user_data.clear() # Очищаем данные интервью
     return MAIN_MENU
 
-# Обработчик главного меню
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data.clear()
+    await update.message.reply_text(START_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
+    return MAIN_MENU
+
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "Попросить о помощи":
-        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
+        await update
+update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
         return HELP_MENU
     elif choice == "Предложить ресурс":
         context.user_data["type"] = "💡 Предложение ресурса"
         await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2")
         return TYPING
     elif choice == "Стать волонтером":
-        context.user_data["type"] = "Стать волонтером"
-        await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2", disable_web_page_preview=True)
-        return TYPING
+        return await volunteer_start(update, context) # Запускаем интервью
     elif choice == "Поддержать проект":
         await update.message.reply_text(DONATE_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2", disable_web_page_preview=True)
         return TYPING
@@ -301,8 +289,6 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="MarkdownV2")
         return MAIN_MENU
 
-
-# Обработчик меню помощи
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "🆘 Срочная помощь":
@@ -330,7 +316,6 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(CHOOSE_HELP_CATEGORY, parse_mode="MarkdownV2")
         return HELP_MENU
 
-# Функция handle_message должна быть определена здесь, на том же уровне
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message_text = update.message.text
     if message_text == BACK_BUTTON:
@@ -375,8 +360,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     return MAIN_MENU
 
-
-# Обработчик FAQ (юридические и медицинские)
 async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE, faq_type: str) -> int:
     question = update.message.text
     if question == BACK_BUTTON:
@@ -396,57 +379,14 @@ async def handle_legal_faq(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 async def handle_medical_faq(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return await handle_faq(update, context, "медицинская")
-# Обработчик ввода текста пользователя
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    message_text = update.message.text
-    if message_text == BACK_BUTTON:
-        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
-        return MAIN_MENU
 
-    request_type = context.user_data.get("type", "Запрос")
-    username = update.message.from_user.username or "нет"
-    forward_text = f"📩 {request_type}\nОт @{username}\n\n{message_text}"
-
-    target_channel_id = ADMIN_CHAT_ID  # По умолчанию отправляем админу
-
-    if "Срочная" in request_type:
-        target_channel_id = CHANNELS["Срочная"]
-    elif "Анонимное" in request_type:
-        target_channel_id = CHANNELS["Анонимные"]
-    elif "Юридическая" in request_type:
-        target_channel_id = CHANNELS["Юридические"]
-    elif "Медицинская" in request_type:
-        target_channel_id = CHANNELS["Медицинские"]
-    elif "Психологическая помощь" in request_type:
-        target_channel_id = CHANNELS["Психологическая помощь"]
-    elif "Предложение ресурса" in request_type:
-        target_channel_id = CHANNELS["Предложение ресурса"]
-    elif "Юридическая консультация" in request_type:
-        target_channel_id = CHANNELS["Юридические"]
-    elif "Медицинская консультация" in request_type:
-        target_channel_id = CHANNELS["Медицинские"]
-
-    try:
-        await context.bot.send_message(chat_id=target_channel_id, text=forward_text, parse_mode="MarkdownV2")
-        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
-    except Exception as e:
-        logger.error(f"Ошибка отправки сообщения: {e}", exc_info=True)
-        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
-
-    return MAIN_MENU
-
-# Обработчик команды /cancel
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2")
     return START
 
-# Функция для периодической проверки новых волонтеров (теперь использует новую логику)
-async def check_new_volunteers_job(context: ContextTypes.DEFAULT_TYPE):
-    await process_new_volunteers(context=context, update=None) # update=None, т.к. это фоновая задача
-
-# Запуск бота
 def main():
     app = Application.builder().token(TOKEN).build()
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -456,18 +396,18 @@ def main():
             FAQ_LEGAL: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_legal_faq)],
             FAQ_MED: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_medical_faq)],
             TYPING: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_message)],
+            VOLUNTEER_START: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, volunteer_start)],
+            VOLUNTEER_NAME: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, volunteer_name)],
+            VOLUNTEER_REGION: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, volunteer_region)],
+            VOLUNTEER_HELP_TYPE: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, volunteer_help_type)],
+            VOLUNTEER_CONTACT: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, volunteer_contact)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
 
     app.add_handler(conv_handler)
-    app.add_handler(CommandHandler('check', process_new_volunteers)) # Добавлена команда /check
 
-    # --- НОВЫЙ БЛОК: Периодическая проверка новых волонтеров ---
-    # Запускаем задачу, которая будет выполняться каждые N секунд (например, каждые 5 минут = 300 секунд)
-    app.job_queue.run_repeating(check_new_volunteers_job, interval=300, first=10)
-
-    # Запуск бота в режиме ожидания
+    # Запуск бота
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
