@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import logging
 from dotenv import load_dotenv
@@ -262,7 +261,7 @@ async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
                     target_chat_id = CHANNELS.get("Волонтеры Юристы")
                 elif help_direction == "Информационная поддержка":
                     target_chat_id = CHANNELS.get("Волонтеры Инфо")
-                volunteer_info = f"Новый волонтер (ID: {row_number})!\n\n"  # Убран лишний отступ
+                volunteer_info = f"Новый волонтер (ID: {row_number})!\n\n"
 
 
                 try:
@@ -279,13 +278,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 # Обработчик главного меню
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "Попросить о помощи":
         await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True))
         return HELP_MENU
     elif choice == "Предложить ресурс":
         context.user_data["type"] = "💡 Предложение ресурса"
+        await
         await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
         return TYPING
     elif choice == "Стать волонтером":
