@@ -36,14 +36,15 @@ logger = logging.getLogger(__name__)
     VOLUNTEER_REGION,
     VOLUNTEER_HELP_TYPE,
     VOLUNTEER_CONTACT,
-) = range(11)
+    ANONYMOUS_MESSAGE,
+) = range(12)
 
 # Константы
 BACK_BUTTON = "🔙 Назад"
 MAIN_MENU_BUTTONS = [
     ["Попросить о помощи"],
     ["Предложить ресурс", "Стать волонтером"],
-    ["Поддержать проект"],
+    ["Поддержать проект", "Анонимное сообщение"],
 ]
 HELP_MENU_BUTTONS = [
     ["🆘 Срочная помощь", "💼 Юридическая помощь"],
@@ -73,11 +74,11 @@ CHANNELS = {
     "Волонтеры Психология": -1002677526813,
     "Волонтеры Юристы": -1002523489451,
     "Волонтеры Инфо": -1002645097441,
+    "Анонимные сообщения": -1002645097441, # Канал для анонимных сообщений
 }
 
 # Ответы на часто задаваемые вопросы
 FAQ_RESPONSES = {
-    # Юридические вопросы
     "Как сменить документы?": """
 В России смена гендерного маркера сейчас возможна только через суд. Это сложный процесс, который редко проходит без хирургических вмешательств — многое зависит от конкретного судьи и региона.
 
@@ -102,7 +103,6 @@ FAQ_RESPONSES = {
 2. Новый брак возможен только с партнёром противоположного пола (по документам)
 3. В РФ запрещены однополые браки""",
 
-    # Медицинские вопросы
     "Женская гормональная терапия": """
 **Женская гормональная терапия**
 
@@ -159,7 +159,8 @@ START_MESSAGE = (
     "* 🆘 **Попросить о помощи** в различных ситуациях.\n"
     "* 📚 **Предложить ресурс**, который может быть полезен сообществу.\n"
     "* 💖 **Стать волонтером** и помочь проекту.\n"
-    "* 💸 **Поддержать проект**, чтобы мы могли продолжать нашу работу.\n\n"
+    "* 💸 **Поддержать проект**, чтобы мы могли продолжать нашу работу.\n"
+    "* 🤫 **Написать анонимное сообщение**.\n\n"
     "Пожалуйста, выберите нужную опцию:"
 )
 
@@ -262,25 +263,9 @@ async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             f"Контакт: @{context.user_data.get('volunteer_contact', 'не указано')}"
         )
 
-        help_type = context.user_data.get("volunteer_help_type")
-        target_channel_id = None
-        if help_type == "Психологическая помощь":
-            target_channel_id = CHANNELS["Волонтеры Психология"]
-        elif help_type == "Юридические услуги":
-            target_channel_id = CHANNELS["Волонтеры Юристы"]
-        elif help_type == "Информационные услуги (тексты, модерация)":
-            target_channel_id = CHANNELS["Волонтеры Инфо"]
-        elif help_type in ["Медицинские услуги", "Финансовая поддержка", "Другое..."]:
-            target_channel_id = CHANNELS["Волонтеры Остальные"]
-
-        if target_channel_id:
-            await context.bot.send_message(chat_id=target_channel_id, text=volunteer_info)
-            keyboard = ReplyKeyboardMarkup([["🔙 Назад в главное меню"]], resize_keyboard=True)
-            await update.message.reply_text("Спасибо! Ваша информация передана. Мы свяжемся с вами при необходимости.", reply_markup=keyboard, parse_mode="Markdown")
-        else:
-            await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Новый волонтер (неопределенное направление):\n{volunteer_info}") # Отправка админам для обработки (на всякий случай)
-            keyboard = ReplyKeyboardMarkup([["🔙 Назад в главное меню"]], resize_keyboard=True)
-            await update.message.reply_text("Ваша заявка отправлена администраторам. С вами свяжутся в ближайшее время.", reply_markup=keyboard, parse_mode="Markdown")
+        await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=volunteer_info)
+        keyboard = ReplyKeyboardMarkup([["🔙 Назад в главное меню"]], resize_keyboard=True)
+        await update.message.reply_text("Спасибо! Ваша информация передана администраторам. Мы свяжемся с вами при необходимости.", reply_markup=keyboard, parse_mode="Markdown")
 
         context.user_data.clear() # Очищаем данные интервью
         return MAIN_MENU
@@ -312,6 +297,10 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             return await volunteer_start(update, context) # Запускаем интервью
         elif choice == "Поддержать проект":
             await update.message.reply_text(DONATE_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="Markdown", disable_web_page_preview=True)
+            return TYPING
+        elif choice == "Анонимное сообщение":
+            await update.message.reply_text("Пожалуйста, напишите ваше анонимное сообщение:", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="Markdown")
+            context.user_data["type"] = "Анонимное сообщение"
             return TYPING
         else:
             await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="Markdown")
@@ -363,6 +352,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         request_type = context.user_data.get("type", "Запрос")
         username = update.message.from_user.username or "нет"
         forward_text = f"📩 {request_type}\nОт @{username}\n\n{message_text}"
+        anonymous_text = f"🤫 Анонимное сообщение:\n\n{message_text}"
 
         target_channel_id = ADMIN_CHAT_ID  # По умолчанию отправляем админу
 
@@ -373,7 +363,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_notification, parse_mode="Markdown")
             except Exception as e:
                 logger.error(f"Ошибка отправки уведомления администратору о срочном запросе: {e}", exc_info=True)
-        elif "Анонимное" in request_type:
+        elif "Анонимное сообщение" in request_type:
+            target_channel_id = CHANNELS["Анонимные сообщения"]
+            await context.bot.send_message(chat_id=target_channel_id, text=anonymous_text, parse_mode="Markdown")
+            await update.message.reply_text("✅ Ваше анонимное сообщение отправлено!", reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="Markdown")
+            return MAIN_MENU
+        elif "Анонимное" in request_type: # Обработка старого "Анонимные"
             target_channel_id = CHANNELS["Анонимные"]
         elif "Юридическая" in request_type:
             target_channel_id = CHANNELS["Юридические"]
@@ -388,8 +383,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         elif "Медицинская консультация" in request_type:
             target_channel_id = CHANNELS["Медицинские"]
 
-        await context.bot.send_message(chat_id=target_channel_id, text=forward_text, parse_mode="Markdown")
-        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="Markdown")
+        if "Анонимное сообщение" not in request_type:
+            await context.bot.send_message(chat_id=target_channel_id, text=forward_text, parse_mode="Markdown")
+            await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="Markdown")
 
         return MAIN_MENU
     except Exception as e:
@@ -448,6 +444,7 @@ def main():
             VOLUNTEER_REGION: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, volunteer_region)],
             VOLUNTEER_HELP_TYPE: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, volunteer_help_type)],
             VOLUNTEER_CONTACT: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, volunteer_contact)],
+            ANONYMOUS_MESSAGE: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_message)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
