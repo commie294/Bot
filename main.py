@@ -285,7 +285,7 @@ async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         context.user_data.clear() # Очищаем данные интервью
         return MAIN_MENU
     except Exception as e:
-                logger.error(f"Ошибка в volunteer_contact: {e}", exc_info=True)
+        logger.error(f"Ошибка в volunteer_contact: {e}", exc_info=True)
         await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="Markdown")
         return MAIN_MENU
 
