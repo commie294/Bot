@@ -279,10 +279,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 # Обработчик главного меню
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-        if
-        if choice == "Попросить о помощи":
-
+    if choice == "Попросить о помощи":
         await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True))
         return HELP_MENU
     elif choice == "Предложить ресурс":
@@ -299,6 +298,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     else:
         await update.message.reply_text(CHOOSE_FROM_MENU)
         return MAIN_MENU
+
 
 # Обработчик меню помощи
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
