@@ -7,7 +7,7 @@ from telegram.ext import (
     Application,
     CommandHandler,
     MessageHandler,
-    filters,
+    filters as Filters,  # Исправленный импорт
     ContextTypes,
     ConversationHandler,
 )
@@ -22,8 +22,9 @@ TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 # --- НОВЫЙ БЛОК: Интеграция с Google Sheets ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+CREDENTIALS_FILE = '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json' # Единственное определение пути
 credentials = ServiceAccountCredentials.from_json_keyfile_name(
-    '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json',
+    CREDENTIALS_FILE,
     scope
 )
 
@@ -72,12 +73,16 @@ MEDICAL_FAQ_BUTTONS = [
 
 # Каналы для пересылки сообщений
 CHANNELS = {
-    "Срочная": -1002507059500,  # t64_gen (остальное)
-    "Анонимные": -1002507059500, # t64_gen (остальное) - пока используем этот же
-    "Юридические": -1002523489451, # t64_legal
-    "Медицинские": -1002507059500, # t64_gen (остальное) - пока используем этот же
-    "Психологическая помощь": -1002677526813, # t64_psych
-    "Предложение ресурса": -1002645097441 # t4_misc
+    "Срочная": -1002507059500,
+    "Анонимные": -1002507059500,
+    "Юридические": -1002523489451,
+    "Медицинские": -1002507059500,
+    "Психологическая помощь": -1002677526813,
+    "Предложение ресурса": -1002645097441,
+    "Волонтеры Остальные": -1002507059500,
+    "Волонтеры Психология": -1002677526813,
+    "Волонтеры Юристы": -1002523489451,
+    "Волонтеры Инфо": -1002645097441,
 }
 
 # Ответы на часто задаваемые вопросы
@@ -217,8 +222,7 @@ def get_gsheet_data():
         from google.oauth2.service_account import ServiceAccountCredentials
         import gspread
 
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com
-/auth/drive"]
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         CREDENTIALS_FILE = '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json'
         SPREADSHEET_ID = '1w21-rrE7j5QATYtq8IixK79rQxN-LOC8tic827TT8ts'
         WORKSHEET_NAME = 'Ответы на форму (1)'
@@ -264,28 +268,28 @@ async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
 # Обработчик команды /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
-    await update.message.reply_text(START_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+    await update.message.reply_text(START_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
     return MAIN_MENU
 
 # Обработчик главного меню
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "Попросить о помощи":
-        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True))
+        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
         return HELP_MENU
     elif choice == "Предложить ресурс":
         context.user_data["type"] = "💡 Предложение ресурса"
-        await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+        await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
         return TYPING
     elif choice == "Стать волонтером":
         context.user_data["type"] = "Стать волонтером"
-        await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="Markdown", disable_web_page_preview=True)
+        await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2", disable_web_page_preview=True) # Обновлено
         return TYPING
     elif choice == "Поддержать проект":
-        await update.message.reply_text(DONATE_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="Markdown", disable_web_page_preview=True)
+        await update.message.reply_text(DONATE_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2", disable_web_page_preview=True) # Обновлено
         return TYPING
     else:
-        await update.message.reply_text(CHOOSE_FROM_MENU)
+        await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="MarkdownV2") # Обновлено
         return MAIN_MENU
 
 
@@ -293,35 +297,35 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "🆘 Срочная помощь":
-        await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), disable_web_page_preview=True)
+        await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), disable_web_page_preview=True, parse_mode="MarkdownV2") # Обновлено
         context.user_data["type"] = "Срочная"
         return TYPING
     elif choice == "💼 Юридическая помощь":
-        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(LEGAL_FAQ_BUTTONS, resize_keyboard=True))
+        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(LEGAL_FAQ_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
         return FAQ_LEGAL
     elif choice == "🏥 Медицинская помощь":
         context.user_data["type"] = "Медицинская"
-        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(MEDICAL_FAQ_BUTTONS, resize_keyboard=True))
+        await update.message.reply_text("Выберите вопрос:", reply_markup=ReplyKeyboardMarkup(MEDICAL_FAQ_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
         return FAQ_MED
     elif choice == "🧠 Психологическая помощь":
         context.user_data["type"] = "Психологическая помощь"
-        await update.message.reply_text(PSYCHOLOGICAL_HELP_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+        await update.message.reply_text(PSYCHOLOGICAL_HELP_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
         return TYPING
     elif choice == "🏠 Жилье/финансы":
         context.user_data["type"] = "Срочная"  # Или "Остальное"
-        await update.message.reply_text(HOUSING_FINANCE_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+        await update.message.reply_text(HOUSING_FINANCE_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
         return TYPING
     elif choice == BACK_BUTTON:
         return await start(update, context)
     else:
-        await update.message.reply_text(CHOOSE_HELP_CATEGORY)
+        await update.message.reply_text(CHOOSE_HELP_CATEGORY, parse_mode="MarkdownV2") # Обновлено
         return HELP_MENU
 
 # Функция handle_message должна быть определена здесь, на том же уровне
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message_text = update.message.text
     if message_text == BACK_BUTTON:
-        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
         return MAIN_MENU
 
     request_type = context.user_data.get("type", "Запрос")
@@ -335,7 +339,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # Отправляем уведомление администраторам
         admin_notification = f"🚨 НОВЫЙ СРОЧНЫЙ ЗАПРОС!\nОт пользователя: @{username}\nСообщение: {message_text}"
         try:
-            await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_notification)
+            await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_notification, parse_mode="MarkdownV2") # Обновлено
         except Exception as e:
             logger.error(f"Ошибка отправки уведомления администратору о срочном запросе: {e}", exc_info=True)
     elif "Анонимное" in request_type:
@@ -354,11 +358,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         target_channel_id = CHANNELS["Медицинские"]
 
     try:
-        await context.bot.send_message(chat_id=target_channel_id, text=forward_text)
-        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+        await context.bot.send_message(chat_id=target_channel_id, text=forward_text, parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
     except Exception as e:
         logger.error(f"Ошибка отправки сообщения: {e}", exc_info=True)
-        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
 
     return MAIN_MENU
 
@@ -367,15 +371,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE, faq_type: str) -> int:
     question = update.message.text
     if question == BACK_BUTTON:
-        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True))
+        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
         return HELP_MENU
     elif "Консультация" in question:
         context.user_data["type"] = f"{faq_type.capitalize()} консультация"
-        await update.message.reply_text(CONSULTATION_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+        await update.message.reply_text(CONSULTATION_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
         return TYPING
     else:
         response = FAQ_RESPONSES.get(question, "Ответ не найден")
-        await update.message.reply_text(response, parse_mode="Markdown")
+        await update.message.reply_text(response, parse_mode="MarkdownV2") # Обновлено
         return FAQ_LEGAL if faq_type == "юридическая" else FAQ_MED
 
 async def handle_legal_faq(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -387,7 +391,7 @@ async def handle_medical_faq(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message_text = update.message.text
     if message_text == BACK_BUTTON:
-        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+        await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
         return MAIN_MENU
 
     request_type = context.user_data.get("type", "Запрос")
@@ -414,17 +418,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         target_channel_id = CHANNELS["Медицинские"]
 
     try:
-        await context.bot.send_message(chat_id=target_channel_id, text=forward_text)
-        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+        await context.bot.send_message(chat_id=target_channel_id, text=forward_text, parse_mode="MarkdownV2") # Обновлено
+        await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
     except Exception as e:
         logger.error(f"Ошибка отправки сообщения: {e}", exc_info=True)
-        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+        await update.message.reply_text(MESSAGE_SEND_ERROR.format(e), reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
 
     return MAIN_MENU
 
 # Обработчик команды /cancel
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
+    await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True), parse_mode="MarkdownV2") # Обновлено
     return START
 
 # Запуск бота
@@ -434,11 +438,11 @@ def main():
         entry_points=[CommandHandler("start", start)],
         states={
             START: [CommandHandler("start", start)],
-            MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
-            HELP_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)],
-            FAQ_LEGAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_legal_faq)],
-            FAQ_MED: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_medical_faq)],
-            TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)],
+            MAIN_MENU: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, main_menu)], # Обновлено
+            HELP_MENU: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, help_menu)], # Обновлено
+            FAQ_LEGAL: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_legal_faq)], # Обновлено
+            FAQ_MED: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_medical_faq)], # Обновлено
+            TYPING: [MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_message)], # Обновлено
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
@@ -453,3 +457,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
