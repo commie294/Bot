@@ -67,7 +67,7 @@ CHANNELS = {
 # FAQ ответы
 FAQ_RESPONSES = {
     "Какие документы нужны для получения статуса беженца?": "Для получения статуса беженца обычно требуются [список документов](https://example.com/refugee_docs).", # Замените на реальную ссылку
-    "Как получить временное убежище?": "Информация о получении временного убежища доступна по [ссылке](https://example.com/temporary_shelter).", # Замените на реальную ссылку
+    "Как получить временное убежище?": "Информация о получении временного убежище доступна по [ссылке](https://example.com/temporary_shelter).", # Замените на реальную ссылку
     "Где получить первую медицинскую помощь?": "Ближайшие пункты оказания первой медицинской помощи можно найти [здесь](https://example.com/medical_help).", # Замените на реальную ссылку
     "Как получить доступ к медицинскому обслуживанию?": "Информация о доступе к медицинскому обслуживанию доступна [по ссылке](https://example.com/medical_access).", # Замените на реальную ссылку
 }
@@ -147,7 +147,11 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
         return TYPING
     elif choice == "Стать волонтером":
-        await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+        context.user_data["type"] = "Стать волонтером"
+        await update.message.reply_text("Если вы хотите стать волонтером, пожалуйста, заполните эту [анкету](https://docs.google.com/forms/d/e/1FAIpQLSdj4lm6Z_nsvZh6zAWnk0ob8p6hvG6fxVQV5kYrcdXTVjpbaA/viewform?usp=dialog), чтобы стать волонтером.",
+                                        reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
+                                        parse_mode=ParseMode.MARKDOWN,
+                                        disable_web_page_preview=True)
         return TYPING
     elif choice == "Поддержать проект":
         await update.message.reply_text(DONATE_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True), parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
@@ -218,7 +222,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     target_channel_id = ADMIN_CHAT_ID  # По умолчанию отправляем админу
 
-    if "Срочная" in request_type:
+    if "Стать волонтером" in request_type:
+        await update.message.reply_text("Пожалуйста, заполните эту [анкету](https://docs.google.com/forms/d/e/1FAIpQLSdj4lm6Z_nsvZh6zAWnk0ob8p6hvG6fxVQV5kYrcdXTVjpbaA/viewform?usp=dialog), чтобы стать волонтером.",
+                                        reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True),
+                                        parse_mode=ParseMode.MARKDOWN,
+                                        disable_web_page_preview=True)
+        return MAIN_MENU
+    elif "Срочная" in request_type:
         target_channel_id = CHANNELS.get("Срочная")
         # Отправляем уведомление администраторам
         admin_notification = f"🚨 НОВЫЙ СРОЧНЫЙ ЗАПРОС!\nОт пользователя: @{username}\nСообщение: {message_text}"
