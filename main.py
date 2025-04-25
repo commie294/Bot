@@ -163,6 +163,7 @@ START_MESSAGE = (
     "Пожалуйста, выберите нужную опцию:"
 )
 
+
 HELP_MENU_MESSAGE = "Выберите категорию помощи:"
 RESOURCE_PROMPT_MESSAGE = "Опишите, какой ресурс вы хотите предложить:"
 VOLUNTEER_MESSAGE = (
