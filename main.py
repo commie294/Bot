@@ -14,19 +14,8 @@ from telegram.ext import (
 import sys
 sys.path.append('/data/data/com.termux/files/usr/lib/python3.12/site-packages')
 import gspread
-
 from google.oauth2.service_account import ServiceAccountCredentials
-from google.oauth2.service_account import Credentials
-import sys
 
-# Добавляем путь к директории, где установлены библиотеки
-sys.path.append('/data/data/com.termux/files/usr/lib/python3.12/site-packages')
-
-# Теперь можно импортировать библиотеку
-from telegram import Bot, Update
-from telegram.ext import Updater, CommandHandler, CallbackContext, JobQueue
-
-# Остальной код
 # Загрузка переменных окружения
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
@@ -184,7 +173,7 @@ VOLUNTEER_MESSAGE = (
     "Мы очень рады твоему желанию присоединиться к нашей команде волонтеров! "
     "Твоя помощь может стать неоценимым вкладом в поддержку нашего сообщества.\n\n"
     "Пожалуйста, заполни эту форму, чтобы мы могли узнать тебя лучше и предложить подходящие задачи:\n"
-    "[Форма для волонтеров](https://docs.google.com/forms/d/1kFHSQ05lQyL6s7WDdqTqqY-Il6La3Sehhj_1iVTNgus/edit)\n\n"
+    "[Форма для волонтеров](https://docs.google.com/forms/d/1kFHSQ05lQyL6s7WDdqTqqY-Il6La3Sehhj_1iVTNgus/viewform)\n\n"
     "Мы свяжемся с тобой в ближайшее время после получения твоей заявки. "
     "Спасибо за твою готовность помогать!"
 )
@@ -225,10 +214,11 @@ CHOOSE_HELP_CATEGORY = "Пожалуйста, выберите опцию из �
 def get_gsheet_data():
     """Получает все записи из Google Sheets."""
     try:
-        from oauth2client.service_account import ServiceAccountCredentials
+        from google.oauth2.service_account import ServiceAccountCredentials
         import gspread
 
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com
+/auth/drive"]
         CREDENTIALS_FILE = '/storage/emulated/0/Download/rapid-goal-457809-n6-9e1bda1dc23c.json'
         SPREADSHEET_ID = '1w21-rrE7j5QATYtq8IixK79rQxN-LOC8tic827TT8ts'
         WORKSHEET_NAME = 'Ответы на форму (1)'
@@ -242,8 +232,8 @@ def get_gsheet_data():
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Ошибка при получении данных из Google Sheets (oauth2client): {e}", exc_info=True)
-        print(f"Ошибка Google Sheets (oauth2client): {e}")
+        logger.error(f"Ошибка при получении данных из Google Sheets (google.oauth2): {e}", exc_info=True)
+        print(f"Ошибка Google Sheets (google.oauth2): {e}")
         return None
 
 async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
@@ -264,11 +254,11 @@ async def process_new_volunteers(context: ContextTypes.DEFAULT_TYPE):
                     target_chat_id = CHANNELS.get("Волонтеры Инфо")
                 volunteer_info = f"Новый волонтер (ID: {row_number})!\n\n"
 
-
                 try:
                     await context.bot.send_message(chat_id=target_chat_id, text=volunteer_info)
+                    LAST_PROCESSED_ROW = row_number  # Обновляем ID последней обработанной строки после успешной отправки
                 except Exception as e:
-                    logger.error(f"Ошибка при отправке уведомления о волонтере: {e}", exc_info=True)
+                    logger.error(f"Ошибка при отправке уведомления о волонтере (строка {row_number}): {e}", exc_info=True)
 
 
 # Обработчик команды /start
@@ -284,8 +274,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True))
         return HELP_MENU
     elif choice == "Предложить ресурс":
-        context.user_data["type"] = "
-💡 Предложение ресурса"
+        context.user_data["type"] = "💡 Предложение ресурса"
         await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
         return TYPING
     elif choice == "Стать волонтером":
