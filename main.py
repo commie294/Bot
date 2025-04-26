@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 import asyncio
+import hashlib
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -44,6 +45,7 @@ from bot_responses import (
     DIY_HRT_GUIDE_NAME,
     SURGERY_PLANNING_PROMPT,
     FAREWELL_MESSAGE,
+    ANONYMOUS_CONFIRMATION
 )
 from keyboards import (
     MAIN_MENU_BUTTONS,
@@ -61,7 +63,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-logger.info(f"Сообщение отправлено")
 
 (
     START,
@@ -86,6 +87,11 @@ logger.info(f"Сообщение отправлено")
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
+HASH_SALT = os.getenv("HASH_SALT", "default_salt")
+
+def generate_message_id(user_id: int) -> str:
+    """Генерирует хеш для анонимной идентификации сообщений"""
+    return hashlib.sha256(f"{HASH_SALT}_{user_id}_{os.urandom(16)}".encode()).hexdigest()[:8]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
@@ -173,6 +179,11 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_text = update.message.text
     request_type = context.user_data.get("request_type", "Сообщение")
+
+    # Для анонимных сообщений используем отдельную обработку
+    if request_type == "Анонимное сообщение":
+        return await anonymous_message(update, context)
+
     user_id = update.effective_user.id
     channel_mapping = {
         "Ресурс": "t64_misc",
@@ -187,14 +198,14 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         "Помощь - Планирование МТФ операции": "t64_gen",
         "Психологическая помощь": "t64_psych",
         "Жилье/финансы": "t64_gen",
-        "Анонимное сообщение": "t64_misc",
     }
-    channel_name = channel_mapping.get(request_type)
 
+    channel_name = channel_mapping.get(request_type)
     if channel_name:
         try:
             await context.bot.send_message(
-                chat_id=CHANNELS.get(channel_name), text=f"Запрос от ID {user_id}: {user_text}"
+                chat_id=CHANNELS.get(channel_name),
+                text=f"Запрос от пользователя:\n\n{user_text}"
             )
             await update.message.reply_text(
                 MESSAGE_SENT_SUCCESS,
@@ -202,7 +213,7 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             )
             return MAIN_MENU
         except Exception as e:
-            logger.error(f"Ошибка при отправке сообщения в канал {channel_name}: {e}")
+            logger.error(f"Ошибка при отправке сообщения: {e}", exc_info=True)
             await update.message.reply_text(
                 MESSAGE_SEND_ERROR,
                 reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
@@ -210,8 +221,33 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             return MAIN_MENU
     else:
         await update.message.reply_text(
-            "Произошла ошибка при определении канала для вашего запроса.",
+            "Произошла ошибка при обработке вашего запроса.",
             reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
+        )
+        return MAIN_MENU
+
+async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    message = update.message.text
+    message_id = generate_message_id(update.effective_user.id)
+
+    try:
+        await context.bot.send_message(
+            chat_id=CHANNELS.get("t64_misc"),
+            text=f"🔒 Анонимное сообщение [{message_id}]:\n\n{message}"
+        )
+        await update.message.reply_text(
+            ANONYMOUS_CONFIRMATION,
+            reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
+        )
+        # Очищаем временные данные
+        if "request_type" in context.user_data:
+            del context.user_data["request_type"]
+        return MAIN_MENU
+    except Exception as e:
+        logger.error(f"Ошибка при отправке анонимного сообщения: {e}", exc_info=True)
+        await update.message.reply_text(
+            "Ошибка при отправке сообщения. Пожалуйста, попробуйте позже.",
+            reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
         return MAIN_MENU
 
@@ -359,7 +395,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return await medical_gender_therapy_menu(update, context)
     elif choice == "DIY":
         keyboard = ReplyKeyboardMarkup(
-            [["Я понимаю риски, скачать гайд"], [BACK_BUTTON], ["✅ Готово"]], resize keyboard=True
+            [["Я понимаю риски, скачать гайд"], [BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True
         )
         await update.message.reply_text(
             DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
@@ -535,15 +571,28 @@ ID: {user_id}
 
 async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message.text
-    await context.bot.send_message(
-        chat_id=CHANNELS.get("t64_misc"), text=f"🔒 Анонимное сообщение:\n\n{message}"
-    )
-    await update.message.reply_text(
-        "✅ Ваше сообщение отправлено анонимно. Никто (даже администраторы) не увидит ваш ID.",
-        reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
-    )
-    context.user_data.clear()
-    return MAIN_MENU
+    message_id = generate_message_id(update.effective_user.id)
+
+    try:
+        await context.bot.send_message(
+            chat_id=CHANNELS.get("t64_misc"),
+            text=f"🔒 Анонимное сообщение [{message_id}]:\n\n{message}"
+        )
+        await update.message.reply_text(
+            ANONYMOUS_CONFIRMATION,
+            reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
+        )
+        # Очищаем временные данные
+        if "request_type" in context.user_data:
+            del context.user_data["request_type"]
+        return MAIN_MENU
+    except Exception as e:
+        logger.error(f"Ошибка при отправке анонимного сообщения: {e}", exc_info=True)
+        await update.message.reply_text(
+            "Ошибка при отправке сообщения. Пожалуйста, попробуйте позже.",
+            reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
+        )
+        return MAIN_MENU
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
