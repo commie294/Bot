@@ -300,9 +300,9 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
         return MEDICAL_MTF_HRT
 
-async def medical_surgery_planning(update: Update, context:)
+async def medical_surgery_planning(update: Update, context:
     """Обрабатывает выбор планирования операции."""
-    choice = update.message.text
+    choice = update.message.text)
     if choice == "🗓️ Спланировать операцию":
         await update.message.reply_text(SURGERY_PLANNING_PROMPT)
         context.user_data["type"] = "Планирование операции"
