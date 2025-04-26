@@ -356,7 +356,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     choice = update.message.text
     if choice == BACK_BUTTON:
         return await medical_gender_therapy_menu(update, context)
-    elif choice == "DIY": # На том же уровне отступа, что и 'if'
+    elif choice == "DIY": # Теперь код внутри elif с отступом
         keyboard = ReplyKeyboardMarkup(
             [["Я понимаю риски, скачать гайд"], [BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True
         )
