@@ -91,7 +91,7 @@ logger = logging.getLogger(__name__)
 ) = range(25)
 
 load_dotenv()
-TOKEN = os.getenv("TOKEN")
+TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
