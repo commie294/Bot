@@ -425,7 +425,6 @@ def main() -> None:
             MEDICAL_GENDER_THERAPY_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_gender_therapy_menu)],
             MEDICAL_FTM_HRT: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_ftm_hrt)],
             MEDICAL_MTF_HRT: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_mtf_hrt)],
-            MEDICAL_SURGERY_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_menu)], # Этот обработчик больше не нужен для выбора планирования
             MEDICAL_SURGERY_PLANNING: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_planning)], # Добавлено новое состояние
             TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing)],
             VOLUNTEER_START: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_name)],
