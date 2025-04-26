@@ -347,7 +347,7 @@ async def medical_gender_therapy_menu(
             return MEDICAL_GENDER_THERAPY_MENU
     except Exception as e:
         logger.error(f"Ошибка в medical_gender_therapy_menu: {e}", exc_info=True)
-        awaitupdate.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
         return MEDICAL_GENDER_THERAPY_MENU
 
 
