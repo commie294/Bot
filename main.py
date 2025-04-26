@@ -307,6 +307,7 @@ async def medical_gender_therapy_menu(
 ) -> int:
     """Обрабатывает выбор направления гормональной терапии."""
     try:
+        try:
         choice = update.message.text
         if choice == BACK_BUTTON:
             return await medical_menu(update, context)
@@ -315,18 +316,13 @@ async def medical_gender_therapy_menu(
                 MASCULINIZING_HRT_INFO,
                 parse_mode="Markdown",
                 reply_markup=ReplyKeyboardMarkup(
-                    [                    ["DIY"],
-                    ["Запросить консультацию по мужской ГТ"],
-                    [BACK_BUTTON],
-                ],
-                resize_keyboard=True,
-            )
-            return MEDICAL_FTM_HRT
-        elif                    ["DIY"],
-                    ["Запросить консультацию по мужской ГТ"],
-                    [BACK_BUTTON],
-                ],
-                resize_keyboard=True,
+                    [
+                        ["DIY"],
+                        ["Запросить консультацию по мужской ГТ"],
+                        [BACK_BUTTON],
+                    ],
+                    resize_keyboard=True,
+                ),
             )
             return MEDICAL_FTM_HRT
         elif choice == "E":
@@ -334,11 +330,13 @@ async def medical_gender_therapy_menu(
                 FEMINIZING_HRT_INFO,
                 parse_mode="Markdown",
                 reply_markup=ReplyKeyboardMarkup(
-                    ["DIY"],
-                    ["Запросить консультацию по женской ГТ"],
-                    [BACK_BUTTON],
-                ],
-                resize_keyboard=True,
+                    [
+                        ["DIY"],
+                        ["Запросить консультацию по женской ГТ"],
+                        [BACK_BUTTON],
+                    ],
+                    resize_keyboard=True,
+                ),
             )
             return MEDICAL_MTF_HRT
         else:
