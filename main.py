@@ -156,7 +156,7 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     elif request_type == "Анонимное сообщение":
         tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=f"Анонимное сообщение от ID {user_id}: {user_text}"))
     elif request_type.startswith("Срочная помощь"):
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"СРОЧНОЕ СООБЩЕНИЕ ОТ ID {user_id}: {user_text}")) # Или другой подходящий канал
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"СРОЧНОЕ СООБЩЕНИЕ ОТ ID {user_id}: {user_text}"))
     elif request_type.startswith("Сообщение о нарушении (юридическое)"):
         tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=f"Сообщение о нарушении от ID {user_id}: {user_text}"))
     elif request_type.startswith("Юридическая консультация"):
@@ -413,11 +413,13 @@ async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT
         return MEDICAL_SURGERY_PLANNING
 
 async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    logger.info(f"User {update.effective_user.id} entered volunteer_name: {update.message.text}")
     context.user_data["volunteer_data"] = {"name": update.message.text}
     await update.message.reply_text("Из какого вы региона?")
     return VOLUNTEER
 
 async def volunteer_region(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    logger.info(f"User {update.effective_user.id} entered volunteer_region: {update.message.text}, current user_data: {context.user_data}")
     context.user_data["volunteer_data"]["region"] = update.message.text
     await update.message.reply_text(
         "Чем вы готовы помочь?",
