@@ -68,13 +68,16 @@ logger = logging.getLogger(__name__)
     TYPING,
     FAQ_LEGAL,
     MEDICAL_MENU,
-    VOLUNTEER,
+    VOLUNTEER_NAME,
+    VOLUNTEER_REGION,
+    VOLUNTEER_HELP_TYPE,
+    VOLUNTEER_CONTACT,
     ANONYMOUS_MESSAGE,
     MEDICAL_GENDER_THERAPY_MENU,
     MEDICAL_FTM_HRT,
     MEDICAL_MTF_HRT,
     MEDICAL_SURGERY_PLANNING,
-) = range(12)
+) = range(15)
 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
@@ -103,7 +106,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return TYPING
     elif user_choice == "🤝 Стать волонтером":
         await update.message.reply_text("Как к вам обращаться?")
-        return VOLUNTEER
+        return VOLUNTEER_NAME
     elif user_choice == "💸 Поддержать проект":
         context.user_data["request_type"] = "Донат"
         await update.message.reply_text(
@@ -416,25 +419,25 @@ async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     logger.info(f"User {update.effective_user.id} entered volunteer_name: {update.message.text}")
     context.user_data["volunteer_data"] = {"name": update.message.text}
     await update.message.reply_text("Из какого вы региона?")
-    return VOLUNTEER
+    return VOLUNTEER_REGION
 
-async def volunteer_region(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def volunteer_region_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     logger.info(f"User {update.effective_user.id} entered volunteer_region: {update.message.text}, current user_data: {context.user_data}")
     context.user_data["volunteer_data"]["region"] = update.message.text
     await update.message.reply_text(
         "Чем вы готовы помочь?",
         reply_markup=VOLUNTEER_HELP_TYPE_KEYBOARD,
     )
-    return VOLUNTEER
+    return VOLUNTEER_HELP_TYPE
 
-async def volunteer_help_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def volunteer_help_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["volunteer_data"]["help_type"] = update.message.text
     user_contact = update.effective_user.username
     context.user_data["volunteer_data"]["contact"] = f"@{user_contact}" if user_contact else "не указан"
     await update.message.reply_text("Как с вами можно связаться (Telegram, email)?")
-    return VOLUNTEER
+    return VOLUNTEER_CONTACT
 
-async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def volunteer_contact_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["volunteer_data"]["contact_other"] = update.message.text
     user_id = update.effective_user.id
     volunteer_info = f"""Новый волонтер!
@@ -489,7 +492,7 @@ def main() -> None:
     application = Application.builder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
+        entry_points=[MessageHandler(filters.TEXT & ~filters.COMMAND & filters.Regex("^🤝 Стать волонтером$"), volunteer_name)],
         states={
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
             HELP_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)],
@@ -508,12 +511,10 @@ def main() -> None:
             MEDICAL_SURGERY_PLANNING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_planning)
             ],
-            VOLUNTEER: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_name),
-                MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region),
-                MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type),
-                MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_contact),
-            ],
+            VOLUNTEER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_name)],
+            VOLUNTEER_REGION: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region_handler)],
+            VOLUNTEER_HELP_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type_handler)],
+            VOLUNTEER_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_contact_handler)],
             ANONYMOUS_MESSAGE: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, anonymous_message)
             ],
@@ -522,7 +523,9 @@ def main() -> None:
     )
 
     application.add_handler(conv_handler)
+    application.add_handler(CommandHandler("start", start))
     application.run_polling()
 
 if __name__ == "__main__":
     main()
+
