@@ -68,6 +68,7 @@ logger = logging.getLogger(__name__)
     TYPING,
     FAQ_LEGAL,
     MEDICAL_MENU,
+    VOLUNTEER_START_STATE,
     VOLUNTEER_NAME,
     VOLUNTEER_REGION,
     VOLUNTEER_HELP_TYPE,
@@ -77,7 +78,7 @@ logger = logging.getLogger(__name__)
     MEDICAL_FTM_HRT,
     MEDICAL_MTF_HRT,
     MEDICAL_SURGERY_PLANNING,
-) = range(15)
+) = range(16) # Увеличили диапазон состояний
 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
@@ -105,8 +106,8 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(RESOURCE_PROMPT_MESSAGE)
         return TYPING
     elif user_choice == "🤝 Стать волонтером":
-        await update.message.reply_text("Как к вам обращаться?")
-        return VOLUNTEER_NAME
+        await update.message.reply_text("Вы хотите стать волонтером?")
+        return VOLUNTEER_START_STATE # Переход к подтверждению начала диалога волонтера
     elif user_choice == "💸 Поддержать проект":
         context.user_data["request_type"] = "Донат"
         await update.message.reply_text(
@@ -415,6 +416,10 @@ async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_SURGERY_PLANNING
 
+async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("Как к вам обращаться?")
+    return VOLUNTEER_NAME
+
 async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     logger.info(f"User {update.effective_user.id} entered volunteer_name: {update.message.text}")
     context.user_data["volunteer_data"] = {"name": update.message.text}
@@ -463,7 +468,7 @@ ID: {user_id}
     await asyncio.gather(*tasks)
 
     await update.message.reply_text(
-        "Спасибо за вашу готовность помочь! Мы свяжемся с вами в ближайшее время.",
+        "Спасибо за вашу готовность помочь! Ваша заявка принята и будет рассмотрена.",
         reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True),
     )
     context.user_data.clear()
@@ -492,7 +497,7 @@ def main() -> None:
     application = Application.builder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
-        entry_points=[MessageHandler(filters.TEXT & ~filters.COMMAND & filters.Regex("^🤝 Стать волонтером$"), volunteer_name)],
+        entry_points=[MessageHandler(filters.TEXT & ~filters.COMMAND & filters.Regex("^🤝 Стать волонтером$"), volunteer_start)],
         states={
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
             HELP_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)],
@@ -511,6 +516,7 @@ def main() -> None:
             MEDICAL_SURGERY_PLANNING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_planning)
             ],
+            VOLUNTEER_START_STATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_start)], # Ожидаем подтверждение
             VOLUNTEER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_name)],
             VOLUNTEER_REGION: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region_handler)],
             VOLUNTEER_HELP_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type_handler)],
