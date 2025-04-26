@@ -557,36 +557,36 @@ def main() -> None:
     application = Application.builder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
-        states={
-            MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
-            TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing)],
-            FAQ_LEGAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, faq_legal)],
-            MEDICAL_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)], # Use help_menu to show medical options
-            MEDICAL_GENDER_THERAPY_MENU: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, medical_gender_therapy_menu)
-            ],
-            MEDICAL_FTM_HRT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, medical_ftm_hrt)
-            ],
-            MEDICAL_MTF_HRT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, medical_mtf_hrt)
-            ],
-            MEDICAL_SURGERY_PLANNING: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_planning)
-            ],
-            VOLUNTEER: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_name),
-                MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region),
-                MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type),
-                MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_contact),
-            ],
-            ANONYMOUS_MESSAGE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, anonymous_message)
-            ],
-        },
-        fallbacks=[CommandHandler("cancel", cancel)],
-    )
+    entry_points=[CommandHandler("start", start)],
+    states={
+        MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
+        TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing)],
+        FAQ_LEGAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, faq_legal)],
+        MEDICAL_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_menu)], # Измените обратно на medical_menu
+        MEDICAL_GENDER_THERAPY_MENU: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, medical_gender_therapy_menu)
+        ],
+        MEDICAL_FTM_HRT: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, medical_ftm_hrt)
+        ],
+        MEDICAL_MTF_HRT: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, medical_mtf_hrt)
+        ],
+        MEDICAL_SURGERY_PLANNING: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_planning)
+        ],
+        VOLUNTEER: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_name),
+            MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region),
+            MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type),
+            MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_contact),
+        ],
+        ANONYMOUS_MESSAGE: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, anonymous_message)
+        ],
+    },
+    fallbacks=[CommandHandler("cancel", cancel)],
+)
 
     application.add_handler(conv_handler)
 
