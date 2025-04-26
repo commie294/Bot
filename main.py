@@ -362,7 +362,7 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
         )
         return MEDICAL_MTF_HRT
-            elif choice == "Запросить консультацию по женской ГТ":
+    elif choice == "Запросить консультацию по женской ГТ":
         await update.message.reply_text(
             CONSULTATION_PROMPT,
             parse_mode="Markdown",
