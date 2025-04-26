@@ -346,13 +346,6 @@ async def medical_gender_therapy_menu(
         logger.error(f"Ошибка в medical_gender_therapy_menu: {e}", exc_info=True)
         await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
         return MEDICAL_GENDER_THERAPY_MENU
-        else:
-            await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
-            return MEDICAL_GENDER_THERAPY_MENU
-    except Exception as e:
-        logger.error(f"Ошибка в medical_gender_therapy_menu: {e}", exc_info=True)
-        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
-        return MEDICAL_GENDER_THERAPY_MENU
 
 
 async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -370,8 +363,8 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             )
             return MEDICAL_FTM_HRT  # Остаемся в этом состоянии до выбора
         elif choice == "Запросить консультацию по мужской ГТ" or choice == "Консультация":
-            await update.message.reply_text(
-                CONSULTATION_PROMPT,
+            await update.message.
+            CONSULTATION_PROMPT,
                 parse_mode="Markdown",
                 reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
             )
@@ -435,7 +428,7 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 ),
                 disable_web_page_preview=True,
             )
-            return MEDICAL_MTM_HRT  # Возвращаемся в это состояние
+            return MEDICAL_MTF_HRT  # Возвращаемся в это состояние
         else:
             await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
             return MEDICAL_MTF_HRT
@@ -628,4 +621,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
