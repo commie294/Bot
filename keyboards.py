@@ -33,7 +33,6 @@ MEDICAL_MENU_BUTTONS = [
     ["💉HRT"],
     ["❓ F64"],
     ["⚕️ Операции"],
-    ["🗓️ Спланировать операцию"],
     [BACK_BUTTON],
 ]
 
@@ -42,7 +41,5 @@ GENDER_THERAPY_CHOICE_BUTTONS = [
     ["E"],
     [BACK_BUTTON],
 ]
-SURGERY_CHOICE_BUTTONS = [
-    ["🗓️ Спланировать операцию"],
-    [BACK BUTTON],
-]
+
+SURGERY_INFO_KEYBOARD = ReplyKeyboardMarkup([["🗓️ Спланировать операцию"], [BACK_BUTTON]], resize_keyboard=True)
