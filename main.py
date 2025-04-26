@@ -356,12 +356,33 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     choice = update.message.text
     if choice == BACK_BUTTON:
         return await medical_gender_therapy_menu(update, context)
-            elif choice == "DIY": # Добавьте двоеточие здесь
+    elif choice == "DIY": # На том же уровне отступа, что и 'if'
         keyboard = ReplyKeyboardMarkup(
             [["Я понимаю риски, скачать гайд"], [BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True
         )
         await update.message.reply_text(
             DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
+        )
+        return MEDICAL_FTM_HRT
+    elif choice == "Запросить консультацию по мужской ГТ":
+        await update.message.reply_text(
+            CONSULTATION_PROMPT,
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
+        )
+        context.user_data["request_type"] = "Помощь - Консультация по мужской ГТ"
+        return TYPING
+    elif choice == "Я понимаю риски, скачать гайд":
+        link = DIY_HRT_GUIDE_LINK
+        file_name = DIY_HRT_GUIDE_NAME
+        await update.message.reply_text(
+            f"Вы можете скачать гайд по DIY ГТ: [{file_name}]({link})",
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardMarkup(
+                [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON], ["✅ Готово"]],
+                resize_keyboard=True,
+            ),
+            disable_web_page_preview=True,
         )
         return MEDICAL_FTM_HRT
     elif choice == "✅ Готово":
@@ -370,7 +391,6 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_FTM_HRT
-
 async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == BACK_BUTTON:
