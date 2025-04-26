@@ -322,18 +322,33 @@ async def medical_gender_therapy_menu(
                 resize_keyboard=True,
             )
             return MEDICAL_FTM_HRT
+        elif                    ["DIY"],
+                    ["Запросить консультацию по мужской ГТ"],
+                    [BACK_BUTTON],
+                ],
+                resize_keyboard=True,
+            )
+            return MEDICAL_FTM_HRT
         elif choice == "E":
             await update.message.reply_text(
                 FEMINIZING_HRT_INFO,
                 parse_mode="Markdown",
                 reply_markup=ReplyKeyboardMarkup(
-                    [["DIY"],
+                    ["DIY"],
                     ["Запросить консультацию по женской ГТ"],
                     [BACK_BUTTON],
                 ],
                 resize_keyboard=True,
             )
             return MEDICAL_MTF_HRT
+        else:
+            await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
+            return MEDICAL_GENDER_THERAPY_MENU
+    except Exception as e:
+        logger.error(f"Ошибка в medical_gender_therapy_menu: {e}", exc_info=True)
+        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
+        return MEDICAL_GENDER_THERAPY_MENU
+
         else:
             await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
             return MEDICAL_GENDER_THERAPY_MENU
