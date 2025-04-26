@@ -361,7 +361,7 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_GENDER_THERAPY_MENU
 
-async def medical_ftm_hrt(update: : Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "⬅️ Назад":
         return await medical_gender_therapy_menu(update, context)
