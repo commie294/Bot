@@ -51,6 +51,7 @@ from keyboards import (
     SURGERY_CHOICE_BUTTONS,
     BACK_BUTTON,
 )
+from channels import CHANNELS
 
 # Включите логирование
 logging.basicConfig(
@@ -85,6 +86,9 @@ logger = logging.getLogger(__name__)
     MEDICAL_SURGERY_MTF_CONSULT,
     MEDICAL_SURGEON_PLANNING,
 ) = range(24)
+
+YOUR_BOT_TOKEN = "YOUR_BOT_TOKEN"  # Замените на токен вашего бота
+YOUR_ADMIN_CHAT_ID = -123456789  # Замените на ID вашего личного чата (если нужен)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Начинает разговор и выводит приветственное сообщение с главным меню."""
@@ -300,8 +304,7 @@ async def medical_surgery_menu(update: Update, context: ContextTypes.DEFAULT_TYP
             context.user_data["type"] = "Консультация по ФТМ операциям"
             return TYPING
         elif choice == "МТФ Операции":
-            await update.message.
-            reply_text(MTF_SURGERY_INFO, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup([["Запросить консультацию по МТФ операциям"], [BACK_BUTTON]], resize_keyboard=True))
+            await update.message.reply_text(MTF_SURGERY_INFO, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup([["Запросить консультацию по МТФ операциям"], [BACK_BUTTON]], resize_keyboard=True))
             context.user_data["type"] = "Консультация по МТФ операциям"
             return TYPING
         elif choice == BACK_BUTTON:
@@ -333,7 +336,7 @@ async def volunteer_region(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 async def volunteer_help_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Получает тип помощи, которую может оказать волонтер."""
-    context.user_data["volunteer_help_type"] = update.message.text
+    context.user_data["volunteer_help_type"] = update.message.text.lower()
     await update.message.reply_text("Как с вами можно связаться (Telegram, email)?")
     return VOLUNTEER_CONTACT
 
@@ -345,14 +348,27 @@ async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 Регион: {context.user_data.get('volunteer_region', 'не указано')}
 Тип помощи: {context.user_data.get('volunteer_help_type', 'не указано')}
 Контакт: {context.user_data.get('volunteer_contact', 'не указано')}"""
-    await context.bot.send_message(chat_id=YOUR_ADMIN_CHAT_ID, text=volunteer_info)
+
+    # Отправляем информацию обо ВСЕХ волонтерах в t64_admin
+    await context.bot.send_message(chat_id=CHANNELS.get("t64_admin"), text=volunteer_info)
+
+    help_type = context.user_data.get("volunteer_help_type", "").lower()
+    if "юридическ" in help_type:
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=volunteer_info)
+    elif "психологическ" in help_type:
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_psych"), text=volunteer_info)
+    elif "медицинск" in help_type or "финансов" in help_type or "друг" in help_type:
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=volunteer_info)
+    elif "информацион" in help_type or "текст" in help_type or "модерац" in help_type:
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=volunteer_info)
+
     await update.message.reply_text("Спасибо за вашу готовность помочь! Мы свяжемся с вами в ближайшее время.", reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
     return MAIN_MENU
 
 async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Получает и пересылает анонимное сообщение."""
     message = update.message.text
-    await context.bot.send_message(chat_id=YOUR_ADMIN_CHAT_ID, text=f"Анонимное сообщение: {message}")
+    await context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=f"Анонимное сообщение: {message}")
     await update.message.reply_text("Ваше анонимное сообщение отправлено администраторам.", reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
     return MAIN_MENU
 
@@ -361,11 +377,36 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     user_text = update.message.text
     message_type = context.user_data.get("type", "Сообщение")
     consultation_type = context.user_data.get("consultation_type")
-    report = f"Новое сообщение от пользователя:\nТип: {message_type}"
+    report_admin = f"Новое сообщение от пользователя:\nТип: {message_type}"
     if consultation_type:
-        report += f"\nТип консультации: {consultation_type}"
-    report += f"\nТекст: {user_text}"
-    await context.bot.send_message(chat_id=YOUR_ADMIN_CHAT_ID, text=report)
+        report_admin += f"\nТип консультации: {consultation_type}"
+    report_admin += f"\nТекст: {user_text}"
+
+    if not message_type.startswith("Срочная помощь"):
+        await context.bot.send_message(chat_id=YOUR_ADMIN_CHAT_ID, text=report_admin)
+
+    if message_type == "Предложение ресурса":
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text)
+    elif message_type == "Анонимное сообщение":
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text)
+    elif message_type.startswith("Срочная помощь"):
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_admin"), text=user_text)
+    elif message_type.startswith("Сообщение о нарушении (юридическое)"):
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=user_text)
+    elif message_type.startswith("Юридическая консультация"):
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=f"Запрос на консультацию: {user_text}")
+    elif message_type.startswith("Медицинская консультация") or \
+         message_type.startswith("Консультация по мужской ГТ") or \
+         message_type.startswith("Консультация по женской ГТ") or \
+         message_type.startswith("Консультация по ФТМ операциям") or \
+         message_type.startswith("Консультация по МТФ операциям") or \
+         message_type == "Планирование операции":
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"Запрос: {user_text}")
+    elif message_type == "Психологическая помощь":
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_psych"), text=user_text)
+    elif message_type == "Жилье/финансы":
+        await context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=user_text)
+
     await update.message.reply_text(MESSAGE_SENT_SUCCESS, reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True))
     return MAIN_MENU
 
@@ -409,3 +450,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
