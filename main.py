@@ -102,8 +102,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(RESOURCE_PROMPT_MESSAGE)
         return TYPING
     elif user_choice == "🤝 Стать волонтером":
-        context.user_data["request_type"] = "Волонтерство"
-        await update.message.reply_text(VOLUNTEER_MESSAGE)
+        await update.message.reply_text("Как к вам обращаться?")
         return VOLUNTEER
     elif user_choice == "💸 Поддержать проект":
         context.user_data["request_type"] = "Донат"
@@ -150,26 +149,19 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     consultation_type = context.user_data.get("consultation_type")
     user_id = update.effective_user.id
 
-    report_admin = f"Новое сообщение от пользователя:\nID: {user_id}\nТип: {request_type}"
-    if consultation_type:
-        report_admin += f"\nТип консультации: {consultation_type}"
-    report_admin += f"\nТекст: {user_text}"
-
     tasks = []
-    if not request_type.startswith("Срочная помощь"):
-        tasks.append(context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=report_admin))
 
     if request_type == "Ресурс":
         tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text))
     elif request_type == "Анонимное сообщение":
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text))
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=f"Анонимное сообщение от ID {user_id}: {user_text}"))
     elif request_type.startswith("Срочная помощь"):
-        tasks.append(context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=user_text))
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"СРОЧНОЕ СООБЩЕНИЕ ОТ ID {user_id}: {user_text}")) # Или другой подходящий канал
     elif request_type.startswith("Сообщение о нарушении (юридическое)"):
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=user_text))
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=f"Сообщение о нарушении от ID {user_id}: {user_text}"))
     elif request_type.startswith("Юридическая консультация"):
         tasks.append(
-            context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=f"Запрос на консультацию: {user_text}")
+            context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=f"Запрос на консультацию от ID {user_id}: {user_text}")
         )
     elif request_type.startswith("Медицинская консультация") or \
             request_type.startswith("Консультация по мужской ГТ") or \
@@ -177,11 +169,11 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             request_type == "Планирование операции" or \
             request_type == "Планирование ФТМ операции" or \
             request_type == "Планирование МТФ операции":
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"Запрос: {user_text}"))
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"Запрос от ID {user_id}: {user_text}"))
     elif request_type == "Психологическая помощь":
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_psych"), text=user_text))
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_psych"), text=f"Запрос от ID {user_id}: {user_text}"))
     elif request_type == "Жилье/финансы":
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=user_text))
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"Запрос от ID {user_id}: {user_text}"))
 
     await asyncio.gather(*tasks)
 
@@ -370,7 +362,7 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
         )
         return MEDICAL_MTF_HRT
-    elif choice == "Запросить консультацию по женской ГТ":
+            elif choice == "Запросить консультацию по женской ГТ":
         await update.message.reply_text(
             CONSULTATION_PROMPT,
             parse_mode="Markdown",
@@ -428,7 +420,7 @@ async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def volunteer_region(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["volunteer_data"]["region"] = update.message.text
     await update.message.reply_text(
-        "Выберите тип помощи, которую вы можете предложить:",
+        "Чем вы готовы помочь?",
         reply_markup=VOLUNTEER_HELP_TYPE_KEYBOARD,
     )
     return VOLUNTEER
@@ -451,7 +443,7 @@ ID: {user_id}
 Контакт (Telegram): {context.user_data["volunteer_data"].get("contact", "не указано")}
 Контакт (Другое): {context.user_data["volunteer_data"].get("contact_other", "не указано")}"""
 
-    tasks = [context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=volunteer_info)]
+    tasks = [context.bot.send_message(chat_id=CHANNELS.get("t64_admin"), text=volunteer_info)]
 
     help_type = context.user_data["volunteer_data"].get("help_type", "").lower()
     if "юридическ" in help_type:
