@@ -86,15 +86,16 @@ load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 
-# Обновляем кнопки главного меню
-MAIN_MENU_BUTTONS = [
-    ["🆘 Попросить о помощи"],
-    ["➕ Предложить ресурс"],
-    ["🤝 Стать волонтером"],
-    ["💸 Поддержать проект"],
-    ["✉️ Анонимное сообщение"],
-    ["✅ Готово"],
-]
+# Обновляем кнопки главного меню (хотя они уже определены в keyboards.py)
+# Лучше использовать константу из keyboards.py напрямую
+# MAIN_MENU_BUTTONS = [
+#     ["🆘 Попросить о помощи"],
+#     ["➕ Предложить ресурс"],
+#     ["🤝 Стать волонтером"],
+#     ["💸 Поддержать проект"],
+#     ["✉️ Анонимное сообщение"],
+#     ["✅ Готово"],
+# ]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
@@ -148,6 +149,18 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             reply_markup=ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True),
         )
         return MAIN_MENU
+    elif user_choice == "🚨 Срочная помощь":
+        context.user_data["request_type"] = "Срочная помощь"
+        await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True))
+        return TYPING
+    elif user_choice == "🏠 Жилье/финансы":
+        context.user_data["request_type"] = "Жилье/финансы"
+        await update.message.reply_text(HOUSING_FINANCE_PROMPT, reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True))
+        return TYPING
+    elif user_choice == "🧠 Психологическая помощь":
+        context.user_data["request_type"] = "Психологическая помощь"
+        await update.message.reply_text(PSYCHOLOGICAL_HELP_PROMPT, reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True))
+        return TYPING
     elif user_choice == "🩺 Медицинская помощь":
         await update.message.reply_text(
             "Выберите категорию медицинской помощи:",
@@ -160,82 +173,57 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             reply_markup=ReplyKeyboardMarkup(LEGAL_MENU_BUTTONS + [["✅ Готово"]], resize_keyboard=True),
         )
         return FAQ_LEGAL
+    elif user_choice == "✅ Готово":
+        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
     else:
-        context.user_data["request_type"] = "Помощь - " + user_choice
-        await update.message.reply_text(CHOOSE_HELP_CATEGORY, reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True))
-        return TYPING
+        await update.message.reply_text(CHOOSE_HELP_CATEGORY) # Сообщение по умолчанию, если нажата неизвестная кнопка
+        return HELP_MENU
 
 async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_text = update.message.text
     request_type = context.user_data.get("request_type", "Сообщение")
-    consultation_type = context.user_data.get("consultation_type")
     user_id = update.effective_user.id
+    channel_mapping = {
+        "Ресурс": "t64_misc",
+        "Срочная помощь": "t64_gen",
+        "Помощь - Сообщение о нарушении (юридическое)": "t64_legal",
+        "Помощь - Юридическая консультация": "t64_legal",
+        "Помощь - Медицинская консультация": "t64_gen",
+        "Помощь - Консультация по мужской ГТ": "t64_gen",
+        "Помощь - Консультация по женской ГТ": "t64_gen",
+        "Помощь - Планирование операции": "t64_gen",
+        "Помощь - Планирование ФТМ операции": "t64_gen",
+        "Помощь - Планирование МТФ операции": "t64_gen",
+        "Психологическая помощь": "t64_psych",
+        "Жилье/финансы": "t64_gen",
+        "Анонимное сообщение": "t64_misc",
+    }
+    channel_name = channel_mapping.get(request_type)
 
-    tasks = []
-
-    if request_type == "Ресурс":
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text))
+    if channel_name:
+        try:
+            await context.bot.send_message(
+                chat_id=CHANNELS.get(channel_name), text=f"Запрос от ID {user_id}: {user_text}"
+            )
+            await update.message.reply_text(
+                MESSAGE_SENT_SUCCESS,
+                reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
+            )
+            return MAIN_MENU
+        except Exception as e:
+            logger.error(f"Ошибка при отправке сообщения в канал {channel_name}: {e}")
+            await update.message.reply_text(
+                MESSAGE_SEND_ERROR,
+                reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
+            )
+            return MAIN_MENU
+    else:
         await update.message.reply_text(
-            MESSAGE_SENT_SUCCESS,
+            "Произошла ошибка при определении канала для вашего запроса.",
             reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
         )
         return MAIN_MENU
-    elif request_type.startswith("Срочная помощь"):
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"СРОЧНОЕ СООБЩЕНИЕ ОТ ID {user_id}: {user_text}"))
-        await update.message.reply_text(
-            MESSAGE_SENT_SUCCESS,
-            reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
-        )
-        return MAIN_MENU
-    elif request_type.startswith("Сообщение о нарушении (юридическое)"):
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=f"Сообщение о нарушении от ID {user_id}: {user_text}"))
-        await update.message.reply_text(
-            MESSAGE_SENT_SUCCESS,
-            reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
-        )
-        return MAIN_MENU
-    elif request_type.startswith("Юридическая консультация"):
-        tasks.append(
-            context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=f"Запрос на консультацию от ID {user_id}: {user_text}")
-        )
-        await update.message.reply_text(
-            MESSAGE_SENT_SUCCESS,
-            reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
-        )
-        return MAIN_MENU
-    elif request_type.startswith("Медицинская консультация") or \
-            request_type.startswith("Консультация по мужской ГТ") or \
-            request_type.startswith("Консультация по женской ГТ") or \
-            request_type == "Планирование операции" or \
-            request_type == "Планирование ФТМ операции" or \
-            request_type == "Планирование МТФ операции":
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"Запрос от ID {user_id}: {user_text}"))
-        await update.message.reply_text(
-            MESSAGE_SENT_SUCCESS,
-            reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
-        )
-        return MAIN_MENU
-    elif request_type == "Психологическая помощь":
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_psych"), text=f"Запрос от ID {user_id}: {user_text}"))
-        await update.message.reply_text(
-            MESSAGE_SENT_SUCCESS,
-            reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
-        )
-        return MAIN_MENU
-    elif request_type == "Жилье/финансы":
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"Запрос от ID {user_id}: {user_text}"))
-        await update.message.reply_text(
-            MESSAGE_SENT_SUCCESS,
-            reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
-        )
-        return MAIN_MENU
-
-    await asyncio.gather(*tasks)
-    await update.message.reply_text(
-        MESSAGE_SENT_SUCCESS,
-        reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
-    )
-    return MAIN_MENU
 
 async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
@@ -251,7 +239,7 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
-        return MAIN_MENU
+        return FAQ_LEGAL # Остаемся в этом меню, пока не нажмут "Назад" или "Готово"
     elif choice == "📝 Как сменить документы":
         response = DOCUMENTS_MESSAGE
         keyboard = ReplyKeyboardMarkup(
@@ -259,14 +247,13 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             resize_keyboard=True,
         )
         await update.message.reply_text(response, parse_mode="Markdown", reply_markup=keyboard)
-        context.user_data["consultation_type"] = "смена документов"
-        context.user_data["request_type"] = "Помощь - Юридическая"
+        context.user_data["request_type"] = "Помощь - Юридическая консультация (смена документов)"
         return TYPING
     elif choice == "📢 Что такое пропаганда ЛГБТ?":
         response = PROPAGANDA_MESSAGE
         keyboard = ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True)
         await update.message.reply_text(response, parse_mode="Markdown", reply_markup=keyboard)
-        return MAIN_MENU
+        return FAQ_LEGAL # Остаемся в этом меню
     elif choice == "🗣️ Юридическая консультация":
         await update.message.reply_text(
             CONSULTATION_PROMPT,
@@ -283,6 +270,9 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         )
         context.user_data["request_type"] = "Помощь - Сообщение о нарушении (юридическое)"
         return TYPING
+    elif choice == "✅ Готово":
+        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return FAQ_LEGAL
@@ -317,7 +307,7 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
-        return MAIN_MENU
+        return MEDICAL_MENU # Возвращаемся в медицинское меню после просмотра F64
     elif choice == "⚕️ Операции":
         await update.message.reply_text(
             SURGERY_INFO_MESSAGE,
@@ -325,13 +315,9 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             reply_markup=ReplyKeyboardMarkup(SURGERY_INFO_KEYBOARD.keyboard + [["✅ Готово"]], resize_keyboard=True),
         )
         return MEDICAL_SURGERY_PLANNING
-    elif choice == "🗓️ Спланировать операцию":
-        await update.message.reply_text(
-            SURGERY_PLANNING_PROMPT,
-            reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
-        )
-        context.user_data["request_type"] = "Помощь - Планирование операции"
-        return TYPING
+    elif choice == "✅ Готово":
+        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_MENU
@@ -370,6 +356,9 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
             ),
         )
         return MEDICAL_MTF_HRT
+    elif choice == "✅ Готово":
+        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_GENDER_THERAPY_MENU
@@ -392,8 +381,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
-        context.user_data["consultation_type"] = "мужская ГТ"
-        context.user_data["request_type"] = "Помощь - Консультация"
+        context.user_data["request_type"] = "Помощь - Консультация по мужской ГТ"
         return TYPING
     elif choice == "Я понимаю риски, скачать гайд":
         link = DIY_HRT_GUIDE_LINK
@@ -408,6 +396,9 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             disable_web_page_preview=True,
         )
         return MEDICAL_FTM_HRT
+    elif choice == "✅ Готово":
+        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_FTM_HRT
@@ -430,8 +421,7 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
-        context.user_data["consultation_type"] = "женская ГТ"
-        context.user_data["request_type"] = "Помощь - Консультация"
+        context.user_data["request_type"] = "Помощь - Консультация по женской ГТ"
         return TYPING
     elif choice == "Я понимаю риски, скачать гайд":
         link = DIY_HRT_GUIDE_LINK
@@ -446,6 +436,9 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             disable_web_page_preview=True,
         )
         return MEDICAL_MTF_HRT
+    elif choice == "✅ Готово":
+        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_MTF_HRT
@@ -459,13 +452,13 @@ async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT
             FTM_SURGERY_INFO,
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
-        return MEDICAL_MENU
+        return MEDICAL_SURGERY_PLANNING # Остаемся здесь
     elif choice == "МТФ Операции":
         await update.message.reply_text(
             MTF_SURGERY_INFO,
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
-        return MEDICAL_MENU
+        return MEDICAL_SURGERY_PLANNING # Остаемся здесь
     elif choice == "🗓️ Спланировать операцию":
         await update.message.reply_text(
             SURGERY_PLANNING_PROMPT,
@@ -473,6 +466,9 @@ async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT
         )
         context.user_data["request_type"] = "Помощь - Планирование операции"
         return TYPING
+    elif choice == "✅ Готово":
+        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_SURGERY_PLANNING
@@ -492,7 +488,7 @@ async def volunteer_region_handler(update: Update, context: ContextTypes.DEFAULT
     context.user_data["volunteer_data"]["region"] = update.message.text
     await update.message.reply_text(
         "Чем вы готовы помочь?",
-        reply_markup=VOLUNTEER_HELP_TYPE_KEYBOARD.add(["✅ Готово"]),
+        reply_markup=VOLUNTEER_HELP_TYPE_KEYBOARD.add([["✅ Готово"]]),
     )
     return VOLUNTEER_HELP_TYPE
 
@@ -610,3 +606,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
