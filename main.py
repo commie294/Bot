@@ -356,6 +356,7 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
         )
         return MEDICAL_FTM_HRT
     elif choice == "E":
+        await update.message.reply_text(
             FEMINIZING_HRT_INFO,
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardMarkup(
@@ -367,6 +368,7 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
                 ],
                 resize_keyboard=True,
             ),
+        )
         return MEDICAL_MTF_HRT
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
