@@ -43,7 +43,7 @@ from bot_responses import (
     DIY_HRT_GUIDE_LINK,
     DIY_HRT_GUIDE_NAME,
     SURGERY_PLANNING_PROMPT,
-    FAREWELL_MESSAGE,  # Импортируем FAREWELL_MESSAGE
+    FAREWELL_MESSAGE,
 )
 from keyboards import (
     MAIN_MENU_BUTTONS,
@@ -108,7 +108,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True))
         return TYPING
     elif user_choice == "🤝 Стать волонтером":
-        await update.message.reply_text("Вы хотите стать волонтером?", reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True))
+        await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True))
         return VOLUNTEER_START_STATE
     elif user_choice == "💸 Поддержать проект":
         context.user_data["request_type"] = "Донат"
@@ -166,7 +166,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
     else:
-        await update.message.reply_text(CHOOSE_HELP_CATEGORY) # Сообщение по умолчанию, если нажата неизвестная кнопка
+        await update.message.reply_text(CHOOSE_HELP_CATEGORY)
         return HELP_MENU
 
 async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -228,7 +228,7 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
-        return FAQ_LEGAL # Остаемся в этом меню
+        return FAQ_LEGAL
     elif choice == "📝 Как сменить документы":
         response = DOCUMENTS_MESSAGE
         keyboard = ReplyKeyboardMarkup(
@@ -242,7 +242,7 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         response = PROPAGANDA_MESSAGE
         keyboard = ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True)
         await update.message.reply_text(response, parse_mode="Markdown", reply_markup=keyboard)
-        return FAQ_LEGAL # Остаемся в этом меню
+        return FAQ_LEGAL
     elif choice == "🗣️ Юридическая консультация":
         await update.message.reply_text(
             CONSULTATION_PROMPT,
@@ -296,7 +296,7 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
-        return MEDICAL_MENU # Возвращаемся в медицинское меню после просмотра F64
+        return MEDICAL_MENU
     elif choice == "⚕️ Операции":
         await update.message.reply_text(
             SURGERY_INFO_MESSAGE,
@@ -356,7 +356,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     choice = update.message.text
     if choice == BACK_BUTTON:
         return await medical_gender_therapy_menu(update, context)
-    elif choice == "DIY": # Теперь код внутри elif с отступом
+    elif choice == "DIY":
         keyboard = ReplyKeyboardMarkup(
             [["Я понимаю риски, скачать гайд"], [BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True
         )
@@ -390,6 +390,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_FTM_HRT
+
 async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == BACK_BUTTON:
@@ -438,13 +439,13 @@ async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT
             FTM_SURGERY_INFO,
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
-        return MEDICAL_SURGERY_PLANNING # Остаемся здесь
+        return MEDICAL_SURGERY_PLANNING
     elif choice == "МТФ Операции":
         await update.message.reply_text(
             MTF_SURGERY_INFO,
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
-        return MEDICAL_SURGERY_PLANNING # Остаемся здесь
+        return MEDICAL_SURGERY_PLANNING
     elif choice == "🗓️ Спланировать операцию":
         await update.message.reply_text(
             SURGERY_PLANNING_PROMPT,
@@ -473,7 +474,7 @@ async def volunteer_region_handler(update: Update, context: ContextTypes.DEFAULT
     context.user_data["volunteer_data"]["region"] = update.message.text
     await update.message.reply_text(
         "Чем вы готовы помочь?",
-        reply_markup=VOLUNTEER_HELP_TYPE_KEYBOARD, # Убрал .add([["✅ Готово"]])
+        reply_markup=VOLUNTEER_HELP_TYPE_KEYBOARD,
     )
     return VOLUNTEER_HELP_TYPE
 
@@ -554,8 +555,8 @@ def main() -> None:
     application = Application.builder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
-        entry_points=[MessageHandler(filters.TEXT & ~filters.COMMAND & filters.Regex("^🤝 Стать волонтером$"), volunteer_start)],
-        states        ={
+        entry_points=[CommandHandler("start", start)],
+        states={
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
             HELP_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)],
             TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing)],
@@ -582,14 +583,11 @@ def main() -> None:
                 MessageHandler(filters.TEXT & ~filters.COMMAND, anonymous_message)
             ],
         },
-        fallbacks=[MessageHandler(filters.TEXT & ~filters.COMMAND & filters.Regex("^✅ Готово$"), main_menu)], # Обрабатываем "Готово" и возвращаем в главное меню
+        fallbacks=[CommandHandler("cancel", cancel)],
     )
 
     application.add_handler(conv_handler)
-    application.add_handler(CommandHandler("start", start))
     application.run_polling()
 
 if __name__ == "__main__":
     main()
-
-
