@@ -76,7 +76,7 @@ logger = logging.getLogger(__name__)
     MEDICAL_FTM_HRT,
     MEDICAL_MTF_HRT,
     MEDICAL_SURGERY_PLANNING,
-) = range(13)
+) = range(12)
 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
