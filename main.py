@@ -228,7 +228,7 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
         )
-        return FAQ_LEGAL # Остаемся в этом меню, пока не нажмут "Назад" или "Готово"
+        return FAQ_LEGAL # Остаемся в этом меню
     elif choice == "📝 Как сменить документы":
         response = DOCUMENTS_MESSAGE
         keyboard = ReplyKeyboardMarkup(
@@ -386,8 +386,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
         return MEDICAL_FTM_HRT
     elif choice == "✅ Готово":
-        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        return await medical_gender_therapy_menu(update, context)
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_FTM_HRT
@@ -425,8 +424,7 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
         return MEDICAL_MTF_HRT
     elif choice == "✅ Готово":
-        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        return await medical_gender_therapy_menu(update, context)
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_MTF_HRT
@@ -455,8 +453,7 @@ async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT
         context.user_data["request_type"] = "Помощь - Планирование операции"
         return TYPING
     elif choice == "✅ Готово":
-        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        return await medical_menu(update, context)
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_SURGERY_PLANNING
@@ -558,7 +555,7 @@ def main() -> None:
 
     conv_handler = ConversationHandler(
         entry_points=[MessageHandler(filters.TEXT & ~filters.COMMAND & filters.Regex("^🤝 Стать волонтером$"), volunteer_start)],
-        states={
+        states        ={
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
             HELP_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)],
             TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing)],
@@ -594,3 +591,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
