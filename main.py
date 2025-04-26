@@ -230,7 +230,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         elif choice == BACK_BUTTON:
             return await main_menu(update, context)
         else:
-            await update.message.reply_text(CHOOSE_HELP_CATEGORY)
+            await update.message.reply_text(CHOOSE_FROM_MENU)
             return HELP_MENU
     except Exception as e:
         logger.error(f"Ошибка в help_menu: {e}", exc_info=True)
