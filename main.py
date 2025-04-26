@@ -184,47 +184,56 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     if request_type == "Анонимное сообщение":
         return await anonymous_message(update, context)
 
-    user_id = update.effective_user.id
-    channel_mapping = {
-        "Ресурс": "t64_misc",
-        "Срочная помощь": "t64_gen",
-        "Помощь - Сообщение о нарушении (юридическое)": "t64_legal",
-        "Помощь - Юридическая консультация": "t64_legal",
-        "Помощь - Медицинская консультация": "t64_gen",
-        "Помощь - Консультация по мужской ГТ": "t64_gen",
-        "Помощь - Консультация по женской ГТ": "t64_gen",
-        "Помощь - Планирование операции": "t64_gen",
-        "Помощь - Планирование ФТМ операции": "t64_gen",
-        "Помощь - Планирование МТФ операции": "t64_gen",
-        "Психологическая помощь": "t64_psych",
-        "Жилье/финансы": "t64_gen",
-    }
+    # Проверяем, что сообщение пользователя не пустое и не является просто "✅ Готово"
+    if user_text and user_text != "✅ Готово":
+        user_id = update.effective_user.id
+        channel_mapping = {
+            "Ресурс": "t64_misc",
+            "Срочная помощь": "t64_gen",
+            "Помощь - Сообщение о нарушении (юридическое)": "t64_legal",
+            "Помощь - Юридическая консультация": "t64_legal",
+            "Помощь - Медицинская консультация": "t64_gen",
+            "Помощь - Консультация по мужской ГТ": "t64_gen",
+            "Помощь - Консультация по женской ГТ": "t64_gen",
+            "Помощь - Планирование операции": "t64_gen",
+            "Помощь - Планирование ФТМ операции": "t64_gen",
+            "Помощь - Планирование МТФ операции": "t64_gen",
+            "Психологическая помощь": "t64_psych",
+            "Жилье/финансы": "t64_gen",
+        }
 
-    channel_name = channel_mapping.get(request_type)
-    if channel_name:
-        try:
-            await context.bot.send_message(
-                chat_id=CHANNELS.get(channel_name),
-                text=f"Запрос от пользователя:\n\n{user_text}"
-            )
+        channel_name = channel_mapping.get(request_type)
+        if channel_name:
+            try:
+                await context.bot.send_message(
+                    chat_id=CHANNELS.get(channel_name),
+                    text=f"Запрос от пользователя:\n\n{user_text}"
+                )
+                await update.message.reply_text(
+                    MESSAGE_SENT_SUCCESS,
+                    reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
+                )
+                return MAIN_MENU
+            except Exception as e:
+                logger.error(f"Ошибка при отправке сообщения: {e}", exc_info=True)
+                await update.message.reply_text(
+                    MESSAGE_SEND_ERROR,
+                    reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
+                )
+                return MAIN_MENU
+        else:
             await update.message.reply_text(
-                MESSAGE_SENT_SUCCESS,
+                "Произошла ошибка при обработке вашего запроса.",
                 reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
             )
             return MAIN_MENU
-        except Exception as e:
-            logger.error(f"Ошибка при отправке сообщения: {e}", exc_info=True)
-            await update.message.reply_text(
-                MESSAGE_SEND_ERROR,
-                reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
-            )
-            return MAIN_MENU
-    else:
-        await update.message.reply_text(
-            "Произошла ошибка при обработке вашего запроса.",
-            reply_markup=ReplyKeyboardMarkup([["✅ Готово"]], resize_keyboard=True),
-        )
-        return MAIN_MENU
+    elif request_type != "Анонимное сообщение" and user_text == "✅ Готово":
+        # Если пользователь нажал "Готово" без ввода сообщения, возвращаем в предыдущее меню
+        await update.message.reply_text("Пожалуйста, введите ваш запрос.", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True))
+        return HELP_MENU # Или MAIN_MENU, в зависимости от того, откуда был сделан запрос
+    # Если сообщение пустое или только "✅ Готово" для анонимных сообщений, ничего не делаем здесь,
+    # так как обработка анонимных сообщений идёт в отдельной функции.
+    return TYPING
 
 async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message.text
