@@ -67,7 +67,7 @@ F64_MESSAGE = """
 Информация о диагнозе F64 (транссексуализм) в МКБ-10...
 [Дополнительная информация или ссылки]
 """
-DIY_HRT_GUIDE_LINK = "https://example.com/diy_hrt_guide.pdf"  # Замените на реальную ссылку
+DIY_HRT_GUIDE_LINK = "https://drive.google.com/uc?export=download&id=1GQfuFl3RWm6gAEt-KIj4kLlimL8ldg7F"  # Замените на реальную ссылку
 DIY_HRT_GUIDE_NAME = "Гайд по DIY ГТ (неофициальный)"
 SURGERY_PLANNING_PROMPT = "Опишите, пожалуйста, какую операцию вы планируете и какая информация вам нужна:"
 FAREWELL_MESSAGE = "Спасибо за обращение! Если у вас возникнут еще вопросы, обращайтесь."
