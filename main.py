@@ -352,7 +352,8 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         return MEDICAL_SURGERY_PLANNING
     elif choice == "✅ Готово":
         await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END     else:
+        return ConversationHandler.END
+    else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_MENU
 
