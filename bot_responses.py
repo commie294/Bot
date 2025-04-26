@@ -182,3 +182,4 @@ GENDER_THERAPY_MESSAGE = (
 )
 LEGAL_FAQ_MESSAGE = "Выберите категорию юридической помощи:"
 MEDICAL_FAQ_MESSAGE = "Выберите категорию медицинской помощи:"
+CHOOSE_HELP_CATEGORY = "Пожалуйста, выберите опцию из меню помощи."
