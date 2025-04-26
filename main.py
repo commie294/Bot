@@ -79,6 +79,7 @@ logger = logging.getLogger(__name__)
     MEDICAL_SURGERY_PLANNING,
 ) = range(12)
 
+# Загрузка переменных окружения из файла .env
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
@@ -346,7 +347,7 @@ async def medical_gender_therapy_menu(
             return MEDICAL_GENDER_THERAPY_MENU
     except Exception as e:
         logger.error(f"Ошибка в medical_gender_therapy_menu: {e}", exc_info=True)
-        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
+        awaitupdate.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
         return MEDICAL_GENDER_THERAPY_MENU
 
 
