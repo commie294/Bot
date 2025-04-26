@@ -306,7 +306,7 @@ async def medical_gender_therapy_menu(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
     """Обрабатывает выбор направления гормональной терапии."""
-            try:
+    try:
         choice = update.message.text
         if choice == BACK_BUTTON:
             return await medical_menu(update, context)
