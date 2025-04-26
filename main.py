@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os
+import asyncio
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -139,20 +140,21 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         report_admin += f"\nТип консультации: {consultation_type}"
     report_admin += f"\nТекст: {user_text}"
 
+    tasks = []
     if not request_type.startswith("Срочная помощь"):
-        await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=report_admin)  # Исправлено на ADMIN_CHAT_ID
+        tasks.append(context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=report_admin))
 
     if request_type == "Ресурс":
-        await context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text)
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text))
     elif request_type == "Анонимное сообщение":
-        await context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text)
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text))
     elif request_type.startswith("Срочная помощь"):
-        await context.bot.send_message(chat_id=CHANNELS.get("t64_admin"), text=user_text)
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_admin"), text=user_text))
     elif request_type.startswith("Сообщение о нарушении (юридическое)"):
-        await context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=user_text)
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=user_text))
     elif request_type.startswith("Юридическая консультация"):
-        await context.bot.send_message(
-            chat_id=CHANNELS.get("t64_legal"), text=f"Запрос на консультацию: {user_text}"
+        tasks.append(
+            context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=f"Запрос на консультацию: {user_text}")
         )
     elif request_type.startswith("Медицинская консультация") or \
             request_type.startswith("Консультация по мужской ГТ") or \
@@ -160,15 +162,13 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             request_type == "Планирование операции" or \
             request_type == "Планирование ФТМ операции" or \
             request_type == "Планирование МТФ операции":
-        await context.bot.send_message(
-            chat_id=CHANNELS.get("t64_gen"), text=f"Запрос: {user_text}"
-        )
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"Запрос: {user_text}"))
     elif request_type == "Психологическая помощь":
-        await context.bot.send_message(
-            chat_id=CHANNELS.get("t64_psych"), text=user_text
-        )
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_psych"), text=user_text))
     elif request_type == "Жилье/финансы":
-        await context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=user_text)
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=user_text))
+
+    await asyncio.gather(*tasks)
 
     await update.message.reply_text(
         MESSAGE_SENT_SUCCESS,
@@ -512,34 +512,27 @@ async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 Контакт (Telegram): {context.user_data["volunteer_data"].get("contact", "не указано")}
 Контакт (Другое): {context.user_data["volunteer_data"].get("contact_other", "не указано")}"""
 
-    # Отправляем информацию обо ВСЕХ волонтерах в t64_admin
-    await context.bot.send_message(chat_id=CHANNELS.get("t64_admin"), text=volunteer_info)
+    tasks = [context.bot.send_message(chat_id=CHANNELS.get("t64_admin"), text=volunteer_info)]
 
     help_type = context.user_data["volunteer_data"].get("help_type", "").lower()
     if "юридическ" in help_type:
-        await context.bot.send_message(
-            chat_id=CHANNELS.get("t64_legal"), text=volunteer_info
-        )
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=volunteer_info))
     elif "психологическ" in help_type:
-        await context.bot.send_message(
-            chat_id=CHANNELS.get("t64_psych"), text=volunteer_info
-        )
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_psych"), text=volunteer_info))
     elif (
         "медицинск" in help_type
         or "финансов" in help_type
         or "друг" in help_type
     ):
-        await context.bot.send_message(
-            chat_id=CHANNELS.get("t64_gen"), text=volunteer_info
-        )
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=volunteer_info))
     elif (
         "информацион" in help_type
         or "текст" in help_type
         or "модерац" in help_type
     ):
-        await context.bot.send_message(
-            chat_id=CHANNELS.get("t64_misc"), text=volunteer_info
-        )
+        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=volunteer_info))
+
+    await asyncio.gather(*tasks)
 
     await update.message.reply_text(
         "Спасибо за вашу готовность помочь! Мы свяжемся с вами в ближайшее время.",
