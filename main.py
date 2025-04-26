@@ -52,6 +52,7 @@ from keyboards import (
     GENDER_THERAPY_CHOICE_BUTTONS,
     BACK_BUTTON,
     SURGERY_INFO_KEYBOARD,
+    VOLUNTEER_HELP_TYPE_KEYBOARD, # Import the new keyboard
 )
 from channels import CHANNELS
 
@@ -303,8 +304,16 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
         return MEDICAL_MTF_HRT
 
-async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if choice == "🗓️ Спланировать операцию":
+async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Обрабатывает вопросы по планированию операций."""
+    choice = update.message.text
+    if choice == "ФТМ Операции":
+        await update.message.reply_text(FTM_SURGERY_INFO, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+        return MEDICAL_SURGERY_MENU
+    elif choice == "МТФ Операции":
+        await update.message.reply_text(MTF_SURGERY_INFO, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+        return MEDICAL_SURGERY_MENU
+    elif choice == "🗓️ Спланировать операцию":
         await update.message.reply_text(SURGERY_PLANNING_PROMPT)
         context.user_data["type"] = "Планирование операции"
         return TYPING
@@ -328,23 +337,32 @@ async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def volunteer_region(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Получает регион волонтера."""
     context.user_data["volunteer_region"] = update.message.text
-    await update.message.reply_text("Какая помощь вам интересна (например, юридическая, психологическая, техническая)?")
+    await update.message.reply_text(
+        "Выберите тип помощи, которую вы можете предложить:",
+        reply_markup=VOLUNTEER_HELP_TYPE_KEYBOARD
+    )
     return VOLUNTEER_HELP_TYPE
 
 async def volunteer_help_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Получает тип помощи, которую может оказать волонтер."""
-    context.user_data["volunteer_help_type"] = update.message.text.lower()
+    context.user_data["volunteer_help_type"] = update.message.text
+    user_contact = update.effective_user.username
+    if user_contact:
+        context.user_data["volunteer_contact"] = user_contact
+    else:
+        context.user_data["volunteer_contact"] = "не указан"
     await update.message.reply_text("Как с вами можно связаться (Telegram, email)?")
     return VOLUNTEER_CONTACT
 
 async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Получает контактные данные волонтера и завершает сбор."""
-    context.user_data["volunteer_contact"] = update.message.text
+    context.user_data["volunteer_contact_other"] = update.message.text
     volunteer_info = f"""Новый волонтер!
 Имя: {context.user_data.get('volunteer_name', 'не указано')}
 Регион: {context.user_data.get('volunteer_region', 'не указано')}
 Тип помощи: {context.user_data.get('volunteer_help_type', 'не указано')}
-Контакт: {context.user_data.get('volunteer_contact', 'не указано')}"""
+Контакт (Telegram): @{context.user_data.get('volunteer_contact', 'не указано')}
+Контакт (Другое): {context.user_data.get('volunteer_contact_other', 'не указано')}"""
 
     # Отправляем информацию обо ВСЕХ волонтерах в t64_admin
     await context.bot.send_message(chat_id=CHANNELS.get("t64_admin"), text=volunteer_info)
@@ -380,7 +398,7 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     report_admin += f"\nТекст: {user_text}"
 
     if not message_type.startswith("Срочная помощь"):
-        await context.bot.send_message(chat_id=YOUR_ADMIN_CHAT_ID, text=report_admin)
+        await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=report_admin) # Исправлено на ADMIN_CHAT_ID
 
     if message_type == "Предложение ресурса":
         await context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text)
