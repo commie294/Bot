@@ -61,7 +61,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-logger.info(f"Сообщение отправлено)
+logger.info(f"Сообщение отправлено")
 
 (
     START,
@@ -359,7 +359,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return await medical_gender_therapy_menu(update, context)
     elif choice == "DIY":
         keyboard = ReplyKeyboardMarkup(
-            [["Я понимаю риски, скачать гайд"], [BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True
+            [["Я понимаю риски, скачать гайд"], [BACK_BUTTON], ["✅ Готово"]], resize keyboard=True
         )
         await update.message.reply_text(
             DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
@@ -535,14 +535,14 @@ ID: {user_id}
 
 async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message.text
-    user_id = update.effective_user.id
     await context.bot.send_message(
-        chat_id=CHANNELS.get("t64_misc"), text=f"Анонимное сообщение от ID {user_id}: {message}"
+        chat_id=CHANNELS.get("t64_misc"), text=f"🔒 Анонимное сообщение:\n\n{message}"
     )
     await update.message.reply_text(
-        "Ваше анонимное сообщение отправлено администраторам.",
+        "✅ Ваше сообщение отправлено анонимно. Никто (даже администраторы) не увидит ваш ID.",
         reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True),
     )
+    context.user_data.clear()
     return MAIN_MENU
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -592,3 +592,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
