@@ -88,8 +88,9 @@ logger = logging.getLogger(__name__)
     MEDICAL_SURGERY_PLANNING,
 ) = range(25)
 
-YOUR_BOT_TOKEN = "YOUR_BOT_TOKEN"  # Замените на токен вашего бота
-YOUR_ADMIN_CHAT_ID = -123456789  # Замените на ID вашего личного чата (если нужен)
+load_dotenv()
+ TOKEN = os.getenv("BOT_TOKEN")
+ ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Начинает разговор и выводит приветственное сообщение с главным меню."""
