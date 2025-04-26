@@ -356,8 +356,8 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     choice = update.message.text
     if choice == BACK_BUTTON:
         return await medical_gender_therapy_menu(update, context)
-    elif choice == "DIY:
-    keyboard = ReplyKeyboardMarkup(
+        elif choice == "DIY":
+        keyboard = ReplyKeyboardMarkup(
             [["Я понимаю риски, скачать гайд"], [BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True
         )
         await update.message.reply_text(
