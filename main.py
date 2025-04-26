@@ -86,17 +86,6 @@ load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 
-# Обновляем кнопки главного меню (хотя они уже определены в keyboards.py)
-# Лучше использовать константу из keyboards.py напрямую
-# MAIN_MENU_BUTTONS = [
-#     ["🆘 Попросить о помощи"],
-#     ["➕ Предложить ресурс"],
-#     ["🤝 Стать волонтером"],
-#     ["💸 Поддержать проект"],
-#     ["✉️ Анонимное сообщение"],
-#     ["✅ Готово"],
-# ]
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         START_MESSAGE,
@@ -367,7 +356,8 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     choice = update.message.text
     if choice == BACK_BUTTON:
         return await medical_gender_therapy_menu(update, context)
-    elif choice == "DIY":
+    elif choice == "DIY
+    :
         keyboard = ReplyKeyboardMarkup(
             [["Я понимаю риски, скачать гайд"], [BACK_BUTTON], ["✅ Готово"]], resize_keyboard=True
         )
@@ -488,7 +478,7 @@ async def volunteer_region_handler(update: Update, context: ContextTypes.DEFAULT
     context.user_data["volunteer_data"]["region"] = update.message.text
     await update.message.reply_text(
         "Чем вы готовы помочь?",
-        reply_markup=VOLUNTEER_HELP_TYPE_KEYBOARD.add([["✅ Готово"]]),
+        reply_markup=VOLUNTEER_HELP_TYPE_KEYBOARD, # Убрал .add([["✅ Готово"]])
     )
     return VOLUNTEER_HELP_TYPE
 
@@ -606,4 +596,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
