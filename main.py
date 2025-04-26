@@ -48,8 +48,8 @@ from keyboards import (
     LEGAL_MENU_BUTTONS,
     MEDICAL_MENU_BUTTONS,
     GENDER_THERAPY_CHOICE_BUTTONS,
-    SURGERY_CHOICE_BUTTONS,
     BACK_BUTTON,
+    SURGERY_INFO_KEYBOARD,
 )
 from channels import CHANNELS
 
@@ -85,7 +85,8 @@ logger = logging.getLogger(__name__)
     MEDICAL_SURGERY_FTM_CONSULT,
     MEDICAL_SURGERY_MTF_CONSULT,
     MEDICAL_SURGEON_PLANNING,
-) = range(24)
+    MEDICAL_SURGERY_PLANNING,
+) = range(25)
 
 YOUR_BOT_TOKEN = "YOUR_BOT_TOKEN"  # Замените на токен вашего бота
 YOUR_ADMIN_CHAT_ID = -123456789  # Замените на ID вашего личного чата (если нужен)
@@ -98,24 +99,24 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Обрабатывает выбор пользователя в главном меню."""
     user_choice = update.message.text
-    if user_choice == "Попросить о помощи":
+    if user_choice == "🆘 Попросить о помощи":
         await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=ReplyKeyboardMarkup(HELP_MENU_BUTTONS, resize_keyboard=True), parse_mode="Markdown")
         return HELP_MENU
-    elif user_choice == "Предложить ресурс":
+    elif user_choice == "➕ Предложить ресурс":
         await update.message.reply_text(RESOURCE_PROMPT_MESSAGE)
         context.user_data["type"] = "Предложение ресурса"
         return TYPING
-    elif user_choice == "Стать волонтером":
+    elif user_choice == "🤝 Стать волонтером":
         await update.message.reply_text(VOLUNTEER_MESSAGE)
         return await volunteer_start(update, context)
-    elif user_choice == "Поддержать проект":
+    elif user_choice == "💸 Поддержать проект":
         await update.message.reply_text(DONATE_MESSAGE, parse_mode="Markdown", disable_web_page_preview=True)
         context.user_data["type"] = "Поддержка проекта"
         return TYPING
-    elif user_choice == "Анонимное сообщение":
+    elif user_choice == "✉️ Анонимное сообщение":
         await update.message.reply_text("Пожалуйста, напишите ваше анонимное сообщение:")
         context.user_data["type"] = "Анонимное сообщение"
-        return TYPING
+        return ANONYMOUS_MESSAGE
     else:
         await update.message.reply_text(CHOOSE_FROM_MENU)
         return MAIN_MENU
@@ -123,14 +124,14 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Обрабатывает выбор пользователя в меню помощи."""
     user_choice = update.message.text
-    if user_choice == "🆘 Срочная помощь":
+    if user_choice == "🚨 Срочная помощь":
         await update.message.reply_text(EMERGENCY_MESSAGE, parse_mode="Markdown")
         context.user_data["type"] = "Срочная помощь"
         return TYPING
-    elif user_choice == "💼 Юридическая помощь":
+    elif user_choice == "⚖️ Юридическая помощь":
         await update.message.reply_text("Выберите интересующий вас юридический вопрос:", reply_markup=ReplyKeyboardMarkup(LEGAL_MENU_BUTTONS, resize_keyboard=True), parse_mode="Markdown")
         return FAQ_LEGAL
-    elif user_choice == "🏥 Медицинская помощь":
+    elif user_choice == "🩺 Медицинская помощь":
         await update.message.reply_text("Выберите интересующий вас медицинский вопрос:", reply_markup=ReplyKeyboardMarkup(MEDICAL_MENU_BUTTONS, resize_keyboard=True), parse_mode="Markdown")
         return MEDICAL_MENU
     elif user_choice == "🏠 Жилье/финансы":
@@ -152,25 +153,25 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Обрабатывает вопросы в разделе юридической помощи."""
     try:
         choice = update.message.text
-        if choice == "ЛГБТ+ семьи":
+        if choice == "🏳️‍🌈 ЛГБТ+ семьи":
             await update.message.reply_text(LGBT_FAMILIES_INFO, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
             return HELP_MENU
-        elif choice == "Как сменить документы":
+        elif choice == "📝 Как сменить документы":
             response = DOCUMENTS_MESSAGE
             keyboard = ReplyKeyboardMarkup([["Запросить консультацию по смене документов"], [BACK_BUTTON]], resize_keyboard=True)
             await update.message.reply_text(response, parse_mode="Markdown", reply_markup=keyboard)
             context.user_data["consultation_type"] = "смена документов"
             return TYPING
-        elif choice == "Что такое пропаганда ЛГБТ?":
+        elif choice == "📢 Что такое пропаганда ЛГБТ?":
             response = PROPAGANDA_MESSAGE
             keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
             await update.message.reply_text(response, parse_mode="Markdown", reply_markup=keyboard)
             return HELP_MENU
-        elif choice == "Консультация":
+        elif choice == "🗣️ Юридическая консультация":
             await update.message.reply_text(CONSULTATION_PROMPT, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
             context.user_data["type"] = "Юридическая консультация"
             return TYPING
-        elif choice == "Сообщить о нарушении":
+        elif choice == "🚨 Сообщить о нарушении":
             await update.message.reply_text(REPORT_ABUSE_MESSAGE, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
             context.user_data["type"] = "Сообщение о нарушении (юридическое)"
             return TYPING
@@ -188,16 +189,20 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     """Обрабатывает выбор пользователя в медицинском меню."""
     try:
         choice = update.message.text
-        if choice == "ГТ":
+        if choice == "🗣️ Медицинская консультация":
+            await update.message.reply_text(CONSULTATION_PROMPT)
+            context.user_data["type"] = "Медицинская консультация"
+            return TYPING
+        elif choice == "💉HRT":
             await update.message.reply_text(GENDER_THERAPY_MESSAGE, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup(GENDER_THERAPY_CHOICE_BUTTONS, resize_keyboard=True))
             return MEDICAL_GENDER_THERAPY_MENU
-        elif choice == "F64":
+        elif choice == "❓ F64":
             await update.message.reply_text(F64_MESSAGE, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
             return MEDICAL_MENU
-        elif choice == "Операции":
-            await update.message.reply_text(SURGERY_INFO_MESSAGE, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup(SURGERY_CHOICE_BUTTONS, resize_keyboard=True))
-            return MEDICAL_SURGERY_MENU
-        elif choice == "Спланировать операцию":
+        elif choice == "⚕️ Операции":
+            await update.message.reply_text(SURGERY_INFO_MESSAGE, parse_mode="Markdown", reply_markup=SURGERY_INFO_KEYBOARD)
+            return MEDICAL_SURGERY_PLANNING  # Переходим в новое состояние для планирования
+        elif choice == "🗓️ Спланировать операцию":
             await update.message.reply_text(SURGERY_PLANNING_PROMPT)
             context.user_data["type"] = "Планирование операции"
             return TYPING
@@ -215,10 +220,10 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
     """Обрабатывает выбор направления гормональной терапии."""
     try:
         choice = update.message.text
-        if choice == "Мужская ГТ":
+        if choice == "T":
             await update.message.reply_text(MASCULINIZING_HRT_INFO, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup([["DIY"], ["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]], resize_keyboard=True))
             return MEDICAL_FTM_HRT
-        elif choice == "Женская ГТ":
+        elif choice == "E":
             await update.message.reply_text(FEMINIZING_HRT_INFO, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup([["DIY"], ["Запросить консультацию по женской ГТ"], [BACK_BUTTON]], resize_keyboard=True))
             return MEDICAL_MTF_HRT
         elif choice == BACK_BUTTON:
@@ -295,27 +300,18 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
         return MEDICAL_MTF_HRT
 
-async def medical_surgery_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Обрабатывает выбор типа хирургического вмешательства."""
-    try:
-        choice = update.message.text
-        if choice == "ФТМ Операции":
-            await update.message.reply_text(FTM_SURGERY_INFO, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup([["Запросить консультацию по ФТМ операциям"], [BACK_BUTTON]], resize_keyboard=True))
-            context.user_data["type"] = "Консультация по ФТМ операциям"
-            return TYPING
-        elif choice == "МТФ Операции":
-            await update.message.reply_text(MTF_SURGERY_INFO, parse_mode="Markdown", reply_markup=ReplyKeyboardMarkup([["Запросить консультацию по МТФ операциям"], [BACK_BUTTON]], resize_keyboard=True))
-            context.user_data["type"] = "Консультация по МТФ операциям"
-            return TYPING
-        elif choice == BACK_BUTTON:
-            return await medical_menu(update, context)
-        else:
-            await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
-            return MEDICAL_SURGERY_MENU
-    except Exception as e:
-        logger.error(f"Ошибка в medical_surgery_menu: {e}", exc_info=True)
-        await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
-        return MEDICAL_SURGERY_MENU
+async def medical_surgery_planning(update: Update, context:
+    """Обрабатывает выбор планирования операции."""
+    choice = update.message.text
+    if choice == "🗓️ Спланировать операцию":
+        await update.message.reply_text(SURGERY_PLANNING_PROMPT)
+        context.user_data["type"] = "Планирование операции"
+        return TYPING
+    elif choice == BACK_BUTTON:
+        return await medical_menu(update, context)
+    else:
+        await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
+        return MEDICAL_SURGERY_PLANNING
 
 async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Начало сбора информации о волонтере."""
@@ -398,9 +394,9 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     elif message_type.startswith("Медицинская консультация") or \
          message_type.startswith("Консультация по мужской ГТ") or \
          message_type.startswith("Консультация по женской ГТ") or \
-         message_type.startswith("Консультация по ФТМ операциям") or \
-         message_type.startswith("Консультация по МТФ операциям") or \
-         message_type == "Планирование операции":
+         message_type == "Планирование операции" or \
+         message_type == "Планирование ФТМ операции" or \
+         message_type == "Планирование МТФ операции":
         await context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=f"Запрос: {user_text}")
     elif message_type == "Психологическая помощь":
         await context.bot.send_message(chat_id=CHANNELS.get("t64_psych"), text=user_text)
@@ -431,7 +427,8 @@ def main() -> None:
             MEDICAL_GENDER_THERAPY_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_gender_therapy_menu)],
             MEDICAL_FTM_HRT: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_ftm_hrt)],
             MEDICAL_MTF_HRT: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_mtf_hrt)],
-            MEDICAL_SURGERY_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_menu)],
+            MEDICAL_SURGERY_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_menu)], # Этот обработчик больше не нужен для выбора планирования
+            MEDICAL_SURGERY_PLANNING: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_planning)], # Добавлено новое состояние
             TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing)],
             VOLUNTEER_START: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_name)],
             VOLUNTEER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region)],
@@ -450,4 +447,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
