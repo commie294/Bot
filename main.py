@@ -327,7 +327,7 @@ async def medical_gender_therapy_menu(
                 FEMINIZING_HRT_INFO,
                 parse_mode="Markdown",
                 reply_markup=ReplyKeyboardMarkup(
-                    ["DIY"],
+                    [["DIY"],
                     ["Запросить консультацию по женской ГТ"],
                     [BACK_BUTTON],
                 ],
