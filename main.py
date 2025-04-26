@@ -134,8 +134,9 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     user_text = update.message.text
     request_type = context.user_data.get("request_type", "Сообщение")
     consultation_type = context.user_data.get("consultation_type")
+    user_id = update.effective_user.id  # Получаем ID пользователя
 
-    report_admin = f"Новое сообщение от пользователя:\nТип: {request_type}"
+    report_admin = f"Новое сообщение от пользователя:\nID: {user_id}\nТип: {request_type}"
     if consultation_type:
         report_admin += f"\nТип консультации: {consultation_type}"
     report_admin += f"\nТекст: {user_text}"
@@ -359,7 +360,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 [["Я понимаю риски, скачать гайд"], [BACK_BUTTON]], resize_keyboard=True
             )
             await update.message.reply_text(
-                DIYHRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
+                DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
             )
             return MEDICAL_FTM_HRT  # Остаемся в этом состоянии до выбора
         elif choice == "Запросить консультацию по мужской ГТ" or choice == "Консультация":
@@ -505,7 +506,9 @@ async def volunteer_help_type(update: Update, context: ContextTypes.DEFAULT_TYPE
 async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Получает контактные данные волонтера и завершает сбор."""
     context.user_data["volunteer_data"]["contact_other"] = update.message.text
+    user_id = update.effective_user.id  # Получаем ID пользователя
     volunteer_info = f"""Новый волонтер!
+ID: {user_id}
 Имя: {context.user_data["volunteer_data"].get("name", "не указано")}
 Регион: {context.user_data["volunteer_data"].get("region", "не указано")}
 Тип помощи: {context.user_data["volunteer_data"].get("help_type", "не указано")}
@@ -548,8 +551,9 @@ async def anonymous_message(
 ) -> int:
     """Получает и пересылает анонимное сообщение."""
     message = update.message.text
+    user_id = update.effective_user.id  # Получаем ID пользователя
     await context.bot.send_message(
-        chat_id=CHANNELS.get("t64_misc"), text=f"Анонимное сообщение: {message}"
+        chat_id=CHANNELS.get("t64_misc"), text=f"Анонимное сообщение от ID {user_id}: {message}"
     )
     await update.message.reply_text(
         "Ваше анонимное сообщение отправлено администраторам.",
@@ -612,6 +616,5 @@ def main() -> None:
     application.run_polling()
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main
 
