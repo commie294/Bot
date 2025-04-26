@@ -368,7 +368,7 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             context.user_data["consultation_type"] = "женская ГТ (DIY)"
             return TYPING
         elif choice == "Запросить консультацию по женской ГТ" or choice == "Консультация":
-            await update.message.reply_text(TRANS_FRIENDLY_ENDO_CONSULT_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+            await update.message.reply_text(CONSULTATION_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
             context.user_data["type"] = "Консультация по женской ГТ"
             return TYPING
         elif choice == BACK_BUTTON:
@@ -393,7 +393,7 @@ async def medical_surgery_menu(update: Update, context: ContextTypes.DEFAULT_TYP
             context.user_data["consultation_type"] = "МТФ операции"
             return TYPING
         elif choice == "Консультация хирурга":
-            await update.message.reply_text(SURGERY_CONSULT_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+            await update.message.reply_text(CONSULTATION_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
             context.user_data["type"] = "Консультация хирурга"
             return TYPING
         elif choice == BACK_BUTTON:
