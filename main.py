@@ -414,7 +414,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 def main() -> None:
     """Запускает бота."""
-    application = Application.builder().token(BOT_TOKEN).build()
+    application = Application.builder().token(TOKEN).build()
 
     # Обработчик разговоров
     conv_handler = ConversationHandler(
