@@ -367,7 +367,6 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
                 ],
                 resize_keyboard=True,
             ),
-        )
         return MEDICAL_MTF_HRT
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
