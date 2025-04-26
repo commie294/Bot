@@ -12,6 +12,7 @@ from telegram.ext import (
     ContextTypes,
 )
 import logging
+from telegram.error import TelegramError
 from bot_responses import (
     START_MESSAGE,
     HELP_MENU_MESSAGE,
@@ -177,7 +178,6 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     user_text = update.message.text
     request_type = context.user_data.get("request_type", "Сообщение")
 
-    # Проверяем, что сообщение пользователя не пустое и не является командой "⬅️ Назад"
     if user_text and user_text != "⬅️ Назад":
         user_id = update.effective_user.id
         channel_mapping = {
@@ -207,10 +207,17 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
                     reply_markup=ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True),
                 )
                 return MAIN_MENU
-            except Exception as e:
-                logger.error(f"Ошибка при отправке сообщения: {e}", exc_info=True)
+            except TelegramError as e:
+                logger.error(f"Ошибка Telegram API при отправке сообщения: {e}", exc_info=True)
                 await update.message.reply_text(
-                    MESSAGE_SEND_ERROR,
+                    MESSAGE_SEND_ERROR.format(e),
+                    reply_markup=ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True),
+                )
+                return MAIN_MENU
+            except Exception as e:
+                logger.error(f"Непредвиденная ошибка при отправке сообщения: {e}", exc_info=True)
+                await update.message.reply_text(
+                    MESSAGE_SEND_ERROR.format(e),
                     reply_markup=ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True),
                 )
                 return MAIN_MENU
@@ -354,7 +361,7 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_GENDER_THERAPY_MENU
 
-async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def medical_ftm_hrt(update: : Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "⬅️ Назад":
         return await medical_gender_therapy_menu(update, context)
@@ -496,30 +503,31 @@ ID: {user_id}
     try:
         await context.bot.send_message(chat_id=CHANNELS.get("t64_admin"), text=volunteer_info)
         logger.info(f"Сообщение отправлено в t64_admin: {volunteer_info}")
+    except TelegramError as e:
+        logger.error(f"Ошибка Telegram API при отправке сообщения в t64_admin: {e}", exc_info=True)
     except Exception as e:
-        logger.error(f"Ошибка при отправке в t64_admin: {e}")
+        logger.error(f"Непредвиденная ошибка при отправке сообщения в t64_admin: {e}", exc_info=True)
 
     help_type = context.user_data["volunteer_data"].get("help_type", "").lower()
-    if "юридическ" in help_type:
-        try:
-            await context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=volunteer_info)
-        except Exception as e:
-            logger.error(f"Ошибка при отправке в t64_legal: {e}")
-    elif "психологическ" in help_type:
-        try:
-            await context.bot.send_message(chat_id=CHANNELS.get("t64_psych"), text=volunteer_info)
-        except Exception as e:
-            logger.error(f"Ошибка при отправке в t64_psych: {e}")
-    elif "медицинск" in help_type or "финансов" in help_type or "друг" in help_type:
-        try:
-            await context.bot.send_message(chat_id=CHANNELS.get("t64_gen"), text=volunteer_info)
-        except Exception as e:
-            logger.error(f"Ошибка при отправке в t64_gen: {e}")
-    elif "информацион" in help_type or "текст" in help_type or "модерац" in help_type:
-        try:
-            await context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=volunteer_info)
-        except Exception as e:
-            logger.error(f"Ошибка при отправке в t64_misc: {e}")
+    channel_map = {
+        "юридическ": "t64_legal",
+        "психологическ": "t64_psych",
+        "медицинск": "t64_gen",
+        "финансов": "t64_gen",
+        "друг": "t64_gen",
+        "информацион": "t64_misc",
+        "текст": "t64_misc",
+        "модерац": "t64_misc",
+    }
+    for keyword, channel_name in channel_map.items():
+        if keyword in help_type:
+            try:
+                await context.bot.send_message(chat_id=CHANNELS.get(channel_name), text=volunteer_info)
+                logger.info(f"Сообщение отправлено в {channel_name}: {volunteer_info}")
+            except TelegramError as e:
+                logger.error(f"Ошибка Telegram API при отправке сообщения в {channel_name}: {e}", exc_info=True)
+            except Exception as e:
+                logger.error(f"Непредвиденная ошибка при отправке сообщения в {channel_name}: {e}", exc_info=True)
 
     await update.message.reply_text(
         "Спасибо за вашу готовность помочь! Ваша заявка принята и будет рассмотрена.",
@@ -547,12 +555,18 @@ async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 ANONYMOUS_CONFIRMATION,
                 reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
             )
-            # Очищаем временные данные
             if "request_type" in context.user_data:
                 del context.user_data["request_type"]
             return MAIN_MENU
+        except TelegramError as e:
+            logger.error(f"Ошибка Telegram API при отправке анонимного сообщения: {e}", exc_info=True)
+            await update.message.reply_text(
+                "Ошибка при отправке сообщения. Пожалуйста, попробуйте позже.",
+                reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
+            )
+            return MAIN_MENU
         except Exception as e:
-            logger.error(f"Ошибка при отправке анонимного сообщения: {e}", exc_info=True)
+            logger.error(f"Непредвиденная ошибка при отправке анонимного сообщения: {e}", exc_info=True)
             await update.message.reply_text(
                 "Ошибка при отправке сообщения. Пожалуйста, попробуйте позже.",
                 reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
@@ -568,6 +582,21 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     context.user_data.clear()
     return ConversationHandler.END
+
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Log the error and send a telegram message to notify the developer."""
+    logger.error(f"Exception while handling an update {update}:", exc_info=context.error)
+    if ADMIN_CHAT_ID:
+        try:
+            await context.bot.send_message(
+                chat_id=ADMIN_CHAT_ID,
+                text=f"⚠️ Произошла ошибка при обработке обновления `{update}`:\n\n`{context.error}`",
+                parse_mode="MarkdownV2",
+            )
+        except TelegramError as e:
+            logger.error(f"Ошибка Telegram API при отправке сообщения об ошибке администратору: {e}", exc_info=True)
+        except Exception as e:
+            logger.error(f"Непредвиденная ошибка при отправке сообщения об ошибке администратору: {e}", exc_info=True)
 
 def main() -> None:
     application = Application.builder().token(TOKEN).build()
@@ -605,6 +634,8 @@ def main() -> None:
     )
 
     application.add_handler(conv_handler)
+    application.add_error_handler(error_handler)
+
     application.run_polling()
 
 if __name__ == "__main__":
