@@ -90,7 +90,7 @@ logger = logging.getLogger(__name__)
     MEDICAL_SURGERY_PLANNING,
 ) = range(25)
 
-Load_dotenv()
+load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 
