@@ -143,14 +143,15 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
     tasks = []
     if not request_type.startswith("Срочная помощь"):
-        tasks.append(context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=report_admin))
+        # Отправляем сообщение администраторам
+        tasks.append(context.bot.send_message(chat_id="t64_admin", text=report_admin))
 
     if request_type == "Ресурс":
         tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text))
     elif request_type == "Анонимное сообщение":
         tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_misc"), text=user_text))
     elif request_type.startswith("Срочная помощь"):
-        tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_admin"), text=user_text))
+        tasks.append(context.bot.send_message(chat_id="t64_admin", text=user_text))
     elif request_type.startswith("Сообщение о нарушении (юридическое)"):
         tasks.append(context.bot.send_message(chat_id=CHANNELS.get("t64_legal"), text=user_text))
     elif request_type.startswith("Юридическая консультация"):
@@ -515,7 +516,7 @@ ID: {user_id}
 Контакт (Telegram): {context.user_data["volunteer_data"].get("contact", "не указано")}
 Контакт (Другое): {context.user_data["volunteer_data"].get("contact_other", "не указано")}"""
 
-    tasks = [context.bot.send_message(chat_id=CHANNELS.get("t64_admin"), text=volunteer_info)]
+    tasks = [context.bot.send_message(chat_id="t64_admin", text=volunteer_info)]
 
     help_type = context.user_data["volunteer_data"].get("help_type", "").lower()
     if "юридическ" in help_type:
@@ -616,5 +617,6 @@ def main() -> None:
     application.run_polling()
 
 
-if __name__ == "__main
+if __name__ == "__main__":
+    main()
 
