@@ -359,7 +359,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 [["Я понимаю риски, скачать гайд"], [BACK_BUTTON]], resize_keyboard=True
             )
             await update.message.reply_text(
-                DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
+                DIYHRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
             )
             return MEDICAL_FTM_HRT  # Остаемся в этом состоянии до выбора
         elif choice == "Запросить консультацию по мужской ГТ" or choice == "Консультация":
