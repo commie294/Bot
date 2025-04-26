@@ -346,7 +346,6 @@ async def medical_gender_therapy_menu(
         logger.error(f"Ошибка в medical_gender_therapy_menu: {e}", exc_info=True)
         await update.message.reply_text(f"Произошла ошибка: {e}", parse_mode="HTML")
         return MEDICAL_GENDER_THERAPY_MENU
-
         else:
             await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
             return MEDICAL_GENDER_THERAPY_MENU
