@@ -347,7 +347,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             context.user_data["consultation_type"] = "мужская ГТ (DIY)"
             return TYPING
         elif choice == "Запросить консультацию по мужской ГТ" or choice == "Консультация":
-            await update.message.reply_text(TRANS_FRIENDLY_ENDO_CONSULT_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+            await update.message.reply_text(CONSULTATION_PROMPT, reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
             context.user_data["type"] = "Консультация по мужской ГТ"
             return TYPING
         elif choice == BACK_BUTTON:
