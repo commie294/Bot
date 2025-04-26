@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+import os
 from telegram.ext import (
     Application,
     CommandHandler,
