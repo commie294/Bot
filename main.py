@@ -52,7 +52,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return ConversationHandler.END
 
     await update.message.reply_text(START_MESSAGE)
-        reply_markup=MAIN_MENU
+    reply_markup=MAIN_MENU
     )
     return MAIN_MENU
 
