@@ -1,3 +1,4 @@
+import os
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Application,
@@ -60,6 +61,15 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
+HASH_SALT = os.getenv("HASH_SALT")
+
+if BOT_TOKEN:
+    print(f"Токен бота: {BOT_TOKEN}")
+else:
+    print("Ошибка: Переменная BOT_TOKEN не найдена.")
 
 (
     START,
