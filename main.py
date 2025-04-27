@@ -74,6 +74,8 @@ if BOT_TOKEN:
 else:
     print("Ошибка: Переменная BOT_TOKEN не найдена.")
 
+TOKEN = BOT_TOKEN 
+
 (
     START,
     MAIN_MENU,
