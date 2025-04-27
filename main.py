@@ -1,6 +1,5 @@
 import os
-import dotenv
-from dotenv
+from dotenv import load_dotenv
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Application,
@@ -12,6 +11,7 @@ from telegram.ext import (
 )
 import logging
 from telegram.error import TelegramError
+import hashlib
 from bot_responses import (
     START_MESSAGE,
     HELP_MENU_MESSAGE,
@@ -72,7 +72,7 @@ HASH_SALT = os.getenv("HASH_SALT")
 if BOT_TOKEN:
     print(f"Токен бота: {BOT_TOKEN}")
 else:
-    print("Ошибка: Переменная BOT_TOKEN не найдена.") 
+    print("Ошибка: Переменная BOT_TOKEN не найдена.")
 
 (
     START,
