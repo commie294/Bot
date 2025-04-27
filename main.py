@@ -288,7 +288,6 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return FAQ_LEGAL
 
 async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == "⬅️ Назад":
         await update.message.reply_text(
@@ -320,15 +319,15 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         )
         return MEDICAL_MENU
     elif choice == "⚕️ Операции":
+        keyboard_list = list(SURGERY_INFO_KEYBOARD.keyboard)
+        keyboard_list.append(["⬅️ Назад"])
         await update.message.reply_text(
             SURGERY_INFO_MESSAGE,
             parse_mode="Markdown",
-            reply_markup=SURGERY_INFO_KEYBOARD,  # Используем клавиатуру как она определена
+            reply_markup=ReplyKeyboardMarkup(keyboard_list, resize_keyboard=True),
         )
         return MEDICAL_SURGERY_PLANNING
-    else:
-        await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
-        return MEDICAL_MENU
+
 
 async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
