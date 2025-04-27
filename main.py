@@ -257,22 +257,102 @@ async def handle_hrt_actions(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await update.message.reply_text(CHOOSE_FROM_MENU)
     return MAIN_MENU
 
+async def medical_gender_therapy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "hrt_male":
+        await query.edit_message_text(
+            MASCULINIZING_HRT_INFO,
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton("⚠️ DIY-гайд (FTM)", callback_data="request_diy_ftm")],
+                    [InlineKeyboardButton("Консультация по мужской ГТ", callback_data="consult_male_hrt")],
+                    [InlineKeyboardButton("⬅️ Назад", callback_data="back_medical")],
+                ],
+            ),
+        )
+        return MEDICAL_FTM_HRT
+    elif query.data == "hrt_female":
+        await query.edit_message_text(
+            FEMINIZING_HRT_INFO,
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton("⚠️ DIY-гайд (MTF)", callback_data="request_diy_mtf")],
+                    [InlineKeyboardButton("Консультация по женской ГТ", callback_data="consult_female_hrt")],
+                    [InlineKeyboardButton("⬅️ Назад", callback_data="back_medical")],
+                ],
+            ),
+        )
+        return MEDICAL_MTF_HRT
+    elif query.data == "back_medical":
+        await query.edit_message_text(
+            "Медицинская помощь:",
+            reply_markup=MEDICAL_INLINE_MENU
+        )
+        return MEDICAL_MENU
+
+    return MEDICAL_GENDER_THERAPY
+
+async def handle_hrt_actions(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "request_diy_ftm":
+        context.user_data["hrt_type"] = "FTM"
+        await query.edit_message_text(
+            DIY_HRT_WARNING,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("✅ Я понимаю риски", callback_data="confirm_diy")],
+                [InlineKeyboardButton("❌ Отменить", callback_data="cancel_diy")]
+            ]),
+            parse_mode="Markdown"
+        )
+        return CONFIRM
+    elif query.data == "request_diy_mtf":
+        context.user_data["hrt_type"] = "MTF"
+        await query.edit_message_text(
+            DIY_HRT_WARNING,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("✅ Я понимаю риски", callback_data="confirm_diy")],
+                [InlineKeyboardButton("❌ Отменить", callback_data="cancel_diy")]
+            ]),
+            parse_mode="Markdown"
+        )
+        return CONFIRM
+    elif query.data == "consult_male_hrt":
+        context.user_data["request_type"] = "Консультация по мужской ГТ"
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=CONSULTATION_PROMPT)
+        return TYPING
+    elif query.data == "consult_female_hrt":
+        context.user_data["request_type"] = "Консультация по женской ГТ"
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=CONSULTATION_PROMPT)
+        return TYPING
+    elif query.data == "back_medical":
+        await query.edit_message_text(
+            "Медицинская помощь:",
+            reply_markup=MEDICAL_INLINE_MENU
+        )
+        return MEDICAL_MENU
+
+    return MEDICAL_GENDER_THERAPY
+
 async def confirm_diy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
 
-    if query.data == "confirm_diy":
-        hrt_type = context.user_data.get("hrt_type", "FTM/MTF")
+    hrt_type = context.user_data.get("hrt_type", "FTM/MTF")
 
+    if query.data == "confirm_diy":
         try:
-            # Отправляем один PDF файл для обоих типов (предполагается, что файл называется diyHRTguide.pdf)
             await context.bot.send_document(
                 chat_id=update.effective_chat.id,
                 document=open("diyHRTguide.pdf", "rb"),
                 caption=f"Гайд по DIY {hrt_type} ГТ. Будьте осторожны!",
                 filename="DIY_HRT_Guide.pdf"
             )
-
             await query.edit_message_text(
                 f"Гайд по DIY {hrt_type} ГТ отправлен. Всегда консультируйтесь с врачом!",
                 reply_markup=ReplyKeyboardMarkup(
@@ -283,32 +363,34 @@ async def confirm_diy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
                     resize_keyboard=True,
                 )
             )
+            return MEDICAL_FTM_HRT if hrt_type == "FTM" else MEDICAL_MTF_HRT
         except FileNotFoundError:
             logger.error("Файл diyHRTguide.pdf не найден.")
             await query.edit_message_text(
                 "Ошибка: Файл с гайдом не найден.",
                 reply_markup=HRT_INLINE_MENU
             )
+            return MEDICAL_FTM_HRT if hrt_type == "FTM" else MEDICAL_MTF_HRT
         except TelegramError as e:
             logger.error(f"Ошибка Telegram при отправке PDF: {e}")
             await query.edit_message_text(
                 "Ошибка при отправке гайда. Попробуйте позже.",
                 reply_markup=HRT_INLINE_MENU
             )
+            return MEDICAL_FTM_HRT if hrt_type == "FTM" else MEDICAL_MTF_HRT
         except Exception as e:
             logger.error(f"Неизвестная ошибка при отправке PDF: {e}")
             await query.edit_message_text(
                 "Произошла непредвиденная ошибка.",
                 reply_markup=HRT_INLINE_MENU
             )
-
+            return MEDICAL_FTM_HRT if hrt_type == "FTM" else MEDICAL_MTF_HRT
     elif query.data == "cancel_diy":
         await query.edit_message_text(
             "Вы отменили получение гайда.",
             reply_markup=HRT_INLINE_MENU
         )
-
-    return MEDICAL_FTM_HRT if context.user_data.get("hrt_type") == "FTM" else MEDICAL_MTF_HRT
+        return MEDICAL_FTM_HRT if context.user_data.get("hrt_type") == "FTM" else MEDICAL_MTF_HRT
 
 async def medical_surgery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
