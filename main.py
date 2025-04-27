@@ -42,15 +42,31 @@ if not BOT_TOKEN:
     MEDICAL_SURGERY, CONFIRM
 ) = range(17)
 
+if MAIN_MENU:
+    await update.message.reply_text(
+        "Выберите опцию:",
+        reply_markup=MAIN_MENU
+    )
+else:
+    await update.message.reply_text(
+        "Ошибка: Главное меню не загружено."
+    )
+    
 def generate_message_id(user_id: int) -> str:
     return hashlib.sha256(f"{HASH_SALT}_{user_id}_{os.urandom(16)}".encode()).hexdigest()[:8]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if not MAIN_MENU:
+        logger.error("MAIN_MENU не инициализировано!")
+        await update.message.reply_text("Ошибка загрузки меню. Попробуйте позже.")
+        return ConversationHandler.END
+
     await update.message.reply_text(
         START_MESSAGE,
-        reply_markup=MAIN_MENU
+        reply_markup=MAIN_MENU,
+        parse_mode="Markdown"
     )
-    return ConversationHandler.END
+    return MAIN_MENU
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
