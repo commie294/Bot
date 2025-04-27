@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import ContextTypes
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -298,6 +299,29 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     
     return MAIN_MENU
 
+async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.message.text == BACK_BUTTON:
+        return await main_menu(update, context)
+    
+    try:
+        message_id = generate_message_id(update.effective_user.id)
+        await context.bot.send_message(
+            chat_id=CHANNELS["t64_misc"],
+            text=f"Анонимное сообщение [{message_id}]:\n\n{update.message.text}"
+        )
+        await update.message.reply_text(
+            "Ваше анонимное сообщение отправлено!",
+            reply_markup=MAIN_MENU
+        )
+    except Exception as e:
+        logger.error(f"Ошибка отправки анонимного сообщения: {e}")
+        await update.message.reply_text(
+            "Ошибка отправки. Попробуйте позже.",
+            reply_markup=MAIN_MENU
+        )
+    
+    return MAIN_MENU
+    
 async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         "Как вас зовут? (реальное имя или псевдоним)",
