@@ -51,10 +51,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text("Ошибка загрузки меню. Попробуйте позже.")
         return ConversationHandler.END
 
-    await update.message.reply_text(
-        START_MESSAGE,
-        reply_markup=MAIN_MENU,
-        parse_mode="Markdown"
+    await update.message.reply_text(START_MESSAGE)
+        reply_markup=MAIN_MENU
     )
     return MAIN_MENU
 
