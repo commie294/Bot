@@ -1,4 +1,6 @@
 import os
+import dotenv
+from dotenv
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Application,
@@ -62,6 +64,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 HASH_SALT = os.getenv("HASH_SALT")
