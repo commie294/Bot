@@ -14,8 +14,7 @@ MAIN_MENU = ReplyKeyboardMarkup(
         ["💸 Поддержать проект"],
         ["✉️ Анонимное сообщение"],
     ],
-    resize_keyboard=True
-)
+    resize_keyboard=True)
 
 HELP_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🚨 Срочная помощь", callback_data="help_emergency")],
