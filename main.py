@@ -1,7 +1,10 @@
 import os
+import sys
+import logging
+import hashlib
+import dotenv
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import ContextTypes
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -11,9 +14,7 @@ from telegram.ext import (
     ContextTypes,
     CallbackQueryHandler
 )
-import logging
 from telegram.error import TelegramError
-import hashlib
 from bot_responses import *
 from keyboards import *
 from channels import CHANNELS
@@ -28,6 +29,10 @@ load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 HASH_SALT = os.getenv("HASH_SALT")
+
+if not BOT_TOKEN:
+    logger.error("Не удалось загрузить BOT_TOKEN из .env")
+    sys.exit(1)
 
 (
     START,
@@ -101,31 +106,41 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return MAIN_MENU
 
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        
+        if query.data == "help_legal":
+            await query.edit_message_text(
+                "Выберите категорию юридической помощи:",
+                reply_markup=LEGAL_INLINE_MENU
+            )
+            return FAQ_LEGAL
+        elif query.data == "help_medical":
+            await query.edit_message_text(
+                "Выберите категорию медицинской помощи:",
+                reply_markup=MEDICAL_INLINE_MENU
+            )
+            return MEDICAL_MENU
+        elif query.data == "help_emergency":
+            context.user_data["request_type"] = "Срочная помощь"
+            await query.edit_message_text(EMERGENCY_MESSAGE)
+            return TYPING
+        elif query.data == "back_main":
+            await query.edit_message_text(
+                START_MESSAGE,
+                reply_markup=MAIN_MENU
+            )
+            return MAIN_MENU
+    else:
+        text = update.message.text
+        if text == "⬅️ Назад":
+            await update.message.reply_text(
+                START_MESSAGE,
+                reply_markup=MAIN_MENU
+            )
+            return MAIN_MENU
     
-    if query.data == "help_legal":
-        await query.edit_message_text(
-            "Выберите категорию юридической помощи:",
-            reply_markup=LEGAL_INLINE_MENU
-        )
-        return FAQ_LEGAL
-    elif query.data == "help_medical":
-        await query.edit_message_text(
-            "Выберите категорию медицинской помощи:",
-            reply_markup=MEDICAL_INLINE_MENU
-        )
-        return MEDICAL_MENU
-    elif query.data == "help_emergency":
-        context.user_data["request_type"] = "Срочная помощь"
-        await query.edit_message_text(EMERGENCY_MESSAGE)
-        return TYPING
-    elif query.data == "back_main":
-        await query.edit_message_text(
-            START_MESSAGE,
-            reply_markup=MAIN_MENU
-        )
-        return MAIN_MENU
     return HELP_MENU
 
 async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -259,6 +274,18 @@ async def medical_surgery(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     
     return MEDICAL_SURGERY
 
+async def send_to_channel(update: Update, context: ContextTypes.DEFAULT_TYPE, channel_key: str, message_type: str):
+    try:
+        message_id = generate_message_id(update.effective_user.id)
+        await context.bot.send_message(
+            chat_id=CHANNELS[channel_key],
+            text=f"Новый запрос ({message_type}) [{message_id}]:\n\n{update.message.text}"
+        )
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка отправки: {e}")
+        return False
+
 async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message.text == BACK_BUTTON:
         return await main_menu(update, context)
@@ -280,18 +307,12 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         await update.message.reply_text(MESSAGE_SEND_ERROR)
         return MAIN_MENU
     
-    try:
-        message_id = generate_message_id(update.effective_user.id)
-        await context.bot.send_message(
-            chat_id=CHANNELS[channel],
-            text=f"Новый запрос ({request_type}) [{message_id}]:\n\n{user_text}"
-        )
+    if await send_to_channel(update, context, channel, request_type):
         await update.message.reply_text(
             MESSAGE_SENT_SUCCESS,
             reply_markup=MAIN_MENU
         )
-    except Exception as e:
-        logger.error(f"Ошибка отправки: {e}")
+    else:
         await update.message.reply_text(
             MESSAGE_SEND_ERROR,
             reply_markup=MAIN_MENU
@@ -303,18 +324,12 @@ async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     if update.message.text == BACK_BUTTON:
         return await main_menu(update, context)
     
-    try:
-        message_id = generate_message_id(update.effective_user.id)
-        await context.bot.send_message(
-            chat_id=CHANNELS["t64_misc"],
-            text=f"Анонимное сообщение [{message_id}]:\n\n{update.message.text}"
-        )
+    if await send_to_channel(update, context, "t64_misc", "Анонимное сообщение"):
         await update.message.reply_text(
             "Ваше анонимное сообщение отправлено!",
             reply_markup=MAIN_MENU
         )
-    except Exception as e:
-        logger.error(f"Ошибка отправки анонимного сообщения: {e}")
+    else:
         await update.message.reply_text(
             "Ошибка отправки. Попробуйте позже.",
             reply_markup=MAIN_MENU
