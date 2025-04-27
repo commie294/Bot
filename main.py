@@ -81,11 +81,6 @@ logger = logging.getLogger(__name__)
     DONE,
 ) = range(17)
 
-env:
-TOKEN = ("BOT_TOKEN")
-ADMIN_CHAT_ID = ("ADMIN_CHAT_ID")
-HASH_SALT = ("HASH_SALT")
-
 def generate_message_id(user_id: int) -> str:
     """Генерирует хеш для анонимной идентификации сообщений"""
     return hashlib.sha256(f"{HASH_SALT}_{user_id}_{os.urandom(16)}".encode()).hexdigest()[:8]
