@@ -41,16 +41,6 @@ if not BOT_TOKEN:
     MEDICAL_GENDER_THERAPY, MEDICAL_FTM_HRT, MEDICAL_MTF_HRT,
     MEDICAL_SURGERY, CONFIRM
 ) = range(17)
-
-if MAIN_MENU:
-    await update.message.reply_text(
-        "Выберите опцию:",
-        reply_markup=MAIN_MENU
-    )
-else:
-    await update.message.reply_text(
-        "Ошибка: Главное меню не загружено."
-    )
     
 def generate_message_id(user_id: int) -> str:
     return hashlib.sha256(f"{HASH_SALT}_{user_id}_{os.urandom(16)}".encode()).hexdigest()[:8]
