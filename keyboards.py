@@ -27,20 +27,21 @@ LEGAL_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("📝 Смена документов", callback_data="legal_docs")],
     [InlineKeyboardButton("📢 Пропаганда ЛГБТ", callback_data="legal_propaganda")],
     [InlineKeyboardButton("🗣️ Консультация", callback_data="legal_consult")],
-    [InlineKeyboardButton("🚨 Нарушения", callback_data="legal_abuse")]
+    [InlineKeyboardButton("🚨 Нарушения", callback_data="legal_abuse")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_help")]
 ])
 
 MEDICAL_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("💊 Консультация", callback_data="med_consult")],
     [InlineKeyboardButton("💉 HRT", callback_data="med_hrt")],
     [InlineKeyboardButton("⚕️ Операции", callback_data="med_surgery")],
-    [InlineKeyboardButton("❓ F64", callback_data="med_f64")]
+    [InlineKeyboardButton("❓ F64", callback_data="med_f64")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_help")]
 ])
 
 HRT_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🔹 Мужская ГТ (T)", callback_data="hrt_male")],
     [InlineKeyboardButton("🔸 Женская ГТ (E)", callback_data="hrt_female")],
-    [InlineKeyboardButton("⚠️ DIY ГТ", callback_data="hrt_diy")],
     [InlineKeyboardButton("⬅️ Назад", callback_data="back_medical")]
 ])
 
