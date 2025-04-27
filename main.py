@@ -85,10 +85,10 @@ logger = logging.getLogger(__name__)
     DONE,
 ) = range(17)
 
-load_dotenv()
-TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
-HASH_SALT = os.getenv("HASH_SALT", "default_salt")
+env:
+TOKEN = ("BOT_TOKEN")
+ADMIN_CHAT_ID = ("ADMIN_CHAT_ID")
+HASH_SALT = ("HASH_SALT")
 
 def generate_message_id(user_id: int) -> str:
     """Генерирует хеш для анонимной идентификации сообщений"""
