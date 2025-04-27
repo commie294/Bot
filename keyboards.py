@@ -43,7 +43,7 @@ GENDER_THERAPY_CHOICE_BUTTONS = [
     [BACK_BUTTON],
 ]
 
-SURGERY_INFO_KEYBOARD = ReplyKeyboardMarkup([["🗓️ Спланировать операцию"]
+SURGERY_INFO_KEYBOARD = ReplyKeyboardMarkup([["🗓️ Спланировать операцию"][BACK_BUTTON]]
 
 # keyboards.py
 from telegram import ReplyKeyboardMarkup
