@@ -6,20 +6,22 @@ NEXT_BUTTON = "➡️ Далее"
 SKIP_BUTTON = "⏭ Пропустить"
 CANCEL_BUTTON = "❌ Отменить"
 
-MAIN_MENU = ReplyKeyboardMarkup([
-    ["🆘 Попросить о помощи"],
-    ["➕ Предложить ресурс"],
-    ["🤝 Стать волонтером"],
-    ["💸 Поддержать проект"],
-    ["✉️ Анонимное сообщение"]
-], resize_keyboard=True)
+MAIN_MENU = ReplyKeyboardMarkup(
+    [
+        ["🆘 Попросить о помощи"],
+        ["➕ Предложить ресурс"],
+        ["🤝 Стать волонтером"],
+        ["💸 Поддержать проект"],
+        ["✉️ Анонимное сообщение"],
+    ],
+    resize_keyboard=True
+)
 
 HELP_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🚨 Срочная помощь", callback_data="help_emergency")],
-    [InlineKeyboardButton("⚖️ Юридическая", callback_data="help_legal")],
-    [InlineKeyboardButton("🩺 Медицинская", callback_data="help_medical")],
-    [InlineKeyboardButton("🏠 Жилье/финансы", callback_data="help_housing")],
-    [InlineKeyboardButton("🧠 Психологическая", callback_data="help_psy")]
+    [InlineKeyboardButton("⚖️ Юридическая помощь", callback_data="help_legal")],
+    [InlineKeyboardButton("🧠 Медицинская помощь", callback_data="help_medical")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_main")],
 ])
 
 LEGAL_INLINE_MENU = InlineKeyboardMarkup([
@@ -69,11 +71,11 @@ CONFIRM_KEYBOARD = ReplyKeyboardMarkup([
     [BACK_BUTTON]
 ], resize_keyboard=True)
 
-BASIC_NAVIGATION = ReplyKeyboardMarkup([
-    [NEXT_BUTTON, BACK_BUTTON]
-], resize_keyboard=True)
+BASIC_NAVIGATION = ReplyKeyboardMarkup(
+    [["➡️ Далее", "⬅️ Назад"]],
+    resize_keyboard=True
 
-ANONYMOUS_KEYBOARD = ReplyKeyboardMarkup([
-    ["🔒 Отправить анонимно"],
-    [CANCEL_BUTTON]
-], resize_keyboard=True)
+ANONYMOUS_KEYBOARD = ReplyKeyboardMarkup(
+    [["❌ Отмена"]],
+    resize_keyboard=True
+)
