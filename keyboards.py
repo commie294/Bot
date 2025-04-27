@@ -72,9 +72,8 @@ CONFIRM_KEYBOARD = ReplyKeyboardMarkup([
 
 BASIC_NAVIGATION = ReplyKeyboardMarkup(
     [["➡️ Далее", "⬅️ Назад"]],
-    resize_keyboard=True
+    resize_keyboard=True)
 
 ANONYMOUS_KEYBOARD = ReplyKeyboardMarkup(
     [["❌ Отмена"]],
-    resize_keyboard=True
-)
+    resize_keyboard=True)
