@@ -1,22 +1,19 @@
 from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
-# Базовые кнопки
 BACK_BUTTON = "⬅️ Назад"
 DONE_BUTTON = "✅ Готово"
 NEXT_BUTTON = "➡️ Далее"
 SKIP_BUTTON = "⏭ Пропустить"
 CANCEL_BUTTON = "❌ Отменить"
 
-# Главное меню
 MAIN_MENU = ReplyKeyboardMarkup([
     ["🆘 Попросить о помощи"],
     ["➕ Предложить ресурс"],
     ["🤝 Стать волонтером"],
     ["💸 Поддержать проект"],
     ["✉️ Анонимное сообщение"]
-], resize_keyboard=True, one_time_keyboard=True)
+], resize_keyboard=True)
 
-# Меню помощи (инлайн)
 HELP_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🚨 Срочная помощь", callback_data="help_emergency")],
     [InlineKeyboardButton("⚖️ Юридическая", callback_data="help_legal")],
@@ -25,7 +22,6 @@ HELP_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🧠 Психологическая", callback_data="help_psy")]
 ])
 
-# Юридическое меню (инлайн)
 LEGAL_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🏳️‍🌈 ЛГБТ+ семьи", callback_data="legal_families")],
     [InlineKeyboardButton("📝 Смена документов", callback_data="legal_docs")],
@@ -34,7 +30,6 @@ LEGAL_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🚨 Нарушения", callback_data="legal_abuse")]
 ])
 
-# Медицинское меню (инлайн)
 MEDICAL_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("💊 Консультация", callback_data="med_consult")],
     [InlineKeyboardButton("💉 HRT", callback_data="med_hrt")],
@@ -42,7 +37,6 @@ MEDICAL_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("❓ F64", callback_data="med_f64")]
 ])
 
-# HRT меню (инлайн)
 HRT_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🔹 Мужская ГТ (T)", callback_data="hrt_male")],
     [InlineKeyboardButton("🔸 Женская ГТ (E)", callback_data="hrt_female")],
@@ -50,7 +44,6 @@ HRT_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("⬅️ Назад", callback_data="back_medical")]
 ])
 
-# Операции (инлайн)
 SURGERY_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🔹 ФТМ операции", callback_data="surgery_ftm")],
     [InlineKeyboardButton("🔸 МТФ операции", callback_data="surgery_mtf")],
@@ -58,32 +51,27 @@ SURGERY_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("⬅️ Назад", callback_data="back_medical")]
 ])
 
-# Волонтерская анкета (реплай)
 VOLUNTEER_KEYBOARD = ReplyKeyboardMarkup([
     [NEXT_BUTTON],
     [CANCEL_BUTTON]
-], resize_keyboard=True, one_time_keyboard=True)
+], resize_keyboard=True)
 
-# Типы помощи волонтера (реплай)
 VOLUNTEER_TYPES = ReplyKeyboardMarkup([
     ["Юридическая", "Психологическая"],
     ["Медицинская", "Финансовая"],
     ["Информационная", "Другая"],
     [DONE_BUTTON]
-], resize_keyboard=True, one_time_keyboard=True)
+], resize_keyboard=True)
 
-# Подтверждение (реплай)
 CONFIRM_KEYBOARD = ReplyKeyboardMarkup([
     ["✅ Подтвердить"],
     [BACK_BUTTON]
 ], resize_keyboard=True)
 
-# Простые действия (реплай)
 BASIC_NAVIGATION = ReplyKeyboardMarkup([
     [NEXT_BUTTON, BACK_BUTTON]
 ], resize_keyboard=True)
 
-# Для анонимных сообщений
 ANONYMOUS_KEYBOARD = ReplyKeyboardMarkup([
     ["🔒 Отправить анонимно"],
     [CANCEL_BUTTON]
