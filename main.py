@@ -48,10 +48,9 @@ def generate_message_id(user_id: int) -> str:
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         START_MESSAGE,
-        reply_markup=MAIN_MENU,
-        parse_mode="Markdown"
+        reply_markup=MAIN_MENU
     )
-    return MAIN_MENU
+    return ConversationHandler.END
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
