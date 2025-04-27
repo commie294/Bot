@@ -72,9 +72,7 @@ HASH_SALT = os.getenv("HASH_SALT")
 if BOT_TOKEN:
     print(f"Токен бота: {BOT_TOKEN}")
 else:
-    print("Ошибка: Переменная BOT_TOKEN не найдена.")
-
-TOKEN = BOT_TOKEN 
+    print("Ошибка: Переменная BOT_TOKEN не найдена.") 
 
 (
     START,
@@ -605,7 +603,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logger.error(f"Непредвиденная ошибка при отправке сообщения об ошибке администратору: {e}", exc_info=True)
 
 def main() -> None:
-    application = Application.builder().token(TOKEN).build()
+    application = Application.builder().token(BOT_TOKEN).build()
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
