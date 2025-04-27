@@ -55,7 +55,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
-    
+
     if text == "🆘 Попросить о помощи":
         await update.message.reply_text(
             HELP_MENU_MESSAGE,
@@ -96,7 +96,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    
+
     if query.data == "help_legal":
         await query.edit_message_text(
             "Выберите категорию юридической помощи:",
@@ -124,7 +124,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    
+
     if query.data == "legal_families":
         await query.edit_message_text(
             LGBT_FAMILIES_INFO,
@@ -145,13 +145,13 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             reply_markup=HELP_INLINE_MENU
         )
         return HELP_MENU
-    
+
     return FAQ_LEGAL
 
 async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    
+
     if query.data == "med_hrt":
         await query.edit_message_text(
             GENDER_THERAPY_MESSAGE,
@@ -176,13 +176,13 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             reply_markup=HELP_INLINE_MENU
         )
         return HELP_MENU
-    
+
     return MEDICAL_MENU
 
 async def medical_gender_therapy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    
+
     if query.data == "hrt_male":
         await query.edit_message_text(
             MASCULINIZING_HRT_INFO,
@@ -217,62 +217,103 @@ async def medical_gender_therapy(update: Update, context: ContextTypes.DEFAULT_T
             reply_markup=MEDICAL_INLINE_MENU
         )
         return MEDICAL_MENU
-    
+
     return MEDICAL_GENDER_THERAPY
 
 async def handle_hrt_actions(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
-    
-    if text == "⚠️ DIY-гайд (FTM)":
+
+    if text in ["⚠️ DIY-гайд (FTM)", "⚠️ DIY-гайд (MTF)"]:
+        # Сохраняем тип ГТ в user_data для использования при подтверждении
+        context.user_data["hrt_type"] = "FTM" if "FTM" in text else "MTF"
+
         await update.message.reply_text(
-            f"{DIY_HRT_WARNING}\n\n"
-            f"📚 Гайд: [{DIY_HRT_GUIDE_NAME}]({DIY_HRT_GUIDE_LINK})",
-            parse_mode="Markdown",
-            reply_markup=ReplyKeyboardMarkup(
-                [
-                    ["Консультация по мужской ГТ"],
-                    ["⬅️ Назад"],
-                ],
-                resize_keyboard=True,
-            )
+            DIY_HRT_WARNING,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("✅ Я понимаю риски", callback_data="confirm_diy")],
+                [InlineKeyboardButton("❌ Отменить", callback_data="cancel_diy")]
+            ]),
+            parse_mode="Markdown"
         )
-        return MEDICAL_FTM_HRT
-    elif text == "⚠️ DIY-гайд (MTF)":
-        await update.message.reply_text(
-            f"{DIY_HRT_WARNING}\n\n"
-            f"📚 Гайд: [{DIY_HRT_GUIDE_NAME}]({DIY_HRT_GUIDE_LINK})",
-            parse_mode="Markdown",
-            reply_markup=ReplyKeyboardMarkup(
-                [
-                    ["Консультация по женской ГТ"],
-                    ["⬅️ Назад"],
-                ],
-                resize_keyboard=True,
-            )
-        )
-        return MEDICAL_MTF_HRT
+        return CONFIRM
+
     elif text == "Консультация по мужской ГТ":
         context.user_data["request_type"] = "Консультация по мужской ГТ"
         await update.message.reply_text(CONSULTATION_PROMPT)
         return TYPING
+
     elif text == "Консультация по женской ГТ":
         context.user_data["request_type"] = "Консультация по женской ГТ"
         await update.message.reply_text(CONSULTATION_PROMPT)
         return TYPING
+
     elif text == "⬅️ Назад":
         await update.message.reply_text(
             "Медицинская помощь:",
             reply_markup=MEDICAL_INLINE_MENU
         )
         return MEDICAL_MENU
-    
+
     await update.message.reply_text(CHOOSE_FROM_MENU)
     return MAIN_MENU
+
+async def confirm_diy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "confirm_diy":
+        hrt_type = context.user_data.get("hrt_type", "FTM/MTF")
+
+        try:
+            # Отправляем один PDF файл для обоих типов (предполагается, что файл называется diyHRTguide.pdf)
+            await context.bot.send_document(
+                chat_id=update.effective_chat.id,
+                document=open("diyHRTguide.pdf", "rb"),
+                caption=f"Гайд по DIY {hrt_type} ГТ. Будьте осторожны!",
+                filename="DIY_HRT_Guide.pdf"
+            )
+
+            await query.edit_message_text(
+                f"Гайд по DIY {hrt_type} ГТ отправлен. Всегда консультируйтесь с врачом!",
+                reply_markup=ReplyKeyboardMarkup(
+                    [
+                        [f"Консультация по {'мужской' if hrt_type == 'FTM' else 'женской'} ГТ"],
+                        ["⬅️ Назад"],
+                    ],
+                    resize_keyboard=True,
+                )
+            )
+        except FileNotFoundError:
+            logger.error("Файл diyHRTguide.pdf не найден.")
+            await query.edit_message_text(
+                "Ошибка: Файл с гайдом не найден.",
+                reply_markup=HRT_INLINE_MENU
+            )
+        except TelegramError as e:
+            logger.error(f"Ошибка Telegram при отправке PDF: {e}")
+            await query.edit_message_text(
+                "Ошибка при отправке гайда. Попробуйте позже.",
+                reply_markup=HRT_INLINE_MENU
+            )
+        except Exception as e:
+            logger.error(f"Неизвестная ошибка при отправке PDF: {e}")
+            await query.edit_message_text(
+                "Произошла непредвиденная ошибка.",
+                reply_markup=HRT_INLINE_MENU
+            )
+
+    elif query.data == "cancel_diy":
+        await query.edit_message_text(
+            "Вы отменили получение гайда.",
+            reply_markup=HRT_INLINE_MENU
+        )
+
+    return MEDICAL_FTM_HRT if context.user_data.get("hrt_type") == "FTM" else MEDICAL_MTF_HRT
 
 async def medical_surgery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    
+
     if query.data == "surgery_ftm":
         await query.edit_message_text(
             FTM_SURGERY_INFO,
@@ -298,7 +339,7 @@ async def medical_surgery(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             reply_markup=MEDICAL_INLINE_MENU
         )
         return MEDICAL_MENU
-    
+
     return MEDICAL_SURGERY
 
 async def send_to_channel(update: Update, context: ContextTypes.DEFAULT_TYPE, channel_key: str, message_type: str) -> bool:
@@ -322,7 +363,7 @@ async def send_to_channel(update: Update, context: ContextTypes.DEFAULT_TYPE, ch
 async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message.text == BACK_BUTTON:
         return await main_menu(update, context)
-    
+
     request_type = context.user_data.get("request_type")
     channel_map = {
         "Ресурс": "t64_misc",
@@ -334,12 +375,12 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         "Планирование операции": "t64_gen",
         "Анонимное сообщение": "t64_misc"
     }
-    
+
     channel = channel_map.get(request_type)
     if not channel or channel not in CHANNELS:
         await update.message.reply_text(MESSAGE_SEND_ERROR)
         return MAIN_MENU
-    
+
     if await send_to_channel(update, context, channel, request_type):
         await update.message.reply_text(
             MESSAGE_SENT_SUCCESS,
@@ -350,13 +391,13 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             MESSAGE_SEND_ERROR,
             reply_markup=MAIN_MENU
         )
-    
+
     return MAIN_MENU
 
 async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message.text == BACK_BUTTON:
         return await main_menu(update, context)
-    
+
     if await send_to_channel(update, context, "t64_misc", "Анонимное сообщение"):
         await update.message.reply_text(
             ANONYMOUS_CONFIRMATION,
@@ -367,7 +408,7 @@ async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             "Ошибка отправки. Попробуйте позже.",
             reply_markup=MAIN_MENU
         )
-    
+
     return MAIN_MENU
 
 async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -380,9 +421,9 @@ async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     name = update.message.text.strip()
     if len(name) < 2 or len(name) > 50:
-        await update.message.reply_text("Имя должно быть от 2 до 50 символов. Попробуйте еще раз.")
+                await update.message.reply_text("Имя должно быть от 2 до 50 символов. Попробуйте еще раз.")
         return VOLUNTEER_NAME
-    
+
     context.user_data["volunteer"] = {"name": name}
     await update.message.reply_text(
         "Из какого вы региона/города?",
@@ -395,7 +436,7 @@ async def volunteer_region(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if len(region) < 2:
         await update.message.reply_text("Укажите корректный регион.")
         return VOLUNTEER_REGION
-    
+
     context.user_data["volunteer"]["region"] = region
     await update.message.reply_text(
         "Выберите тип помощи:",
@@ -408,7 +449,7 @@ async def volunteer_help_type(update: Update, context: ContextTypes.DEFAULT_TYPE
     if help_type not in [btn[0] for row in VOLUNTEER_TYPES.keyboard for btn in row]:
         await update.message.reply_text("Пожалуйста, выберите вариант из предложенных.")
         return VOLUNTEER_HELP_TYPE
-    
+
     context.user_data["volunteer"]["help_type"] = help_type
     await update.message.reply_text(
         "Как с вами связаться? (телеграм @username или телефон)",
@@ -421,11 +462,11 @@ async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     if not contact:
         await update.message.reply_text("Пожалуйста, укажите контакты.")
         return VOLUNTEER_CONTACT
-    
+
     volunteer_data = context.user_data["volunteer"]
     volunteer_data["contact"] = contact
     user = update.effective_user
-    
+
     summary = (
         "Новая заявка волонтера:\n\n"
         f"Имя: {volunteer_data['name']}\n"
@@ -435,7 +476,7 @@ async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         f"ID: {user.id}\n"
         f"Username: @{user.username if user.username else 'нет'}"
     )
-    
+
     try:
         await context.bot.send_message(
             chat_id=CHANNELS["t64_admin"],
@@ -451,7 +492,7 @@ async def volunteer_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             "Ошибка отправки. Попробуйте позже.",
             reply_markup=MAIN_MENU
         )
-    
+
     context.user_data.clear()
     return MAIN_MENU
 
@@ -494,14 +535,16 @@ def main() -> None:
             VOLUNTEER_REGION: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region)],
             VOLUNTEER_HELP_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type)],
             VOLUNTEER_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_contact)],
-            ANONYMOUS_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, anonymous_message)]
+            ANONYMOUS_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, anonymous_message)],
+            CONFIRM: [CallbackQueryHandler(confirm_diy, pattern="^confirm_diy$"),
+                      CallbackQueryHandler(confirm_diy, pattern="^cancel_diy$")]
         },
         fallbacks=[CommandHandler("cancel", cancel)]
     )
 
     application.add_handler(conv_handler)
     application.add_error_handler(error_handler)
-    
+
     logger.info("Бот запущен")
     application.run_polling()
 
