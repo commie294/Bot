@@ -185,6 +185,47 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     
     return MEDICAL_MENU
 
+async def medical_gender_therapy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    
+    if query.data == "hrt_male":
+        await query.edit_message_text(
+            MASCULINIZING_HRT_INFO,
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardMarkup(
+                [
+                    ["DIY"],
+                    ["Запросить консультацию по мужской ГТ"],
+                    ["⬅️ Назад"],
+                ],
+                resize_keyboard=True,
+            ),
+        )
+        return MEDICAL_FTM_HRT
+    elif query.data == "hrt_female":
+        await query.edit_message_text(
+            FEMINIZING_HRT_INFO,
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardMarkup(
+                [
+                    ["DIY"],
+                    ["Запросить консультацию по женской ГТ"],
+                    ["⬅️ Назад"],
+                ],
+                resize_keyboard=True,
+            ),
+        )
+        return MEDICAL_MTF_HRT
+    elif query.data == "back_medical":
+        await query.edit_message_text(
+            "Медицинская помощь:",
+            reply_markup=MEDICAL_INLINE_MENU
+        )
+        return MEDICAL_MENU
+    
+    return MEDICAL_GENDER_THERAPY
+
 async def medical_surgery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
