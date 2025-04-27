@@ -319,10 +319,13 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         )
         return MEDICAL_MENU
     elif choice == "⚕️ Операции":
+        # Исправленная строка: преобразуем кортеж в список и добавляем кнопку
+        keyboard_list = list(SURGERY_INFO_KEYBOARD.keyboard)
+        keyboard_list.append(["⬅️ Назад"])
         await update.message.reply_text(
             SURGERY_INFO_MESSAGE,
             parse_mode="Markdown",
-            reply_markup=ReplyKeyboardMarkup(SURGERY_INFO_KEYBOARD.keyboard + [["⬅️ Назад"]], resize_keyboard=True),
+            reply_markup=ReplyKeyboardMarkup(keyboard_list, resize_keyboard=True),
         )
         return MEDICAL_SURGERY_PLANNING
     else:
