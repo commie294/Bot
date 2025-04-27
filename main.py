@@ -503,7 +503,7 @@ async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     name = update.message.text.strip()
     if len(name) < 2 or len(name) > 50:
-                await update.message.reply_text("Имя должно быть от 2 до 50 символов. Попробуйте еще раз.")
+        await update.message.reply_text("Имя должно быть от 2 до 50 символов. Попробуйте еще раз.")
         return VOLUNTEER_NAME
 
     context.user_data["volunteer"] = {"name": name}
