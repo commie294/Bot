@@ -1,7 +1,3 @@
-From dotenv import load_dotenv
-import os
-import asyncio
-import hashlib
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Application,
