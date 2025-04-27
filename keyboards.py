@@ -46,14 +46,16 @@ MEDICAL_INLINE_MENU = InlineKeyboardMarkup([
 HRT_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🔹 Мужская ГТ (T)", callback_data="hrt_male")],
     [InlineKeyboardButton("🔸 Женская ГТ (E)", callback_data="hrt_female")],
-    [InlineKeyboardButton("⚠️ DIY ГТ", callback_data="hrt_diy")]
+    [InlineKeyboardButton("⚠️ DIY ГТ", callback_data="hrt_diy")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_medical")]
 ])
 
 # Операции (инлайн)
 SURGERY_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🔹 ФТМ операции", callback_data="surgery_ftm")],
     [InlineKeyboardButton("🔸 МТФ операции", callback_data="surgery_mtf")],
-    [InlineKeyboardButton("🗓️ Планирование", callback_data="surgery_plan")]
+    [InlineKeyboardButton("🗓️ Планирование", callback_data="surgery_plan")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_medical")]
 ])
 
 # Волонтерская анкета (реплай)
