@@ -8,8 +8,7 @@ CANCEL_BUTTON = "❌ Отменить"
 
 MAIN_MENU = ReplyKeyboardMarkup(
     [["🆘 Попросить о помощи", "➕ Предложить ресурс"], ["🤝 Стать волонтером", "💸 Поддержать проект"]],
-    resize_keyboard=True
-))
+    resize_keyboard=True)
 
 HELP_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🚨 Срочная помощь", callback_data="help_emergency")],
