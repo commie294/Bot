@@ -95,7 +95,7 @@ else:
     MEDICAL_MTF_HRT,
     MEDICAL_SURGERY_PLANNING,
     DONE_STATE,
-) = range(18)
+) = range(17)
 
 def generate_message_id(user_id: int) -> str:
     """Генерирует хеш для анонимной идентификации сообщений"""
