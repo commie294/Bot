@@ -44,7 +44,7 @@ from bot_responses import (
     F64_MESSAGE,
     SURGERY_PLANNING_PROMPT,
     FAREWELL_MESSAGE,
-    DIY_HRT_GUIDE_NAME
+    DIY_HRT_GUIDE_NAME, 
     ANONYMOUS_CONFIRMATION
 )
 from keyboards import (
