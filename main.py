@@ -540,7 +540,6 @@ async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=keyboard)
     return VOLUNTEER_NAME
 
-    
 async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     name = update.message.text
     if name == "Отмена":
