@@ -201,4 +201,4 @@ SURGERY_PLANNING_PROMPT = "Пожалуйста, опишите, какую оп
 RESOURCE_SUBMITTED_SUCCESS = "✅ Спасибо за ваш предложенный ресурс! Ваше предложение отправлено на рассмотрение администраторам."
 RESOURCE_SUBMITTED_ERROR = "⚠️ Произошла ошибка при отправке вашего ресурса. Пожалуйста, попробуйте позже."
 
-DIY_HRT_GUIDE_NAME: "diyHRTguide.pdf"
+DIY_HRT_GUIDE_NAME: = "diyHRTguide.pdf"
