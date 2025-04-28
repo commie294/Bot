@@ -397,31 +397,32 @@ async def confirm_diy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         return MEDICAL_FTM_HRT if context.user_data.get("hrt_type") == "FTM" else MEDICAL_MTF_HRT
 
 async def medical_surgery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def medical_surgery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
 
     if query.data == "surgery_ftm":
         await query.edit_message_text(
-            FTM_SURGERY_INFO,
+            text=FTM_SURGERY_INFO,
             reply_markup=SURGERY_INLINE_MENU,
             parse_mode="Markdown"
         )
     elif query.data == "surgery_mtf":
         await query.edit_message_text(
-            MTF_SURGERY_INFO,
+            text=MTF_SURGERY_INFO,
             reply_markup=SURGERY_INLINE_MENU,
             parse_mode="Markdown"
         )
     elif query.data == "surgery_plan":
         context.user_data["request_type"] = "Планирование операции"
         await query.edit_message_text(
-            SURGERY_PLANNING_PROMPT,
+            text=SURGERY_PLANNING_PROMPT,
             reply_markup=BASIC_NAVIGATION
         )
         return TYPING
     elif query.data == "back_medical":
         await query.edit_message_text(
-            "Медицинская помощь:",
+            text="Медицинская помощь:",
             reply_markup=MEDICAL_INLINE_MENU
         )
         return MEDICAL_MENU
