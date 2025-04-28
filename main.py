@@ -773,9 +773,9 @@ def main() -> None:
             MEDICAL_SURGERY_PLANNING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_planning)
             ],
-            # НОВОЕ СОСТОЯНИЕ И ОБРАБОТЧИК
             VOLUNTEER_CONFIRM_START: [MessageHandler(filters.TEXT & filters.Regex("^Далее$"), volunteer_name)],
-            VOLUNTEER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_name)],
+            # ИЗМЕНЯЕМ ФИЛЬТР - исключаем "Далее" и "Отмена"
+            VOLUNTEER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex("^(Далее|Отмена)$"), volunteer_name)],
             VOLUNTEER_REGION: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region_handler)],
             VOLUNTEER_HELP_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type_handler)],
             VOLUNTEER_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_contact_handler)],
@@ -785,7 +785,6 @@ def main() -> None:
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
-
 
     application.add_handler(conv_handler)
     application.add_handler(CallbackQueryHandler(request_legal_docs_callback, pattern='^request_legal_docs$'))
