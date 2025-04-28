@@ -532,7 +532,8 @@ async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT
 
 async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = ReplyKeyboardMarkup([["Отмена"]], resize_keyboard=True)
-    await update.message.reply_text("Как к вам обращаться?", reply_markup=keyboard)
+    await update.message.reply_text(VOLUNTEER_MESSAGE) # Отправляем приветственное сообщение
+    await update.message.reply_text("Как к вам обращаться?", reply_markup=keyboard) # Отправляем первый вопрос
     return VOLUNTEER_NAME
 
 async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
