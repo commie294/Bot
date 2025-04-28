@@ -85,7 +85,6 @@ else:
     TYPING,
     FAQ_LEGAL,
     MEDICAL_MENU,
-    VOLUNTEER_START_STATE,
     VOLUNTEER_CONFIRM_START,  # НОВОЕ СОСТОЯНИЕ
     VOLUNTEER_NAME,
     VOLUNTEER_REGION,
@@ -97,7 +96,7 @@ else:
     MEDICAL_MTF_HRT,
     MEDICAL_SURGERY_PLANNING,
     DONE_STATE,
-) = range(18)
+) = range(17) # Исправлено количество состояний
 
 def generate_message_id(user_id: int) -> str:
     """Генерирует хеш для анонимной идентификации сообщений"""
@@ -368,10 +367,10 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
             ],
             resize_keyboard=True,
         )
-        await update.message.reply_text(
-            MASCULINIZING_HRT_INFO,
+        await update.message.reply_            MASCULINIZING_HRT_INFO,
             parse_mode="Markdown",
-            reply_markup=keyboard,        )
+            reply_markup=keyboard,
+        )
         return MEDICAL_FTM_HRT
     elif choice == "E":
         keyboard = ReplyKeyboardMarkup(
@@ -549,18 +548,11 @@ async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_SURGERY_PLANNING
 
-async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if "volunteer_data" in context.user_data:
-        del context.user_data["volunteer_data"]
-    if "state" in context.user_data and context.user_data["state"] == VOLUNTEER_START_STATE:
-        del context.user_data["state"]
-
-    await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=VOLUNTEER_START_KEYBOARD)
-    logger.info(f"Состояние context.user_data после volunteer_start: {context.user_data}")
-    logger.info(f"Возвращаемое значение из volunteer_start: {VOLUNTEER_NAME}")
+async def ask_volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("Пожалуйста, введите ваше имя.")
     return VOLUNTEER_NAME
 
-async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_volunteer_region(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     name = update.message.text
     if name == "Отмена":
         await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardRemove())
@@ -575,7 +567,7 @@ async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await update.message.reply_text("Из какого вы региона?", reply_markup=keyboard)
     return VOLUNTEER_REGION
 
-async def volunteer_region_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def volunteer_help_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     region = update.message.text
     if region == "Отмена":
         await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardRemove())
@@ -592,7 +584,7 @@ async def volunteer_region_handler(update: Update, context: ContextTypes.DEFAULT
     )
     return VOLUNTEER_HELP_TYPE
 
-async def volunteer_help_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def volunteer_contact_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     help_type = update.message.text
     if help_type == "Отмена":
         await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardRemove())
@@ -605,7 +597,7 @@ async def volunteer_help_type_handler(update: Update, context: ContextTypes.DEFA
     await update.message.reply_text("Как с вами можно связаться (Telegram, email)?", reply_markup=keyboard)
     return VOLUNTEER_CONTACT
 
-async def volunteer_contact_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def volunteer_finish_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     contact_other = update.message.text
     if contact_other == "Отмена":
         await update.message.reply_text(CANCEL_MESSAGE, reply_markup=ReplyKeyboardRemove())
@@ -704,7 +696,8 @@ async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        "Действие отменено.", reply_markup=ReplyKeyboardRemove()
+        "Действие отменено.", reply_markup
+        ReplyKeyboardRemove()
     )
     context.user_data.clear()
     keyboard = ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True)
@@ -773,12 +766,11 @@ def main() -> None:
             MEDICAL_SURGERY_PLANNING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_planning)
             ],
-            VOLUNTEER_CONFIRM_START: [MessageHandler(filters.TEXT & filters.Regex("^Далее$"), volunteer_name)],
-            # ИЗМЕНЯЕМ ФИЛЬТР - исключаем "Далее" и "Отмена"
-            VOLUNTEER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex("^(Далее|Отмена)$"), volunteer_name)],
-            VOLUNTEER_REGION: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region_handler)],
-            VOLUNTEER_HELP_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type_handler)],
-            VOLUNTEER_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_contact_handler)],
+            VOLUNTEER_CONFIRM_START: [MessageHandler(filters.TEXT & filters.Regex("^Далее$"), ask_volunteer_name)],
+            VOLUNTEER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex("^(Отмена)$"), get_volunteer_region)], # Теперь обрабатывает ввод имени
+            VOLUNTEER_REGION: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex("^(Отмена)$"), volunteer_help_type_handler)],
+            VOLUNTEER_HELP_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex("^(Отмена)$"), volunteer_contact_handler)],
+            VOLUNTEER_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex("^(Отмена)$"), volunteer_finish_handler)],
             ANONYMOUS_MESSAGE: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, anonymous_message)
             ],
