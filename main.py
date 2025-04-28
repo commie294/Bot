@@ -58,6 +58,7 @@ from keyboards import (
     VOLUNTEER_HELP_TYPE_KEYBOARD,
     DONE_BUTTON,
     FINISH_MENU_KEYBOARD,
+    VOLUNTEER_START_KEYBOARD,
 )
 from channels import CHANNELS
 
@@ -535,8 +536,9 @@ async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if "state" in context.user_data and context.user_data["state"] == VOLUNTEER_START_STATE:
         del context.user_data["state"]
 
-    keyboard = ReplyKeyboardMarkup([["Далее", "Отмена"]], resize_keyboard=True)
-    await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=keyboard)
+    await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=VOLUNTEER_START_KEYBOARD)
+    logger.info(f"Состояние context.user_data после volunteer_start: {context.user_data}")
+    logger.info(f"Возвращаемое значение из volunteer_start: {VOLUNTEER_NAME}")
     return VOLUNTEER_NAME
 
 async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
