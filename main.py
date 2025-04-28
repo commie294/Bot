@@ -53,9 +53,7 @@ def generate_message_id(user_id: int) -> str:
     return hashlib.sha256(f"{HASH_SALT}_{user_id}_{os.urandom(16)}".encode()).hexdigest()[:8]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     try:
-        # Добавляем подробное логирование для отладки
         logger.info(f"MAIN_MENU content: {MAIN_MENU.keyboard if hasattr(MAIN_MENU, 'keyboard') else 'Keyboard not initialized'}")
         
         await update.message.reply_text(
@@ -64,23 +62,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             parse_mode="Markdown"
         )
         return MAIN_MENU
-        
     except Exception as e:
         logger.error(f"Error in start function: {str(e)}", exc_info=True)
-        
-        # Отправляем сообщение без клавиатуры в случае ошибки
         await update.message.reply_text(
             text=START_MESSAGE,
             parse_mode="Markdown"
         )
-        
-        # Пытаемся отправить временную клавиатуру для диагностики
         temp_keyboard = ReplyKeyboardMarkup([["Тестовая кнопка"]], resize_keyboard=True)
         await update.message.reply_text(
             text="Проверка клавиатуры...",
             reply_markup=temp_keyboard
         )
-        
         return MAIN_MENU
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
