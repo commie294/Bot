@@ -8,6 +8,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
     ContextTypes,
+    CallbackQueryHandler,
 )
 import logging
 from telegram.error import TelegramError
@@ -56,6 +57,8 @@ from keyboards import (
     BACK_BUTTON,
     SURGERY_INFO_KEYBOARD,
     VOLUNTEER_HELP_TYPE_KEYBOARD,
+    DONE_BUTTON,
+    FINISH_MENU_KEYBOARD,
 )
 from channels import CHANNELS
 
@@ -92,8 +95,8 @@ else:
     MEDICAL_FTM_HRT,
     MEDICAL_MTF_HRT,
     MEDICAL_SURGERY_PLANNING,
-    DONE,
-) = range(17)
+    DONE_STATE,
+) = range(18)
 
 def generate_message_id(user_id: int) -> str:
     """Генерирует хеш для анонимной идентификации сообщений"""
@@ -107,12 +110,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_choice = update.message.text
     if user_choice == "🆘 Попросить о помощи":
-        keyboard = ReplyKeyboardMarkup(HELP_MENU_BUTTONS + [["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup(HELP_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=keyboard, parse_mode="Markdown")
         return HELP_MENU
     elif user_choice == "➕ Предложить ресурс":
         context.user_data["request_type"] = "Ресурс"
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=keyboard)
         return TYPING
     elif user_choice == "🤝 Стать волонтером":
@@ -120,12 +123,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=keyboard)
         return VOLUNTEER_START_STATE
     elif user_choice == "💸 Поддержать проект":
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("Поддержать", url="https://your_donation_link_here")] # Замени на свою ссылку
-        ])
-        await update.message.reply_text(
-            DONATE_MESSAGE, parse_mode="Markdown", disable_web_page_preview=True, reply_markup=keyboard
-        )
+        await update.message.reply_text(DONATE_MESSAGE, parse_mode="Markdown")
         return MAIN_MENU
     elif user_choice == "✉️ Анонимное сообщение":
         keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
@@ -135,7 +133,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         )
         context.user_data["request_type"] = "Анонимное сообщение"
         return ANONYMOUS_MESSAGE
-    elif user_choice == "⬅️ Назад":
+    elif user_choice == BACK_BUTTON or user_choice == DONE_BUTTON:
         await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
     else:
@@ -144,7 +142,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_choice = update.message.text
-    if user_choice == "⬅️ Назад":
+    if user_choice == BACK_BUTTON:
         keyboard = ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True)
         await update.message.reply_text(
             BACK_TO_MAIN_MENU,
@@ -153,28 +151,28 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return MAIN_MENU
     elif user_choice == "🚨 Срочная помощь":
         context.user_data["request_type"] = "Срочная помощь"
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=keyboard)
         return TYPING
     elif user_choice == "🏠 Жилье/финансы":
         context.user_data["request_type"] = "Жилье/финансы"
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(HOUSING_FINANCE_PROMPT, reply_markup=keyboard)
         return TYPING
     elif user_choice == "🧠 Психологическая помощь":
         context.user_data["request_type"] = "Психологическая помощь"
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(PSYCHOLOGICAL_HELP_PROMPT, reply_markup=keyboard)
         return TYPING
     elif user_choice == "🩺 Медицинская помощь":
-        keyboard = ReplyKeyboardMarkup(MEDICAL_MENU_BUTTONS + [["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup(MEDICAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             "Выберите категорию медицинской помощи:",
             reply_markup=keyboard,
         )
         return MEDICAL_MENU
     elif user_choice == "⚖️ Юридическая помощь":
-        keyboard = ReplyKeyboardMarkup(LEGAL_MENU_BUTTONS + [["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup(LEGAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             "Выберите категорию юридической помощи:",
             reply_markup=keyboard,
@@ -188,7 +186,7 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     user_text = update.message.text
     request_type = context.user_data.get("request_type", "Сообщение")
 
-    if user_text and user_text != "⬅️ Назад":
+    if user_text and user_text != BACK_BUTTON:
         channel_mapping = {
             "Ресурс": "t64_misc",
             "Срочная помощь": "t64_gen",
@@ -211,36 +209,32 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
                     chat_id=CHANNELS.get(channel_name),
                     text=f"Запрос от пользователя:\n\n{user_text}"
                 )
-                keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
                 await update.message.reply_text(
                     MESSAGE_SENT_SUCCESS,
-                    reply_markup=keyboard,
+                    reply_markup=FINISH_MENU_KEYBOARD,
                 )
                 return MAIN_MENU
             except TelegramError as e:
                 logger.error(f"Ошибка Telegram API при отправке сообщения: {e}", exc_info=True)
-                keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
                 await update.message.reply_text(
                     MESSAGE_SEND_ERROR.format(e),
-                    reply_markup=keyboard,
+                    reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
                 )
                 return MAIN_MENU
             except Exception as e:
                 logger.error(f"Непредвиденная ошибка при отправке сообщения: {e}", exc_info=True)
-                keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
                 await update.message.reply_text(
                     MESSAGE_SEND_ERROR.format(e),
-                    reply_markup=keyboard,
+                    reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
                 )
                 return MAIN_MENU
         else:
-            keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
             await update.message.reply_text(
                 "Произошла ошибка при обработке вашего запроса.",
-                reply_markup=keyboard,
+                reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
             )
             return MAIN_MENU
-    elif user_text == "⬅️ Назад":
+    elif user_text == BACK_BUTTON:
         if context.user_data.get("request_type") in ["Ресурс", "Срочная помощь", "Жилье/финансы", "Психологическая помощь"]:
             return await help_menu(update, context)
         else:
@@ -249,15 +243,15 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    if choice == "⬅️ Назад":
-        keyboard = ReplyKeyboardMarkup(HELP_MENU_BUTTONS + [["⬅️ Назад"]], resize_keyboard=True)
+    if choice == BACK_BUTTON:
+        keyboard = ReplyKeyboardMarkup(HELP_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             HELP_MENU_MESSAGE,
             reply_markup=keyboard,
         )
         return HELP_MENU
     elif choice == "🏳️‍🌈 ЛГБТ+ семьи":
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             LGBT_FAMILIES_INFO,
             parse_mode="Markdown",
@@ -271,11 +265,11 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(DOCUMENTS_MESSAGE, parse_mode="Markdown", reply_markup=keyboard)
         return FAQ_LEGAL
     elif choice == "📢 Что такое пропаганда ЛГБТ?":
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(PROPAGANDA_MESSAGE, parse_mode="Markdown", reply_markup=keyboard)
         return FAQ_LEGAL
     elif choice == "🗣️ Юридическая консультация":
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             CONSULTATION_PROMPT,
             parse_mode="Markdown",
@@ -284,7 +278,7 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         context.user_data["request_type"] = "Помощь - Юридическая консультация"
         return TYPING
     elif choice == "🚨 Сообщить о нарушении":
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             REPORT_ABUSE_MESSAGE,
             parse_mode="Markdown",
@@ -298,15 +292,15 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    if choice == "⬅️ Назад":
-        keyboard = ReplyKeyboardMarkup(HELP_MENU_BUTTONS + [["⬅️ Назад"]], resize_keyboard=True)
+    if choice == BACK_BUTTON:
+        keyboard = ReplyKeyboardMarkup(HELP_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             HELP_MENU_MESSAGE,
             reply_markup=keyboard,
         )
         return HELP_MENU
     elif choice == "🗣️ Медицинская консультация":
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             CONSULTATION_PROMPT,
             reply_markup=keyboard,
@@ -315,7 +309,7 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         return TYPING
     elif choice == "💉HRT":
         keyboard = ReplyKeyboardMarkup(
-            GENDER_THERAPY_CHOICE_BUTTONS + [["⬅️ Назад"]], resize_keyboard=True
+            GENDER_THERAPY_CHOICE_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True
         )
         await update.message.reply_text(
             GENDER_THERAPY_MESSAGE,
@@ -324,7 +318,7 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         )
         return MEDICAL_GENDER_THERAPY_MENU
     elif choice == "❓ F64":
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             F64_MESSAGE,
             parse_mode="Markdown",
@@ -332,11 +326,10 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         )
         return MEDICAL_MENU
     elif choice == "⚕️ Операции":
-        keyboard = ReplyKeyboardMarkup(SURGERY_INFO_KEYBOARD.keyboard + [["⬅️ Назад"]], resize_keyboard=True)
         await update.message.reply_text(
             SURGERY_INFO_MESSAGE,
             parse_mode="Markdown",
-            reply_markup=keyboard,
+            reply_markup=SURGERY_INFO_KEYBOARD,
         )
         return MEDICAL_SURGERY_PLANNING
     else:
@@ -345,14 +338,14 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
 async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    if choice == "⬅️ Назад":
+    if choice == BACK_BUTTON:
         return await medical_menu(update, context)
     elif choice == "T":
         keyboard = ReplyKeyboardMarkup(
             [
                 ["DIY"],
                 ["Запросить консультацию по мужской ГТ"],
-                ["⬅️ Назад"],
+                [BACK_BUTTON],
             ],
             resize_keyboard=True,
         )
@@ -367,7 +360,7 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
             [
                 ["DIY"],
                 ["Запросить консультацию по женской ГТ"],
-                ["⬅️ Назад"],
+                [BACK_BUTTON],
             ],
             resize_keyboard=True,
         )
@@ -383,18 +376,18 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
 
 async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    if choice == "⬅️ Назад":
+    if choice == BACK_BUTTON:
         return await medical_gender_therapy_menu(update, context)
     elif choice == "DIY":
         keyboard = ReplyKeyboardMarkup(
-            [["Я понимаю риски, скачать гайд"], ["⬅️ Назад"]], resize_keyboard=True
+            [["Я понимаю риски, скачать гайд"], [BACK_BUTTON]], resize_keyboard=True
         )
         await update.message.reply_text(
             DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
         )
         return MEDICAL_FTM_HRT
     elif choice == "Запросить консультацию по мужской ГТ":
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             CONSULTATION_PROMPT,
             parse_mode="Markdown",
@@ -413,14 +406,14 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                         caption="Гайд по DIY ГТ (Т)"
                     )
                     keyboard = ReplyKeyboardMarkup(
-                        [["Запросить консультацию по мужской ГТ"], ["⬅️ Назад"]],
+                        [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
                         resize_keyboard=True,
                     )
                     await update.message.reply_text("Гайд отправлен.", reply_markup=keyboard)
                     return MEDICAL_FTM_HRT
             except FileNotFoundError:
                 keyboard = ReplyKeyboardMarkup(
-                    [["Запросить консультацию по мужской ГТ"], ["⬅️ Назад"]],
+                    [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
                     resize_keyboard=True,
                 )
                 await update.message.reply_text("Файл гайда не найден.", reply_markup=keyboard)
@@ -428,14 +421,14 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             except TelegramError as e:
                 logger.error(f"Ошибка Telegram API при отправке файла: {e}", exc_info=True)
                 keyboard = ReplyKeyboardMarkup(
-                    [["Запросить консультацию по мужской ГТ"], ["⬅️ Назад"]],
+                    [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
                     resize_keyboard=True,
                 )
                 await update.message.reply_text(f"Произошла ошибка при отправке файла: {e}", reply_markup=keyboard)
                 return MEDICAL_FTM_HRT
         else:
             keyboard = ReplyKeyboardMarkup(
-                [["Запросить консультацию по мужской ГТ"], ["⬅️ Назад"]],
+                [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
                 resize_keyboard=True,
             )
             await update.message.reply_text("Путь к файлу гайда не настроен.", reply_markup=keyboard)
@@ -446,18 +439,18 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    if choice == "⬅️ Назад":
+    if choice == BACK_BUTTON:
         return await medical_gender_therapy_menu(update, context)
     elif choice == "DIY":
         keyboard = ReplyKeyboardMarkup(
-            [["Я понимаю риски, скачать гайд"], ["⬅️ Назад"]], resize_keyboard=True
+            [["Я понимаю риски, скачать гайд"], [BACK_BUTTON]], resize_keyboard=True
         )
         await update.message.reply_text(
             DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
         )
         return MEDICAL_MTF_HRT
     elif choice == "Запросить консультацию по женской ГТ":
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             CONSULTATION_PROMPT,
             parse_mode="Markdown",
@@ -476,14 +469,14 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                         caption="Гайд по DIY ГТ (Е)"
                     )
                     keyboard = ReplyKeyboardMarkup(
-                        [["Запросить консультацию по женской ГТ"], ["⬅️ Назад"]],
+                        [["Запросить консультацию по женской ГТ"], [BACK_BUTTON]],
                         resize_keyboard=True,
                     )
                     await update.message.reply_text("Гайд отправлен.", reply_markup=keyboard)
                     return MEDICAL_MTF_HRT
             except FileNotFoundError:
                 keyboard = ReplyKeyboardMarkup(
-                    [["Запросить консультацию по женской ГТ"], ["⬅️ Назад"]],
+                    [["Запросить консультацию по женской ГТ"], [BACK_BUTTON]],
                     resize_keyboard=True,
                 )
                 await update.message.reply_text("Файл гайда не найден.", reply_markup=keyboard)
@@ -491,14 +484,14 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             except TelegramError as e:
                 logger.error(f"Ошибка Telegram API при отправке файла: {e}", exc_info=True)
                 keyboard = ReplyKeyboardMarkup(
-                    [["Запросить консультацию по женской ГТ"], ["⬅️ Назад"]],
+                    [["Запросить консультацию по женской ГТ"], [BACK_BUTTON]],
                     resize_keyboard=True,
                 )
                 await update.message.reply_text(f"Произошла ошибка при отправке файла: {e}", reply_markup=keyboard)
                 return MEDICAL_MTF_HRT
         else:
             keyboard = ReplyKeyboardMarkup(
-                [["Запросить консультацию по женской ГТ"], ["⬅️ Назад"]],
+                [["Запросить консультацию по женской ГТ"], [BACK_BUTTON]],
                 resize_keyboard=True,
             )
             await update.message.reply_text("Путь к файлу гайда не настроен.", reply_markup=keyboard)
@@ -509,27 +502,28 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    if choice == "⬅️ Назад":
+    if choice == BACK_BUTTON:
         return await medical_menu(update, context)
     elif choice == "ФТМ Операции":
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             FTM_SURGERY_INFO,
             reply_markup=keyboard,
         )
         return MEDICAL_SURGERY_PLANNING
     elif choice == "МТФ Операции":
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             MTF_SURGERY_INFO,
             reply_markup=keyboard,
         )
         return MEDICAL_SURGERY_PLANNING
-    elif choice == "🗓️ Спланировать операцию":
-        keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
-        await update.message.reply_text(
-            SURGERY_PLANNING_PROMPT,
-            reply_markup=keyboard,
+    elif update.callback_query and update.callback_query.data == 'plan_surgery':
+        await update.callback_query.answer()
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=SURGERY_PLANNING_PROMPT,
+            reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
         )
         context.user_data["request_type"] = "Помощь - Планирование операции"
         return TYPING
@@ -636,10 +630,9 @@ ID: {user_id}
             except Exception as e:
                 logger.error(f"Непредвиденная ошибка при отправке сообщения в {channel_name}: {e}", exc_info=True)
 
-    keyboard = ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True)
     await update.message.reply_text(
         "Спасибо за вашу готовность помочь! Ваша заявка принята и будет рассмотрена.",
-        reply_markup=keyboard,
+        reply_markup=FINISH_MENU_KEYBOARD,
     )
     context.user_data.clear()
     return MAIN_MENU
@@ -660,32 +653,29 @@ async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 chat_id=CHANNELS.get("t64_misc"),
                 text=f"🔒 Анонимное сообщение [{message_id}]:\n\n{message}"
             )
-            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
             await update.message.reply_text(
                 ANONYMOUS_CONFIRMATION,
-                reply_markup=keyboard,
+                reply_markup=FINISH_MENU_KEYBOARD,
             )
             if "request_type" in context.user_data:
                 del context.user_data["request_type"]
             return MAIN_MENU
         except TelegramError as e:
             logger.error(f"Ошибка Telegram API при отправке анонимного сообщения: {e}", exc_info=True)
-            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
             await update.message.reply_text(
                 "Ошибка при отправке сообщения. Пожалуйста, попробуйте позже.",
-                reply_markup=keyboard,
+                reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
             )
             return MAIN_MENU
         except Exception as e:
             logger.error(f"Непредвиденная ошибка при отправке анонимного сообщения: {e}", exc_info=True)
-            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
             await update.message.reply_text(
                 "Ошибка при отправке сообщения. Пожалуйста, попробуйте позже.",
-                reply_markup=keyboard,
+                reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
             )
             return MAIN_MENU
     else:
-        await update.message.reply_text("Пожалуйста, введите ваше сообщение  или нажмите '⬅️ Назад'.")
+        await update.message.reply_text("Пожалуйста, введите ваше сообщение или нажмите '⬅️ Назад'.")
         return ANONYMOUS_MESSAGE
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -703,8 +693,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(
                 chat_id=ADMIN_CHAT_ID,
                 text=f"⚠️ Произошла ошибка при обработке обновления `{update}`:\n\n`{context.error}`",
-                parse_mode="MarkdownV2",
-            )
+                parse_mode="MarkdownV2",            )
         except TelegramError as e:
             logger.error(f"Ошибка Telegram API при отправке сообщения об ошибке администратору: {e}", exc_info=True)
         except Exception as e:
@@ -719,8 +708,20 @@ async def request_legal_docs_callback(update: Update, context: ContextTypes.DEFA
         chat_id=query.message.chat_id,
         text=CONSULTATION_PROMPT,
         parse_mode="Markdown",
-        reply_markup=ReplyKeyboardMarkup([["⬅️ Назад"]], resize_keyboard=True),
+        reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
     )
+    return TYPING
+
+async def plan_surgery_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Обработчик для inline-кнопки запроса планирования операции."""
+    query = update.callback_query
+    await query.answer()
+    await context.bot.send_message(
+        chat_id=query.message.chat_id,
+        text=SURGERY_PLANNING_PROMPT,
+        reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
+    )
+    context.user_data["request_type"] = "Помощь - Планирование операции"
     return TYPING
 
 def main() -> None:
@@ -760,6 +761,7 @@ def main() -> None:
 
     application.add_handler(conv_handler)
     application.add_handler(CallbackQueryHandler(request_legal_docs_callback, pattern='^request_legal_docs$'))
+    application.add_handler(CallbackQueryHandler(plan_surgery_callback, pattern='^plan_surgery$'))
     application.add_error_handler(error_handler)
 
     application.run_polling()
