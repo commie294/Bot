@@ -74,7 +74,6 @@ def check_keyboards():
 check_keyboards()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.effective_user
     logger.info(f"Новый пользователь: {user.id} @{user.username}")
     
