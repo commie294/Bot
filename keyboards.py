@@ -1,4 +1,4 @@
-from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton
 
 BACK_BUTTON = "⬅️ Назад"
 DONE_BUTTON = "✅ Готово"
@@ -7,8 +7,13 @@ SKIP_BUTTON = "⏭ Пропустить"
 CANCEL_BUTTON = "❌ Отменить"
 
 MAIN_MENU = ReplyKeyboardMarkup(
-    [["🆘 Попросить о помощи", "➕ Предложить ресурс"], ["🤝 Стать волонтером", "💸 Поддержать проект"]],
-    resize_keyboard=True)
+    [
+        [KeyboardButton("🆘 Попросить о помощи")],
+        [KeyboardButton("➕ Предложить ресурс"), KeyboardButton("🤝 Стать волонтером")],
+        [KeyboardButton("💸 Поддержать проект"), KeyboardButton("✉️ Анонимное сообщение")],
+    ],
+    resize_keyboard=True
+)
 
 HELP_INLINE_MENU = InlineKeyboardMarkup([
     [InlineKeyboardButton("🚨 Срочная помощь", callback_data="help_emergency")],
