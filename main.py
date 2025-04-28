@@ -25,6 +25,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def main() -> None:
+    # Добавьте эти строки для проверки клавиатур
+    logger.info(f"MAIN_MENU type: {type(MAIN_MENU)}")
+    logger.info(f"MAIN_MENU content: {MAIN_MENU.to_dict() if hasattr(MAIN_MENU, 'to_dict') else 'Invalid'}")
+    
+    application = Application.builder().token(BOT_TOKEN).build()
+    
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
@@ -47,12 +54,19 @@ def generate_message_id(user_id: int) -> str:
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     try:
-        print(f"MAIN_MENU: {MAIN_MENU}")  # Добавьте эту строку
-        await update.message.reply_text(
-            START_MESSAGE,
-            reply_markup=MAIN_MENU,
-            parse_mode="Markdown"
-        )
+        # Добавляем проверку клавиатуры
+        if not hasattr(MAIN_MENU, 'keyboard') or not MAIN_MENU.keyboard:
+            logger.error("MAIN_MENU is not properly initialized!")
+            await update.message.reply_text(
+                START_MESSAGE,
+                parse_mode="Markdown"
+            )
+        else:
+            await update.message.reply_text(
+                START_MESSAGE,
+                reply_markup=MAIN_MENU,
+                parse_mode="Markdown"
+            )
         return MAIN_MENU
     except Exception as e:
         logger.error(f"Error in start function: {e}")
