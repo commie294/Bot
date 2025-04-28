@@ -696,7 +696,6 @@ async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         return ANONYMOUS_MESSAGE
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         "Действие отменено.", reply_markup=ReplyKeyboardRemove()
     )
