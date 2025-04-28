@@ -252,7 +252,7 @@ async def handle_hrt_actions(update: Update, context: ContextTypes.DEFAULT_TYPE)
         request_type = "Консультация по мужской ГТ" if query.data == "consult_male_hrt" else "Консультация по женской ГТ"
         context.user_data["request_type"] = request_type
         await context.bot.send_message(
-            chat_id=update.effective_chat.id, 
+            chat_id=update.effective_chat.id,
             text=CONSULTATION_PROMPT,
             reply_markup=BASIC_NAVIGATION
         )
@@ -275,21 +275,21 @@ async def confirm_diy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         try:
             await context.bot.send_document(
                 chat_id=update.effective_chat.id,
-                document=open("diyHRTguide.pdf", "rb"),
+                document=open("/home/venikpes/Bot/diyHRTguide.pdf", "rb"),
                 caption=f"Гайд по DIY {hrt_type} ГТ. Будьте осторожны!",
                 filename="DIY_HRT_Guide.pdf"
             )
             await query.edit_message_text(
                 f"Гайд по DIY {hrt_type} ГТ отправлен. Всегда консультируйтесь с врачом!",
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton(f"Консультация по {'мужской' if hrt_type == 'FTM' else 'женской'} ГТ", 
+                    [InlineKeyboardButton(f"Консультация по {'мужской' if hrt_type == 'FTM' else 'женской'} ГТ",
                      callback_data=f"consult_{'male' if hrt_type == 'FTM' else 'female'}_hrt")],
                     [InlineKeyboardButton("⬅️ Назад", callback_data="back_medical")]
                 ])
             )
             return MEDICAL_FTM_HRT if hrt_type == "FTM" else MEDICAL_MTF_HRT
         except FileNotFoundError:
-            logger.error("Файл diyHRTguide.pdf не найден.")
+            logger.error("Файл /home/venikpes/Bot/diyHRTguide.pdf не найден.")
             await query.edit_message_text(
                 "Ошибка: Файл с гайдом не найден.",
                 reply_markup=HRT_INLINE_MENU
@@ -548,3 +548,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
