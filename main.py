@@ -733,7 +733,7 @@ async def plan_surgery_callback(update: Update, context: ContextTypes.DEFAULT_TY
 def main() -> None:
     application = Application.builder().token(BOT_TOKEN).build()
 
-        conv_handler = ConversationHandler(
+    conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
@@ -764,6 +764,13 @@ def main() -> None:
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
+
+    application.add_handler(conv_handler)
+    application.add_handler(CallbackQueryHandler(request_legal_docs_callback, pattern='^request_legal_docs$'))
+    application.add_handler(CallbackQueryHandler(plan_surgery_callback, pattern='^plan_surgery$'))
+    application.add_error_handler(error_handler)
+
+    application.run_polling()
 
     application.add_handler(conv_handler)
     application.add_handler(CallbackQueryHandler(request_legal_docs_callback, pattern='^request_legal_docs$'))
