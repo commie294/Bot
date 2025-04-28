@@ -126,7 +126,7 @@ else:
     CONSULTATION_PSYCH_CONTACT,
     CONSULTATION_CONFIRM,
     CONSULTATION_PSYCH_ANONYMOUS_MESSAGE,
-) = range(29)
+) = range(30)
 
 def generate_message_id(user_id: int) -> str:
     """Генерирует хеш для анонимной идентификации сообщений"""
