@@ -1,6 +1,7 @@
 from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
 BACK_BUTTON = "⬅️ Назад"
+DONE_BUTTON = "✅ Готово"
 
 MAIN_MENU_BUTTONS = [
     ["🆘 Попросить о помощи"],
@@ -52,3 +53,6 @@ VOLUNTEER_HELP_TYPE_BUTTONS = [
 ]
 
 VOLUNTEER_HELP_TYPE_KEYBOARD = ReplyKeyboardMarkup(VOLUNTEER_HELP_TYPE_BUTTONS, resize_keyboard=True)
+
+# Клавиатура для завершения действия и возврата в главное меню
+FINISH_MENU_KEYBOARD = ReplyKeyboardMarkup([[DONE_BUTTON, BACK_BUTTON]], resize_keyboard=True)
