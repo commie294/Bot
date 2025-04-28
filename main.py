@@ -45,7 +45,8 @@ from bot_responses import (
     SURGERY_PLANNING_PROMPT,
     FAREWELL_MESSAGE,
     DIY_HRT_GUIDE_NAME
-    ANONYMOUS_CONFIRMATION)
+    ANONYMOUS_CONFIRMATION, 
+)
 from keyboards import (
     MAIN_MENU_BUTTONS,
     HELP_MENU_BUTTONS,
