@@ -1,3 +1,4 @@
+# main.py
 import os
 from dotenv import load_dotenv
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
@@ -74,6 +75,8 @@ from keyboards import (
     VOLUNTEER_HELP_TYPE_KEYBOARD,
     DONE_BUTTON,
     FINISH_MENU_KEYBOARD,
+    YES_NO_BUTTONS,
+    YES_NO_MAYBE_BUTTONS,
 )
 from channels import CHANNELS
 
@@ -696,7 +699,7 @@ async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             )
             return MAIN_MENU
     else:
-                    await update.message.reply_text("Пожалуйста, введите ваше сообщение или нажмите '⬅️ Назад'.")
+                await update.message.reply_text("Пожалуйста, введите ваше сообщение или нажмите '⬅️ Назад'.")
         return ANONYMOUS_MESSAGE
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -773,9 +776,9 @@ async def consultation_start(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def consultation_legal_situation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["legal_situation"] = update.message.text
-    keyboard = ReplyKeyboardMarkup([["Да", "Нет", BACK_BUTTON]], resize_keyboard=True)
+    keyboard = ReplyKeyboardMarkup(YES_NO_BUTTONS, resize_keyboard=True)
     await update.message.reply_text(LEGAL_ASSISTANCE_PROMPT, reply_markup=keyboard)
-    return CONSULTATION_LEGAL_ASSISTANCE
+    return CONSULTATION_LEGAL_CONTACT
 
 async def consultation_legal_assistance(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["legal_assistance"] = update.message.text
@@ -790,7 +793,7 @@ async def consultation_legal_contact(update: Update, context: ContextTypes.DEFAU
 
 async def consultation_medical_situation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["medical_situation"] = update.message.text
-    keyboard = ReplyKeyboardMarkup([["Да", "Нет", BACK_BUTTON]], resize_keyboard=True)
+    keyboard = ReplyKeyboardMarkup(YES_NO_BUTTONS, resize_keyboard=True)
     await update.message.reply_text(MEDICAL_REGION_ASSISTANCE_PROMPT, reply_markup=keyboard)
     return CONSULTATION_MEDICAL_ASSISTANCE
 
@@ -822,7 +825,7 @@ async def consultation_psych_choice(update: Update, context: ContextTypes.DEFAUL
 
 async def consultation_psych_situation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["psych_situation"] = update.message.text
-    keyboard = ReplyKeyboardMarkup([["Да", "Нет", "Не знаю", BACK_BUTTON]], resize_keyboard=True)
+    keyboard = ReplyKeyboardMarkup(YES_NO_MAYBE_BUTTONS, resize_keyboard=True)
     await update.message.reply_text(PSYCH_REGION_ASSISTANCE_PROMPT, reply_markup=keyboard)
     return CONSULTATION_PSYCH_ASSISTANCE
 
@@ -897,63 +900,6 @@ async def send_consultation_request_to_admin(update: Update, context: ContextTyp
     except Exception as e:
         logger.error(f"Непредвиденная ошибка при отправке запроса на консультацию администратору: {e}", exc_info=True)
 
-def main() -> None:
-    application = Application.builder().token(BOT_TOKEN).build()
-
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
-        states={
-            MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
-            HELP_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)],
-            TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing)],
-            FAQ_LEGAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, faq_legal)],
-            MEDICAL_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, medical_menu)],
-            MEDICAL_GENDER_THERAPY_MENU: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, medical_gender_therapy_menu)
-            ],
-            MEDICAL_FTM_HRT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, medical_ftm_hrt)
-            ],
-            MEDICAL_MTF_HRT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, medical_mtf_hrt)
-            ],
-            MEDICAL_SURGERY_PLANNING: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_planning)
-            ],
-            VOLUNTEER_START_STATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_start)],
-            VOLUNTEER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_name)],
-            VOLUNTEER_REGION: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region_handler)],
-            VOLUNTEER_HELP_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type_handler)],
-            VOLUNTEER_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_contact_handler)],
-            ANONYMOUS_MESSAGE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, anonymous_message)
-            ],
-            CONSULTATION_START: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_start)],
-            CONSULTATION_LEGAL_SITUATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_legal_situation)],
-            CONSULTATION_LEGAL_ASSISTANCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_legal_assistance)],
-            CONSULTATION_LEGAL_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_legal_contact)],
-            CONSULTATION_MEDICAL_SITUATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_medical_situation)],
-            CONSULTATION_MEDICAL_ASSISTANCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_medical_assistance)],
-            CONSULTATION_MEDICAL_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_medical_contact)],
-            CONSULTATION_PSYCH_CHOICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_psych_choice)],
-            CONSULTATION_PSYCH_SITUATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_psych_situation)],
-            CONSULTATION_PSYCH_ASSISTANCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_psych_assistance)],
-            CONSULTATION_PSYCH_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_psych_contact)],
-            CONSULTATION_CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_confirm)],
-            CONSULTATION_PSYCH_ANONYMOUS_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, consultation_psych_anonymous_message)],
-        },
-        fallbacks=[CommandHandler("cancel", cancel)],
-    )
-
-    application.add_handler(conv_handler)
-    application.add_handler(CallbackQueryHandler(request_legal_docs_callback, pattern='^request_legal_docs$'))
-    application.add_handler(CallbackQueryHandler(plan_surgery_callback, pattern='^plan_surgery$'))
-    application.add_error_handler(error_handler)
-
-    application.run_polling()
-
-if __name__ == "__main__":
-    main()
 def main() -> None:
     application = Application.builder().token(BOT_TOKEN).build()
 
