@@ -56,7 +56,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     except Exception as e:
         logger.error(f"Error in start function: {e}")
         await update.message.reply_text(
-            "Добро пожаловать! Используйте команды из меню.",
+            START_MESSAGE,
             parse_mode="Markdown"
         )
         return MAIN_MENU
