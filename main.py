@@ -454,6 +454,89 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             CONSULTATION_PROMPT,
             parse_mode="Markdown",
             reply_markup=keyboard,
+async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    choice = update.message.text
+    if choice == BACK_BUTTON:
+        return await medical_gender_therapy_menu(update, context)
+    elif choice == "DIY":
+        keyboard = ReplyKeyboardMarkup(
+            [["Я понимаю риски, скачать гайд"], [BACK_BUTTON]], resize_keyboard=True
+        )
+        await update.message.reply_text(
+            DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
+        )
+        return MEDICAL_FTM_HRT
+    elif choice == "Запросить консультацию по мужской ГТ":
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
+        await update.message.reply_text(
+            CONSULTATION_PROMPT,
+            parse_mode="Markdown",
+            reply_markup=keyboard,
+        )
+        context.user_data["request_type"] = "Помощь - Консультация по мужской ГТ"
+        return TYPING
+    elif choice == "Я понимаю риски, скачать гайд":
+        if DIY_HRT_GUIDE_PATH:
+            try:
+                with open(DIY_HRT_GUIDE_PATH, 'rb') as pdf_file:
+                    await context.bot.send_document(
+                        chat_id=update.effective_chat.id,
+                        document=pdf_file,
+                        filename=DIY_HRT_GUIDE_NAME,
+                    )
+                    keyboard = ReplyKeyboardMarkup(
+                        [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
+                        resize_keyboard=True,
+                    )
+                    await update.message.reply_text(
+                        "Желаем вам удачи на вашем пути!",
+                        reply_markup=keyboard
+                    )
+                    return MEDICAL_FTM_HRT
+            except FileNotFoundError:
+                keyboard = ReplyKeyboardMarkup(
+                    [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
+                    resize_keyboard=True,
+                )
+                await update.message.reply_text("Файл гайда не найден.", reply_markup=keyboard)
+                return MEDICAL_FTM_HRT
+            except TelegramError as e:
+                logger.error(f"Ошибка Telegram API при отправке файла: {e}", exc_info=True)
+                keyboard = ReplyKeyboardMarkup(
+                    [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
+                    resize_keyboard=True,
+                )
+                await update.message.reply_text(f"Произошла ошибка при отправке файла: {e}", reply_markup=keyboard)
+                return MEDICAL_FTM_HRT
+        else:
+            keyboard = ReplyKeyboardMarkup(
+                [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
+                resize_keyboard=True,
+            )
+            await update.message.reply_text("Путь к файлу гайда не настроен.", reply_markup=keyboard)
+            return MEDICAL_FTM_HRT
+    else:
+        await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
+        return MEDICAL_FTM_HRT
+
+async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    choice = update.message.text
+    if choice == BACK_BUTTON:
+        return await medical_gender_therapy_menu(update, context)
+    elif choice == "DIY":
+        keyboard = ReplyKeyboardMarkup(
+            [["Я понимаю риски, скачать гайд"], [BACK_BUTTON]], resize_keyboard=True
+        )
+        await update.message.reply_text(
+            DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
+        )
+        return MEDICAL_MTF_HRT
+    elif choice == "Запросить консультацию по женской ГТ":
+        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
+        await update.message.reply_text(
+            CONSULTATION_PROMPT,
+            parse_mode="Markdown",
+            reply_markup=keyboard,
         )
         context.user_data["request_type"] = "Помощь - Консультация по женской ГТ"
         return TYPING
@@ -465,13 +548,15 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                         chat_id=update.effective_chat.id,
                         document=pdf_file,
                         filename=DIY_HRT_GUIDE_NAME,
-                        caption="Гайд по DIY ГТ (Е)"
                     )
                     keyboard = ReplyKeyboardMarkup(
                         [["Запросить консультацию по женской ГТ"], [BACK_BUTTON]],
                         resize_keyboard=True,
                     )
-                    await update.message.reply_text("Гайд отправлен.", reply_markup=keyboard)
+                    await update.message.reply_text(
+                        "Желаем вам удачи на вашем пути!",
+                        reply_markup=keyboard
+                    )
                     return MEDICAL_MTF_HRT
             except FileNotFoundError:
                 keyboard = ReplyKeyboardMarkup(
