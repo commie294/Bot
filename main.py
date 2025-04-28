@@ -46,15 +46,16 @@ def generate_message_id(user_id: int) -> str:
     return hashlib.sha256(f"{HASH_SALT}_{user_id}_{os.urandom(16)}".encode()).hexdigest()[:8]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if not MAIN_MENU:
-        logger.error("MAIN_MENU не инициализировано!")
+    if MAIN_MENU is None:  
+        logging.error("MAIN_MENU не инициализировано!")
         await update.message.reply_text("Ошибка загрузки меню. Попробуйте позже.")
         return ConversationHandler.END
 
-    await update.message.reply_text(START_MESSAGE)
-    reply_markup=MAIN_MENU
-    
-    return MAIN_MENU
+    await update.message.reply_text(
+        START_MESSAGE,
+        reply_markup=MAIN_MENU, 
+        parse_mode="Markdown")
+    return ConversationHandler.END  
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
