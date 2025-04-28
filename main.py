@@ -682,7 +682,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         "Действие отменено.", reply_markup=ReplyKeyboardRemove()
     )
     context.user_data.clear()
-    return ConversationHandler.END
+    keyboard = ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True)
+    await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=keyboard)
+    return MAIN_MENU
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Log the error and send a telegram message to notify the developer."""
