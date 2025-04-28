@@ -531,9 +531,15 @@ async def medical_surgery_planning(update: Update, context: ContextTypes.DEFAULT
         return MEDICAL_SURGERY_PLANNING
 
 async def volunteer_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if "volunteer_data" in context.user_data:
+        del context.user_data["volunteer_data"]
+    if "state" in context.user_data and context.user_data["state"] == VOLUNTEER_START_STATE:
+        del context.user_data["state"]
+
     keyboard = ReplyKeyboardMarkup([["Далее", "Отмена"]], resize_keyboard=True)
     await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=keyboard)
-    return VOLUNTEER_NAME 
+    return VOLUNTEER_NAME
+
     
 async def volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     name = update.message.text
