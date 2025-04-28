@@ -427,7 +427,6 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                         [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
                         resize_keyboard=True,
                     )
-                    await update.message.reply_text("Гайд отправлен.", reply_markup=keyboard)
                     return MEDICAL_FTM_HRT
             except FileNotFoundError:
                 keyboard = ReplyKeyboardMarkup(
@@ -444,13 +443,13 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 )
                 await update.message.reply_text(f"Произошла ошибка при отправке файла: {e}", reply_markup=keyboard)
                 return MEDICAL_FTM_HRT
-        else:
-            keyboard = ReplyKeyboardMarkup(
-                [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
-                resize_keyboard=True,
-            )
-            await update.message.reply_text("Путь к файлу гайда не настроен.", reply_markup=keyboard)
-            return MEDICAL_FTM_HRT
+            else:
+                keyboard = ReplyKeyboardMarkup(
+                    [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
+                    resize_keyboard=True,
+                )
+                await update.message.reply_text("Путь к файлу гайда не настроен.", reply_markup=keyboard)
+                return MEDICAL_FTM_HRT
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_FTM_HRT
@@ -490,7 +489,6 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                         [["Запросить консультацию по женской ГТ"], [BACK_BUTTON]],
                         resize_keyboard=True,
                     )
-                    await update.message.reply_text("Гайд отправлен.", reply_markup=keyboard)
                     return MEDICAL_MTF_HRT
             except FileNotFoundError:
                 keyboard = ReplyKeyboardMarkup(
@@ -507,13 +505,13 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 )
                 await update.message.reply_text(f"Произошла ошибка при отправке файла: {e}", reply_markup=keyboard)
                 return MEDICAL_MTF_HRT
-        else:
-            keyboard = ReplyKeyboardMarkup(
-                [["Запросить консультацию по женской ГТ"], [BACK_BUTTON]],
-                resize_keyboard=True,
-            )
-            await update.message.reply_text("Путь к файлу гайда не настроен.", reply_markup=keyboard)
-            return MEDICAL_MTF_HRT
+            else:
+                keyboard = ReplyKeyboardMarkup(
+                    [["Запросить консультацию по женской ГТ"], [BACK_BUTTON]],
+                    resize_keyboard=True,
+                )
+                await update.message.reply_text("Путь к файлу гайда не настроен.", reply_markup=keyboard)
+                return MEDICAL_MTF_HRT
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_MTF_HRT
