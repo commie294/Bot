@@ -108,37 +108,55 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return MAIN_MENU
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_choice = update.message.text
-    if user_choice == "🆘 Попросить о помощи":
-        keyboard = ReplyKeyboardMarkup(HELP_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
-        await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=keyboard, parse_mode="Markdown")
-        return HELP_MENU
-    elif user_choice == "➕ Предложить ресурс":
-        context.user_data["request_type"] = "Ресурс"
-        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
-        await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=keyboard)
-        return TYPING
-    elif user_choice == "🤝 Стать волонтером":
-        keyboard = ReplyKeyboardMarkup([["Отмена"]], resize_keyboard=True)
-        await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=keyboard)
-        return VOLUNTEER_START_STATE
-    elif user_choice == "💸 Поддержать проект":
-        await update.message.reply_text(DONATE_MESSAGE, parse_mode="Markdown")
-        return MAIN_MENU
-    elif user_choice == "✉️ Анонимное сообщение":
-        keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
-        await update.message.reply_text(
-            "Пожалуйста, напишите ваше анонимное сообщение:",
-            reply_markup=keyboard,
-        )
-        context.user_data["request_type"] = "Анонимное сообщение"
-        return ANONYMOUS_MESSAGE
-    elif user_choice == BACK_BUTTON or user_choice == DONE_BUTTON:
-        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
-    else:
-        await update.message.reply_text(CHOOSE_FROM_MENU)
-        return MAIN_MENU
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        if query.data == 'volunteer_start_callback':
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text=VOLUNTEER_MESSAGE,
+                reply_markup=VOLUNTEER_START_KEYBOARD
+            )
+            return VOLUNTEER_NAME
+        # Обработка других callback_query, если они есть
+        elif query.data == 'request_legal_docs':
+            await request_legal_docs_callback(update, context)
+            return TYPING
+        elif query.data == 'plan_surgery':
+            await plan_surgery_callback(update, context)
+            return TYPING
+    elif update.message:
+        user_choice = update.message.text
+        if user_choice == "🆘 Попросить о помощи":
+            keyboard = ReplyKeyboardMarkup(HELP_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
+            await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=keyboard, parse_mode="Markdown")
+            return HELP_MENU
+        elif user_choice == "➕ Предложить ресурс":
+            context.user_data["request_type"] = "Ресурс"
+            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
+            await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=keyboard)
+            return TYPING
+        elif user_choice == "🤝 Стать волонтером":
+            await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=VOLUNTEER_START_KEYBOARD)
+            return VOLUNTEER_NAME
+        elif user_choice == "💸 Поддержать проект":
+            await update.message.reply_text(DONATE_MESSAGE, parse_mode="Markdown")
+            return MAIN_MENU
+        elif user_choice == "✉️ Анонимное сообщение":
+            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
+            await update.message.reply_text(
+                "Пожалуйста, напишите ваше анонимное сообщение:",
+                reply_markup=keyboard,
+            )
+            context.user_data["request_type"] = "Анонимное сообщение"
+            return ANONYMOUS_MESSAGE
+        elif user_choice == BACK_BUTTON or user_choice == DONE_BUTTON:
+            await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove())
+            return ConversationHandler.END
+        else:
+            await update.message.reply_text(CHOOSE_FROM_MENU)
+            return MAIN_MENU
+    return MAIN_MENU
 
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_choice = update.message.text
@@ -734,7 +752,7 @@ async def plan_surgery_callback(update: Update, context: ContextTypes.DEFAULT_TY
 def main() -> None:
     application = Application.builder().token(BOT_TOKEN).build()
 
-    conv_handler = ConversationHandler(
+        conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
@@ -754,7 +772,7 @@ def main() -> None:
             MEDICAL_SURGERY_PLANNING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_planning)
             ],
-            VOLUNTEER_START_STATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_start)],
+            # УДАЛЯЕМ VOLUNTEER_START_STATE
             VOLUNTEER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_name)],
             VOLUNTEER_REGION: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region_handler)],
             VOLUNTEER_HELP_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type_handler)],
