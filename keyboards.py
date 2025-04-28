@@ -43,6 +43,8 @@ SURGERY_INFO_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton("🗓️ Спланировать операцию", callback_data='plan_surgery')]
 ])
 
+VOLUNTEER_START_KEYBOARD = ReplyKeyboardMarkup([["Далее", "Отмена"]], resize_keyboard=True)
+
 VOLUNTEER_HELP_TYPE_BUTTONS = [
     ["Юридическая"],
     ["Психологическая"],
