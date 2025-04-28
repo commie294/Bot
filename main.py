@@ -698,8 +698,8 @@ async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             )
             return MAIN_MENU
     else:
-                await update.message.reply_text("Пожалуйста, введите ваше сообщение или нажмите '⬅️ Назад'.")
-        return ANONYMOUS_MESSAGE
+            await update.message.reply_text("Пожалуйста, введите ваше сообщение или нажмите '⬅️ Назад'.")
+            return ANONYMOUS_MESSAGE
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
