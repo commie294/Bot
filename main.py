@@ -393,7 +393,6 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
         return MEDICAL_GENDER_THERAPY_MENU
 
 async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == BACK_BUTTON:
         return await medical_gender_therapy_menu(update, context)
