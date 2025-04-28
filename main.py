@@ -752,7 +752,7 @@ async def plan_surgery_callback(update: Update, context: ContextTypes.DEFAULT_TY
 def main() -> None:
     application = Application.builder().token(BOT_TOKEN).build()
 
-        conv_handler = ConversationHandler(
+    conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
