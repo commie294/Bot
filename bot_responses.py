@@ -219,5 +219,5 @@ PSYCH_CONTACT_PROMPT = "Укажите, пожалуйста, ваш Telegram н
 PSYCH_ANONYMOUS_PROMPT = "Опишите, пожалуйста, ваш запрос анонимно."
 CONSULTATION_REQUEST_RECEIVED = "Ваш запрос принят и будет направлен специалистам. Ожидайте ответа."
 ANONYMOUS_REQUEST_SENT = "Ваш анонимный запрос отправлен специалистам."
-CONSULTATION_CONFIRT = "Спасибо за запрос, мы свяжемся с вами в течении 24 часов."
+CONSULTATION_CONFIRM = "Спасибо за запрос, мы свяжемся с вами в течении 24 часов."
 
