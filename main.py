@@ -85,7 +85,7 @@ else:
     TYPING,
     FAQ_LEGAL,
     MEDICAL_MENU,
-    VOLUNTEER_START_STATE,
+    VOLUNTEER_CONFIRM_START,  # НОВОЕ СОСТОЯНИЕ
     VOLUNTEER_NAME,
     VOLUNTEER_REGION,
     VOLUNTEER_HELP_TYPE,
@@ -96,7 +96,7 @@ else:
     MEDICAL_MTF_HRT,
     MEDICAL_SURGERY_PLANNING,
     DONE_STATE,
-) = range(17)
+) = range(18)
 
 def generate_message_id(user_id: int) -> str:
     """Генерирует хеш для анонимной идентификации сообщений"""
@@ -117,8 +117,8 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 text=VOLUNTEER_MESSAGE,
                 reply_markup=VOLUNTEER_START_KEYBOARD
             )
-            return VOLUNTEER_NAME
-        # Обработка других callback_query, если они есть
+            return VOLUNTEER_CONFIRM_START  # ИЗМЕНЕНО СОСТОЯНИЕ
+        # Обработка других callback_query
         elif query.data == 'request_legal_docs':
             await request_legal_docs_callback(update, context)
             return TYPING
@@ -126,19 +126,10 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             await plan_surgery_callback(update, context)
             return TYPING
     elif update.message:
-        user_choice = update.message.text
-        if user_choice == "🆘 Попросить о помощи":
-            keyboard = ReplyKeyboardMarkup(HELP_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
-            await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=keyboard, parse_mode="Markdown")
-            return HELP_MENU
-        elif user_choice == "➕ Предложить ресурс":
-            context.user_data["request_type"] = "Ресурс"
-            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
-            await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=keyboard)
-            return TYPING
-        elif user_choice == "🤝 Стать волонтером":
+        # ... остальная обработка текстовых сообщений в главном меню ...
+        if user_choice == "🤝 Стать волонтером":
             await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=VOLUNTEER_START_KEYBOARD)
-            return VOLUNTEER_NAME
+            return VOLUNTEER_CONFIRM_START  
         elif user_choice == "💸 Поддержать проект":
             await update.message.reply_text(DONATE_MESSAGE, parse_mode="Markdown")
             return MAIN_MENU
@@ -772,7 +763,8 @@ def main() -> None:
             MEDICAL_SURGERY_PLANNING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, medical_surgery_planning)
             ],
-            # УДАЛЯЕМ VOLUNTEER_START_STATE
+            # НОВОЕ СОСТОЯНИЕ И ОБРАБОТЧИК
+            VOLUNTEER_CONFIRM_START: [MessageHandler(filters.TEXT & filters.Regex("^Далее$"), volunteer_name)],
             VOLUNTEER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_name)],
             VOLUNTEER_REGION: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_region_handler)],
             VOLUNTEER_HELP_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type_handler)],
@@ -783,6 +775,7 @@ def main() -> None:
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
+
 
     application.add_handler(conv_handler)
     application.add_handler(CallbackQueryHandler(request_legal_docs_callback, pattern='^request_legal_docs$'))
