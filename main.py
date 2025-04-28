@@ -684,7 +684,7 @@ async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
             )
             return MAIN_MENU
-                except Exception as e:
+        except Exception as e:
             logger.error(f"Непредвиденная ошибка при отправке анонимного сообщения: {e}", exc_info=True)
             await update.message.reply_text(
                 "Ошибка при отправке сообщения. Пожалуйста, попробуйте позже.",
