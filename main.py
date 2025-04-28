@@ -417,7 +417,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         if DIY_HRT_GUIDE_PATH:
             try:
                 with open(DIY_HRT_GUIDE_PATH, 'rb') as pdf_file:
-                    await context.bot.send_document(
+                                        await context.bot.send_document(
                         chat_id=update.effective_chat.id,
                         document=pdf_file,
                         filename=DIY_HRT_GUIDE_NAME,
@@ -427,8 +427,8 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                         [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
                         resize_keyboard=True,
                     )
-                    await update.message.reply_text("Гайд отправлен.", reply_markup=keyboard)
                     return MEDICAL_FTM_HRT
+
             except FileNotFoundError:
                 keyboard = ReplyKeyboardMarkup(
                     [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
@@ -480,18 +480,18 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         if DIY_HRT_GUIDE_PATH:
             try:
                 with open(DIY_HRT_GUIDE_PATH, 'rb') as pdf_file:
-                    await context.bot.send_document(
+                                        await context.bot.send_document(
                         chat_id=update.effective_chat.id,
                         document=pdf_file,
                         filename=DIY_HRT_GUIDE_NAME,
-                        caption="Гайд по DIY ГТ (Е)"
+                        caption="Гайд по DIY ГТ (Т)"
                     )
                     keyboard = ReplyKeyboardMarkup(
-                        [["Запросить консультацию по женской ГТ"], [BACK_BUTTON]],
+                        [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
                         resize_keyboard=True,
                     )
-                    await update.message.reply_text("Гайд отправлен.", reply_markup=keyboard)
                     return MEDICAL_MTF_HRT
+
             except FileNotFoundError:
                 keyboard = ReplyKeyboardMarkup(
                     [["Запросить консультацию по женской ГТ"], [BACK_BUTTON]],
