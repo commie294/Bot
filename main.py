@@ -109,6 +109,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return MAIN_MENU
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_choice = None  # Инициализируем user_choice здесь
     if update.callback_query:
         query = update.callback_query
         await query.answer()
@@ -118,8 +119,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 text=VOLUNTEER_MESSAGE,
                 reply_markup=VOLUNTEER_START_KEYBOARD
             )
-            return VOLUNTEER_CONFIRM_START  # ИЗМЕНЕНО СОСТОЯНИЕ
-        # Обработка других callback_query
+            return VOLUNTEER_CONFIRM_START
         elif query.data == 'request_legal_docs':
             await request_legal_docs_callback(update, context)
             return TYPING
@@ -127,10 +127,19 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             await plan_surgery_callback(update, context)
             return TYPING
     elif update.message:
-        # ... остальная обработка текстовых сообщений в главном меню ...
-        if user_choice == "🤝 Стать волонтером":
+        user_choice = update.message.text
+        if user_choice == "🆘 Попросить о помощи":
+            keyboard = ReplyKeyboardMarkup(HELP_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
+            await update.message.reply_text(HELP_MENU_MESSAGE, reply_markup=keyboard, parse_mode="Markdown")
+            return HELP_MENU
+        elif user_choice == "➕ Предложить ресурс":
+            context.user_data["request_type"] = "Ресурс"
+            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
+            await update.message.reply_text(RESOURCE_PROMPT_MESSAGE, reply_markup=keyboard)
+            return TYPING
+        elif user_choice == "🤝 Стать волонтером":
             await update.message.reply_text(VOLUNTEER_MESSAGE, reply_markup=VOLUNTEER_START_KEYBOARD)
-            return VOLUNTEER_CONFIRM_START  
+            return VOLUNTEER_CONFIRM_START
         elif user_choice == "💸 Поддержать проект":
             await update.message.reply_text(DONATE_MESSAGE, parse_mode="Markdown")
             return MAIN_MENU
