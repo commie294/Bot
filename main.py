@@ -454,6 +454,7 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             CONSULTATION_PROMPT,
             parse_mode="Markdown",
             reply_markup=keyboard,
+        )
 async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == BACK_BUTTON:
