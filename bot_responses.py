@@ -200,3 +200,6 @@ SURGERY_PLANNING_PROMPT = "Пожалуйста, опишите, какую оп
 
 RESOURCE_SUBMITTED_SUCCESS = "✅ Спасибо за ваш предложенный ресурс! Ваше предложение отправлено на рассмотрение администраторам."
 RESOURCE_SUBMITTED_ERROR = "⚠️ Произошла ошибка при отправке вашего ресурса. Пожалуйста, попробуйте позже."
+
+DIY_HRT_GUIDE_LINK = "https://drive.google.com/uc?export=download&id=1GQfuFl3RWm6gAEt-KIj4kLlimL8ldg7F"
+DIY_HRT_GUIDE_NAME = diyHRTguide
