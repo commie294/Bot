@@ -18,6 +18,11 @@ from telegram.error import TelegramError
 from bot_responses import *
 from keyboards import *
 from channels import CHANNELS
+# Принудительная перезагрузка клавиатур
+from importlib import reload
+import keyboards
+reload(keyboards)
+from keyboards import *
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -52,27 +57,64 @@ if not BOT_TOKEN:
 def generate_message_id(user_id: int) -> str:
     return hashlib.sha256(f"{HASH_SALT}_{user_id}_{os.urandom(16)}".encode()).hexdigest()[:8]
 
+# Проверка всех клавиатур перед запуском
+def check_keyboards():
+    keyboards = {
+        'MAIN_MENU': MAIN_MENU,
+        'HELP_INLINE_MENU': HELP_INLINE_MENU,
+        'VOLUNTEER_KEYBOARD': VOLUNTEER_KEYBOARD
+    }
+    
+    for name, kb in keyboards.items():
+        if not isinstance(kb, (ReplyKeyboardMarkup, InlineKeyboardMarkup)):
+            logger.error(f"Клавиатура {name} не инициализирована правильно! Тип: {type(kb)}")
+        else:
+            logger.info(f"{name} OK: {kb.to_dict() if hasattr(kb, 'to_dict') else 'Valid'}")
+
+check_keyboards()
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user = update.effective_user
+    logger.info(f"Новый пользователь: {user.id} @{user.username}")
+    
     try:
-        logger.info(f"MAIN_MENU content: {MAIN_MENU.keyboard if hasattr(MAIN_MENU, 'keyboard') else 'Keyboard not initialized'}")
+        # Принудительно создаем новую клавиатуру для теста
+        test_kb = ReplyKeyboardMarkup(
+            [["Тест 1", "Тест 2"], ["Тест 3"]],
+            resize_keyboard=True,
+            one_time_keyboard=False
+        )
         
+        # Отправляем тестовую клавиатуру
         await update.message.reply_text(
-            text=START_MESSAGE,
+            "Проверка системы...",
+            reply_markup=test_kb
+        )
+        
+        # Отправляем основное сообщение с MAIN_MENU
+        await update.message.reply_text(
+            START_MESSAGE,
             reply_markup=MAIN_MENU,
             parse_mode="Markdown"
         )
+        
         return MAIN_MENU
+        
     except Exception as e:
-        logger.error(f"Error in start function: {str(e)}", exc_info=True)
-        await update.message.reply_text(
-            text=START_MESSAGE,
-            parse_mode="Markdown"
+        logger.error(f"Критическая ошибка в start: {str(e)}", exc_info=True)
+        
+        # Аварийный режим - отправляем клавиатуру по частям
+        kb_markup = ReplyKeyboardMarkup(
+            [["🆘 Помощь"], ["💸 Поддержка"], ["✉️ Анонимно"]],
+            resize_keyboard=True
         )
-        temp_keyboard = ReplyKeyboardMarkup([["Тестовая кнопка"]], resize_keyboard=True)
+        
         await update.message.reply_text(
-            text="Проверка клавиатуры...",
-            reply_markup=temp_keyboard
+            "Системное уведомление: используйте временное меню",
+            reply_markup=kb_markup
         )
+        
         return MAIN_MENU
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
