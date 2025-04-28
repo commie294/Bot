@@ -1,4 +1,4 @@
-from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
 BACK_BUTTON = "⬅️ Назад"
 
@@ -8,7 +8,6 @@ MAIN_MENU_BUTTONS = [
     ["🤝 Стать волонтером"],
     ["💸 Поддержать проект"],
     ["✉️ Анонимное сообщение"],
-    ["✅ Готово"],
 ]
 
 HELP_MENU_BUTTONS = [
@@ -17,7 +16,6 @@ HELP_MENU_BUTTONS = [
     ["🩺 Медицинская помощь"],
     ["🏠 Жилье/финансы"],
     ["🧠 Психологическая помощь"],
-    [BACK_BUTTON],
 ]
 
 LEGAL_MENU_BUTTONS = [
@@ -26,7 +24,6 @@ LEGAL_MENU_BUTTONS = [
     ["📢 Что такое пропаганда ЛГБТ?"],
     ["🗣️ Юридическая консультация"],
     ["🚨 Сообщить о нарушении"],
-    [BACK_BUTTON],
 ]
 
 MEDICAL_MENU_BUTTONS = [
@@ -34,19 +31,16 @@ MEDICAL_MENU_BUTTONS = [
     ["💉HRT"],
     ["❓ F64"],
     ["⚕️ Операции"],
-    [BACK_BUTTON],
 ]
 
 GENDER_THERAPY_CHOICE_BUTTONS = [
     ["T"],
     ["E"],
-    [BACK_BUTTON],
 ]
 
-SURGERY_INFO_KEYBOARD = ReplyKeyboardMarkup([["🗓️ Спланировать операцию"], [BACK_BUTTON]], resize_keyboard=True)
-
-# keyboards.py
-from telegram import ReplyKeyboardMarkup
+SURGERY_INFO_KEYBOARD = InlineKeyboardMarkup([
+    [InlineKeyboardButton("🗓️ Спланировать операцию", callback_data='plan_surgery')]
+])
 
 VOLUNTEER_HELP_TYPE_BUTTONS = [
     ["Юридическая"],
@@ -58,4 +52,3 @@ VOLUNTEER_HELP_TYPE_BUTTONS = [
 ]
 
 VOLUNTEER_HELP_TYPE_KEYBOARD = ReplyKeyboardMarkup(VOLUNTEER_HELP_TYPE_BUTTONS, resize_keyboard=True)
-
