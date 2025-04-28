@@ -367,7 +367,8 @@ async def medical_gender_therapy_menu(update: Update, context: ContextTypes.DEFA
             ],
             resize_keyboard=True,
         )
-        await update.message.reply_            MASCULINIZING_HRT_INFO,
+        await update.message.reply_text(
+            MASCULINIZING_HRT_INFO,
             parse_mode="Markdown",
             reply_markup=keyboard,
         )
@@ -683,7 +684,7 @@ async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
             )
             return MAIN_MENU
-        except Exception as e:
+                except Exception as e:
             logger.error(f"Непредвиденная ошибка при отправке анонимного сообщения: {e}", exc_info=True)
             await update.message.reply_text(
                 "Ошибка при отправке сообщения. Пожалуйста, попробуйте позже.",
@@ -695,9 +696,9 @@ async def anonymous_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         return ANONYMOUS_MESSAGE
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        "Действие отменено.", reply_markup
-        ReplyKeyboardRemove()
+        "Действие отменено.", reply_markup=ReplyKeyboardRemove()
     )
     context.user_data.clear()
     keyboard = ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True)
