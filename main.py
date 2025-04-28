@@ -46,7 +46,9 @@ def generate_message_id(user_id: int) -> str:
     return hashlib.sha256(f"{HASH_SALT}_{user_id}_{os.urandom(16)}".encode()).hexdigest()[:8]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     try:
+        print(f"MAIN_MENU: {MAIN_MENU}")  # Добавьте эту строку
         await update.message.reply_text(
             START_MESSAGE,
             reply_markup=MAIN_MENU,
