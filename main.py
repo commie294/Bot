@@ -421,7 +421,6 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                         chat_id=update.effective_chat.id,
                         document=pdf_file,
                         filename=DIY_HRT_GUIDE_NAME,
-                        caption="Гайд по DIY ГТ (Т)"
                     )
                     keyboard = ReplyKeyboardMarkup(
                         [["Запросить консультацию по мужской ГТ"], [BACK_BUTTON]],
@@ -453,7 +452,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     else:
         await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
         return MEDICAL_FTM_HRT
-
+        
 async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
     if choice == BACK_BUTTON:
@@ -483,7 +482,6 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                         chat_id=update.effective_chat.id,
                         document=pdf_file,
                         filename=DIY_HRT_GUIDE_NAME,
-                        caption="Гайд по DIY ГТ (Е)"
                     )
                     keyboard = ReplyKeyboardMarkup(
                         [["Запросить консультацию по женской ГТ"], [BACK_BUTTON]],
