@@ -8,6 +8,9 @@ from bot_responses import (
 )
 from keyboards import MEDICAL_MENU_BUTTONS, GENDER_THERAPY_CHOICE_BUTTONS, SURGERY_INFO_KEYBOARD, BACK_BUTTON
 from utils.constants import BotState, REQUEST_TYPES
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Обрабатывает выбор в меню медицинской помощи."""
