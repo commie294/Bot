@@ -7,8 +7,10 @@ from handlers.help_menu import help_menu, faq_legal
 from handlers.medical import medical_menu, medical_gender_therapy_menu, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning
 from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
 from handlers.anonymous import anonymous_message
-from utils.message_utils import error_handler, request_legal_docs_callback, plan_surgery_callback, handle_typing
+from utils.message_utils import error_handler, request_legal_docs_callback, plan_surgery_callback, handle_typing, feedback_handler
 from utils.constants import BotState, check_env_vars
+from keyboards import MAIN_MENU_BUTTONS
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -59,7 +61,6 @@ def main() -> None:
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Отменяет текущее действие и возвращает в главное меню."""
-    from keyboards import MAIN_MENU_BUTTONS
     await update.message.reply_text(
         "Действие отменено.", reply_markup=ReplyKeyboardRemove()
     )
@@ -67,14 +68,6 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True)
     await update.message.reply_text("Вы вернулись в главное меню.", reply_markup=keyboard)
     return BotState.MAIN_MENU
-
-async def feedback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Обрабатывает обратную связь от пользователя."""
-    query = update.callback_query
-    await query.answer()
-    feedback = "положительная" if query.data == "feedback_good" else "отрицательная"
-    await query.message.reply_text(f"Спасибо за вашу обратную связь ({feedback})!")
-    update_stats(update.effective_user.id, f"feedback_{feedback}")
 
 if __name__ == "__main__":
     main()
