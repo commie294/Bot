@@ -1,11 +1,11 @@
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ContextTypes
 from bot_responses import (
     HELP_MENU_MESSAGE, EMERGENCY_MESSAGE, HOUSING_FINANCE_PROMPT, PSYCHOLOGICAL_HELP_PROMPT,
     CHOOSE_HELP_CATEGORY, LGBT_FAMILIES_INFO, DOCUMENTS_MESSAGE, PROPAGANDA_MESSAGE,
     CONSULTATION_PROMPT, REPORT_ABUSE_MESSAGE
 )
-from keyboards import HELP_MENU_BUTTONS, LEGAL_MENU_BUTTONS, BACK_BUTTON
+from keyboards import HELP_MENU_BUTTONS, LEGAL_MENU_BUTTONS, BACK_BUTTON, MAIN_MENU_BUTTONS
 from utils.constants import BotState, REQUEST_TYPES
 
 async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -21,7 +21,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     elif user_choice == "🚨 Срочная помощь":
         context.user_data["request_type"] = REQUEST_TYPES["emergency"]
         keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
-        await update.message.reply_text(EMERGENCY_MESSAGE, reply_markup=keyboard)
+        await update.message.reply_text(EMERGENCY_MESSAGE.format(emergency_number="112"), reply_markup=keyboard)
         return BotState.TYPING
     elif user_choice == "🏠 Жилье/финансы":
         context.user_data["request_type"] = REQUEST_TYPES["housing"]
@@ -69,10 +69,10 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         )
         return BotState.FAQ_LEGAL
     elif choice == "📝 Как сменить документы":
-        keyboard = InlineKeyboardMarkup([
+        keyboard_inline = InlineKeyboardMarkup([
             [InlineKeyboardButton("Запросить консультацию", callback_data='request_legal_docs')]
         ])
-        await update.message.reply_text(DOCUMENTS_MESSAGE, parse_mode="Markdown", reply_markup=keyboard)
+        await update.message.reply_text(DOCUMENTS_MESSAGE, parse_mode="Markdown", reply_markup=keyboard_inline)
         return BotState.FAQ_LEGAL
     elif choice == "📢 Что такое пропаганда ЛГБТ?":
         await update.message.reply_text(PROPAGANDA_MESSAGE, parse_mode="Markdown", reply_markup=keyboard)
