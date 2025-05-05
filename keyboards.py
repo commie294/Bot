@@ -40,7 +40,9 @@ GENDER_THERAPY_CHOICE_BUTTONS = [
 ]
 
 SURGERY_INFO_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton("🗓️ Спланировать операцию", callback_data='plan_surgery')]
+    [InlineKeyboardButton("🗓️ Спланировать операцию", callback_data='plan_surgery')],
+    [InlineKeyboardButton("ФТМ Операции", callback_data='ftm_surgery')],
+    [InlineKeyboardButton("МТФ Операции", callback_data='mtf_surgery')]
 ])
 
 VOLUNTEER_START_KEYBOARD = ReplyKeyboardMarkup([["Далее", "Отмена"]], resize_keyboard=True)
@@ -51,10 +53,15 @@ VOLUNTEER_HELP_TYPE_BUTTONS = [
     ["Медицинская"],
     ["Финансовая"],
     ["Техническая"],
-    ["Другая помощь"]  # На всякий случай
+    ["Другая помощь"]
 ]
 
 VOLUNTEER_HELP_TYPE_KEYBOARD = ReplyKeyboardMarkup(VOLUNTEER_HELP_TYPE_BUTTONS, resize_keyboard=True)
 
-# Клавиатура для завершения действия и возврата в главное меню
 FINISH_MENU_KEYBOARD = ReplyKeyboardMarkup([[DONE_BUTTON, BACK_BUTTON]], resize_keyboard=True)
+
+REGIONS = [
+    ["РФ", "Украина"],
+    ["Беларусь", "Казахстан"],
+    ["Другой регион"]
+]
