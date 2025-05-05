@@ -5,7 +5,7 @@ import logging
 from datetime import datetime, timedelta
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ContextTypes
-from telegram.error import TelegramError, NetworkError, Unauthorized
+from telegram.error import TelegramError, NetworkError, Forbidden
 from bot_responses import MESSAGE_SENT_SUCCESS, MESSAGE_SEND_ERROR, CONSULTATION_PROMPT, SURGERY_PLANNING_PROMPT
 from keyboards import MAIN_MENU_BUTTONS, BACK_BUTTON, FINISH_MENU_KEYBOARD
 from utils.constants import BotState, REQUEST_TYPES
@@ -128,7 +128,7 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         except NetworkError:
             await update.message.reply_text("Ошибка сети. Попробуйте позже.")
             return BotState.MAIN_MENU
-        except Unauthorized:
+        except Forbidden:
             logger.error(f"Бот не имеет доступа к каналу {channel_name}")
             await update.message.reply_text("Ошибка конфигурации. Свяжитесь с администратором.")
             return BotState.MAIN_MENU
