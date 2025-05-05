@@ -9,6 +9,14 @@ from bot_responses import (
 from keyboards import MEDICAL_MENU_BUTTONS, GENDER_THERAPY_CHOICE_BUTTONS, SURGERY_INFO_KEYBOARD, BACK_BUTTON
 from utils.constants import BotState, REQUEST_TYPES
 
+elif choice == "🩺 Медицинская помощь":
+    keyboard = ReplyKeyboardMarkup(MEDICAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
+    await update.message.reply_text(
+        "Выберите категорию медицинской помощи:",
+        reply_markup=keyboard,
+    )
+    return BotState.MEDICAL_MENU
+
 async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Обрабатывает выбор в меню медицинской помощи."""
     choice = update.message.text
