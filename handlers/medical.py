@@ -1,4 +1,4 @@
-from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import TelegramError
 import os
@@ -6,8 +6,11 @@ from bot_responses import (
     CONSULTATION_PROMPT, GENDER_THERAPY_MESSAGE, MASCULINIZING_HRT_INFO, FEMINIZING_HRT_INFO,
     DIY_HRT_WARNING, F64_MESSAGE, SURGERY_INFO_MESSAGE, FTM_SURGERY_INFO, MTF_SURGERY_INFO
 )
-from keyboards import MEDICAL_MENU_BUTTONS, GENDER_THERAPY_CHOICE_BUTTONS, SURGERY_INFO_KEYBOARD, BACK_BUTTON
+from keyboards import MEDICAL_MENU_BUTTONS, GENDER_THERAPY_CHOICE_BUTTONS, SURGERY_INFO_KEYBOARD, BACK_BUTTON, HELP_MENU_BUTTONS
 from utils.constants import BotState, REQUEST_TYPES
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Обрабатывает выбор в меню медицинской помощи."""
@@ -21,11 +24,10 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         )
         return BotState.HELP_MENU
     elif choice == "🩺 Медицинская помощь":
-        keyboard = ReplyKeyboardMarkup(
-            MEDICAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True
-        )
+        keyboard = ReplyKeyboardMarkup(MEDICAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
-            "Выберите категорию медицинской помощи:", reply_markup=keyboard
+            "Выберите категорию медицинской помощи:",
+            reply_markup=keyboard,
         )
         return BotState.MEDICAL_MENU
     elif choice == "🗣️ Медицинская консультация":
