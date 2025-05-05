@@ -181,3 +181,11 @@ async def plan_surgery_callback(update: Update, context: ContextTypes.DEFAULT_TY
         reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
     )
     return BotState.TYPING
+
+async def feedback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Обрабатывает обратную связь от пользователя."""
+    query = update.callback_query
+    await query.answer()
+    feedback = "положительная" if query.data == "feedback_good" else "отрицательная"
+    await query.message.reply_text(f"Спасибо за вашу обратную связь ({feedback})!")
+    update_stats(update.effective_user.id, f"feedback_{feedback}")
