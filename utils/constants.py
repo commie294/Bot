@@ -1,7 +1,7 @@
 import os
 from enum import IntEnum
 from typing import Dict, Tuple
-from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import ReplyKeyboardMarkup
 from keyboards import MAIN_MENU_BUTTONS, HELP_MENU_BUTTONS, BACK_BUTTON, LEGAL_MENU_BUTTONS, MEDICAL_MENU_BUTTONS, GENDER_THERAPY_CHOICE_BUTTONS, VOLUNTEER_START_KEYBOARD
 
 class BotState(IntEnum):
