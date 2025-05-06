@@ -1,11 +1,7 @@
 import os
 import logging
 from dotenv import load_dotenv
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import (
-    Application, CommandHandler, ConversationHandler, MessageHandler, filters,
-    CallbackQueryHandler, ContextTypes
-)
+from telegram.ext import Application, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler
 from handlers.main_menu import start, main_menu
 from handlers.help_menu import help_menu, faq_legal
 from handlers.medical import medical_menu, medical_gender_therapy_menu, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning
@@ -14,6 +10,7 @@ from handlers.anonymous import anonymous_message
 from utils.message_utils import error_handler, request_legal_docs_callback, plan_surgery_callback, handle_typing, feedback_handler
 from utils.constants import BotState, check_env_vars
 from keyboards import MAIN_MENU_BUTTONS
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
