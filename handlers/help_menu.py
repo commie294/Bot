@@ -110,4 +110,76 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 reply_markup=keyboard,
                 parse_mode="MarkdownV2"
             )
-            return Bot
+            return BotState.MEDICAL_MENU
+        elif user_choice == "⚖️ Юридическая помощь":
+            keyboard = ReplyKeyboardMarkup(LEGAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
+            await update.message.reply_text(
+                "Выберите категорию юридической помощи:",
+                reply_markup=keyboard,
+                parse_mode="MarkdownV2"
+            )
+            return BotState.FAQ_LEGAL
+        await update.message.reply_text(
+            CHOOSE_HELP_CATEGORY,
+            parse_mode="MarkdownV2"
+        )
+    return BotState.HELP_MENU
+
+async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if not await check_rate_limit(update, context):
+        return BotState.FAQ_LEGAL
+    choice = update.message.text
+    keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
+    if choice == BACK_BUTTON:
+        keyboard = HELP_MENU_BUTTONS
+        await update.message.reply_text(
+            HELP_MENU_MESSAGE,
+            reply_markup=keyboard,
+            parse_mode="MarkdownV2"
+        )
+        return BotState.HELP_MENU
+    elif choice == "🏳️‍🌈 ЛГБТ+ семьи":
+        await update.message.reply_text(
+            LGBT_FAMILIES_INFO,
+            parse_mode="Markdown",
+            reply_markup=keyboard
+        )
+        return BotState.FAQ_LEGAL
+    elif choice == "📝 Как сменить документы":
+        keyboard_inline = InlineKeyboardMarkup([
+            [InlineKeyboardButton("Запросить консультацию", callback_data='request_legal_docs')]
+        ])
+        await update.message.reply_text(
+            DOCUMENTS_MESSAGE,
+            parse_mode="Markdown",
+            reply_markup=keyboard_inline
+        )
+        return BotState.FAQ_LEGAL
+    elif choice == "📢 Что такое пропаганда ЛГБТ?":
+        await update.message.reply_text(
+            PROPAGANDA_MESSAGE,
+            parse_mode="Markdown",
+            reply_markup=keyboard
+        )
+        return BotState.FAQ_LEGAL
+    elif choice == "🗣️ Юридическая консультация":
+        await update.message.reply_text(
+            CONSULTATION_PROMPT,
+            parse_mode="Markdown",
+            reply_markup=keyboard
+        )
+        context.user_data["request_type"] = REQUEST_TYPES["legal_consult"]
+        return BotState.TYPING
+    elif choice == "🚨 Сообщить о нарушении":
+        await update.message.reply_text(
+            REPORT_ABUSE_MESSAGE,
+            parse_mode="Markdown",
+            reply_markup=keyboard
+        )
+        context.user_data["request_type"] = REQUEST_TYPES["legal_abuse"]
+        return BotState.TYPING
+    await update.message.reply_text(
+        "Пожалуйста, выберите опцию из меню\\.",
+        parse_mode="MarkdownV2"
+    )
+    return BotState.FAQ_LEGAL
