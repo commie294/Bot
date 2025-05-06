@@ -3,21 +3,22 @@ from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardBu
 BACK_BUTTON = "⬅️ Назад"
 DONE_BUTTON = "✅ Готово"
 
-MAIN_MENU_BUTTONS = [
-    ["🆘 Попросить о помощи"],
-    ["➕ Предложить ресурс"],
-    ["🤝 Стать волонтером"],
-    ["💸 Поддержать проект"],
-    ["✉️ Анонимное сообщение"],
-]
+MAIN_MENU_BUTTONS = InlineKeyboardMarkup([
+    [InlineKeyboardButton("🆘 Попросить о помощи", callback_data="main_help")],
+    [InlineKeyboardButton("➕ Предложить ресурс", callback_data="main_resource")],
+    [InlineKeyboardButton("🤝 Стать волонтёром", callback_data="main_volunteer")],
+    [InlineKeyboardButton("💸 Поддержать проект", callback_data="main_donate")],
+    [InlineKeyboardButton("✉️ Анонимное сообщение", callback_data="main_anonymous")]
+])
 
-HELP_MENU_BUTTONS = [
-    ["🚨 Срочная помощь"],
-    ["⚖️ Юридическая помощь"],
-    ["🩺 Медицинская помощь"],
-    ["🏠 Жилье/финансы"],
-    ["🧠 Психологическая помощь"],
-]
+HELP_MENU_BUTTONS = InlineKeyboardMarkup([
+    [InlineKeyboardButton("🚨 Срочная помощь", callback_data="help_emergency")],
+    [InlineKeyboardButton("⚖️ Юридическая помощь", callback_data="help_legal")],
+    [InlineKeyboardButton("🩺 Медицинская помощь", callback_data="help_medical")],
+    [InlineKeyboardButton("🏠 Жилье/финансы", callback_data="help_housing")],
+    [InlineKeyboardButton("🧠 Психологическая помощь", callback_data="help_psych")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]
+])
 
 LEGAL_MENU_BUTTONS = [
     ["🏳️‍🌈 ЛГБТ+ семьи"],
