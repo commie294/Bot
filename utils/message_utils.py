@@ -5,13 +5,66 @@ import json
 import logging
 from datetime import datetime, timedelta
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, JobQueue
 from telegram.error import TelegramError, NetworkError, Forbidden
 from bot_responses import MESSAGE_SENT_SUCCESS, MESSAGE_SEND_ERROR, CONSULTATION_PROMPT, SURGERY_PLANNING_PROMPT
 from keyboards import MAIN_MENU_BUTTONS, BACK_BUTTON, FINISH_MENU_KEYBOARD
 from utils.constants import BotState, REQUEST_TYPES
 
 logger = logging.getLogger(__name__)
+
+def generate_message_id(user_id: int) -> str:
+    random_bytes = secrets.token_bytes(16)
+    return hashlib.sha256(f"{os.getenv('HASH_SALT')}_{user_id}_{random_bytes}".encode()).hexdigest()[:8]
+
+def load_channels():
+    try:
+        with open("data/channels.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logger.error("Файл channels.json не найден.")
+        raise
+
+def update_stats(user_id: int, action: str):
+    stats_file = "data/stats.json"
+    try:
+        with open(stats_file, "r") as f:
+            stats = json.load(f)
+    except FileNotFoundError:
+        stats = {}
+    user_key = str(user_id)
+    stats.setdefault(user_key, {}).setdefault(action, 0)
+    stats[user_key][action] += 1
+    with open(stats_file, "w") as f:
+        json.dump(stats, f, indent=2)
+
+def load_reminders():
+    try:
+        with open("data/reminders.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+def save_reminder(user_id: int, reminder_time: str, message: str, job_queue: JobQueue):
+    reminders = load_reminders()
+    reminder_id = f"{user_id}_{len(reminders.get(str(user_id), []))}"
+    reminders.setdefault(str(user_id), []).append({"id": reminder_id, "time": reminder_time, "message": message})
+    with open("data/reminders.json", "w") as f:
+        json.dump(reminders, f, indent=2)
+    # Планирование напоминания
+    job_queue.run_once(send_reminder, datetime.fromisoformat(reminder_time), data={"user_id": user_id, "message": message, "reminder_id": reminder_id})
+
+async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
+    job = context.job
+    await context.bot.send_message(job.data["user_id"], f"⏰ Напоминание: {job.data['message']}")
+    # Удаление напоминания после отправки (опционально)
+    reminders = load_reminders()
+    user_reminders = reminders.get(str(job.data["user_id"]), [])
+    reminders[str(job.data["user_id"])] = [r for r in user_reminders if r["id"] != job.data["reminder_id"]]
+    with open("data/reminders.json", "w") as f:
+        json.dump(reminders, f, indent=2)
+
+# Оставшиеся функции (handle_typing, error_handler, etc.) остаются без изменений
 
 def generate_message_id(user_id: int) -> str:
     """Генерирует хеш для анонимной идентификации сообщений."""
