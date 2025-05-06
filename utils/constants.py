@@ -22,6 +22,7 @@ class BotState(IntEnum):
     MEDICAL_MTF_HRT = 14
     MEDICAL_SURGERY_PLANNING = 15
     DONE_STATE = 16
+    RESOURCE_PROPOSAL = 17
 
 REQUEST_TYPES = {
     "resource": "Ресурс",
@@ -39,7 +40,7 @@ REQUEST_TYPES = {
 
 MAIN_MENU_ACTIONS: Dict[str, Tuple[ReplyKeyboardMarkup, str, int]] = {
     "🆘 Попросить о помощи": (
-        ReplyKeyboardMarkup(HELP_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True),
+        HELP_MENU_BUTTONS,
         "Выберите категорию помощи:",
         BotState.HELP_MENU
     ),
@@ -51,7 +52,6 @@ MAIN_MENU_ACTIONS: Dict[str, Tuple[ReplyKeyboardMarkup, str, int]] = {
 }
 
 def check_env_vars():
-    """Проверяет наличие обязательных переменных окружения."""
     required_vars = ["BOT_TOKEN", "ADMIN_CHAT_ID", "HASH_SALT", "DIY_HRT_GUIDE_PATH"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
