@@ -1,9 +1,0 @@
-{
-    "approved": [
-        {"title": "TransMap", "url": "t.me/transmap", "description": "Карта трансфрендли мест"},
-        {"title": "Гайд по HRT", "url": "example.com/hrt-guide", "description": "Полезная информация по гормональной терапии"}
-    ],
-    "pending": [
-        {"title": "Новая группа", "url": "t.me/newgroup", "description": "Группа поддержки", "proposed_by": 123456789}
-    ]
-}
