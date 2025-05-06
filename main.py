@@ -5,7 +5,7 @@ from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Application, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
 from handlers.main_menu import start, main_menu
 from handlers.help_menu import help_menu, faq_legal
-from handlers.medical import medical_menu, medical_gender_therapy_menu, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning
+from handlers.medical import medical_menu, medical_gender_therapy_menu, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning, set_reminder
 from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
 from handlers.anonymous import anonymous_message
 from utils.message_utils import error_handler, request_legal_docs_callback, plan_surgery_callback, handle_typing, feedback_handler
@@ -47,6 +47,7 @@ def main() -> None:
             BotState.VOLUNTEER_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex("^(Отмена)$"), volunteer_finish_handler)],
             BotState.ANONYMOUS_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, anonymous_message)],
             BotState.DONE_STATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
+            BotState.SET_REMINDER: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_reminder)],  # Новое состояние
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
