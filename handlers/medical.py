@@ -8,19 +8,21 @@ from bot_responses import (
 )
 from keyboards import MEDICAL_MENU_BUTTONS, GENDER_THERAPY_CHOICE_BUTTONS, SURGERY_INFO_KEYBOARD, BACK_BUTTON, HELP_MENU_BUTTONS
 from utils.constants import BotState, REQUEST_TYPES
+from utils.message_utils import check_rate_limit
 import logging
 
 logger = logging.getLogger(__name__)
 
 async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Обрабатывает выбор в меню медицинской помощи."""
+    if not await check_rate_limit(update, context):
+        return BotState.MEDICAL_MENU
     choice = update.message.text
     if choice == BACK_BUTTON:
-        keyboard = ReplyKeyboardMarkup(
-            HELP_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True
-        )
+        keyboard = HELP_MENU_BUTTONS
         await update.message.reply_text(
-            "Выберите категорию помощи:", reply_markup=keyboard
+            "Выберите категорию помощи:",
+            reply_markup=keyboard,
+            parse_mode="MarkdownV2"
         )
         return BotState.HELP_MENU
     elif choice == "🩺 Медицинская помощь":
@@ -28,12 +30,15 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         await update.message.reply_text(
             "Выберите категорию медицинской помощи:",
             reply_markup=keyboard,
+            parse_mode="MarkdownV2"
         )
         return BotState.MEDICAL_MENU
     elif choice == "🗣️ Медицинская консультация":
         keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
-            CONSULTATION_PROMPT, reply_markup=keyboard
+            CONSULTATION_PROMPT,
+            reply_markup=keyboard,
+            parse_mode="MarkdownV2"
         )
         context.user_data["request_type"] = REQUEST_TYPES["medical_consult"]
         return BotState.TYPING
@@ -42,28 +47,37 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             GENDER_THERAPY_CHOICE_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True
         )
         await update.message.reply_text(
-            GENDER_THERAPY_MESSAGE, parse_mode="Markdown", reply_markup=keyboard
+            GENDER_THERAPY_MESSAGE,
+            parse_mode="Markdown",
+            reply_markup=keyboard
         )
         return BotState.MEDICAL_GENDER_THERAPY_MENU
     elif choice == "❓ F64":
         keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
-            F64_MESSAGE, parse_mode="Markdown", reply_markup=keyboard
+            F64_MESSAGE,
+            parse_mode="Markdown",
+            reply_markup=keyboard
         )
         return BotState.MEDICAL_MENU
     elif choice == "⚕️ Операции":
         await update.message.reply_text(
-            SURGERY_INFO_MESSAGE, parse_mode="Markdown", reply_markup=SURGERY_INFO_KEYBOARD
+            SURGERY_INFO_MESSAGE,
+            parse_mode="Markdown",
+            reply_markup=SURGERY_INFO_KEYBOARD
         )
         return BotState.MEDICAL_SURGERY_PLANNING
-    await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
+    await update.message.reply_text(
+        "Пожалуйста, выберите опцию из меню\\.",
+        parse_mode="MarkdownV2"
+    )
     return BotState.MEDICAL_MENU
-
 
 async def medical_gender_therapy_menu(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
-    """Обрабатывает выбор направления гормональной терапии."""
+    if not await check_rate_limit(update, context):
+        return BotState.MEDICAL_GENDER_THERAPY_MENU
     choice = update.message.text
     if choice == BACK_BUTTON:
         return await medical_menu(update, context)
@@ -73,7 +87,9 @@ async def medical_gender_therapy_menu(
             resize_keyboard=True,
         )
         await update.message.reply_text(
-            MASCULINIZING_HRT_INFO, parse_mode="Markdown", reply_markup=keyboard
+            MASCULINIZING_HRT_INFO,
+            parse_mode="Markdown",
+            reply_markup=keyboard
         )
         return BotState.MEDICAL_FTM_HRT
     elif choice == "E":
@@ -82,15 +98,20 @@ async def medical_gender_therapy_menu(
             resize_keyboard=True,
         )
         await update.message.reply_text(
-            FEMINIZING_HRT_INFO, parse_mode="Markdown", reply_markup=keyboard
+            FEMINIZING_HRT_INFO,
+            parse_mode="Markdown",
+            reply_markup=keyboard
         )
         return BotState.MEDICAL_MTF_HRT
-    await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
+    await update.message.reply_text(
+        "Пожалуйста, выберите опцию из меню\\.",
+        parse_mode="MarkdownV2"
+    )
     return BotState.MEDICAL_GENDER_THERAPY_MENU
 
-
 async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Обрабатывает запросы по мужской ГТ."""
+    if not await check_rate_limit(update, context):
+        return BotState.MEDICAL_FTM_HRT
     choice = update.message.text
     if choice == BACK_BUTTON:
         return await medical_gender_therapy_menu(update, context)
@@ -99,24 +120,31 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             [["Я понимаю риски, скачать гайд"], [BACK_BUTTON]], resize_keyboard=True
         )
         await update.message.reply_text(
-            DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
+            DIY_HRT_WARNING,
+            parse_mode="Markdown",
+            reply_markup=keyboard
         )
         return BotState.MEDICAL_FTM_HRT
     elif choice == "Запросить консультацию по мужской ГТ":
         keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
-            CONSULTATION_PROMPT, parse_mode="Markdown", reply_markup=keyboard
+            CONSULTATION_PROMPT,
+            parse_mode="Markdown",
+            reply_markup=keyboard
         )
         context.user_data["request_type"] = REQUEST_TYPES["ftm_hrt"]
         return BotState.TYPING
     elif choice == "Я понимаю риски, скачать гайд":
         return await send_hrt_guide(update, context, "ftm")
-    await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
+    await update.message.reply_text(
+        "Пожалуйста, выберите опцию из меню\\.",
+        parse_mode="MarkdownV2"
+    )
     return BotState.MEDICAL_FTM_HRT
 
-
 async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Обрабатывает запросы по женской ГТ."""
+    if not await check_rate_limit(update, context):
+        return BotState.MEDICAL_MTF_HRT
     choice = update.message.text
     if choice == BACK_BUTTON:
         return await medical_gender_therapy_menu(update, context)
@@ -125,33 +153,42 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             [["Я понимаю риски, скачать гайд"], [BACK_BUTTON]], resize_keyboard=True
         )
         await update.message.reply_text(
-            DIY_HRT_WARNING, parse_mode="Markdown", reply_markup=keyboard
+            DIY_HRT_WARNING,
+            parse_mode="Markdown",
+            reply_markup=keyboard
         )
         return BotState.MEDICAL_MTF_HRT
     elif choice == "Запросить консультацию по женской ГТ":
         keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
-            CONSULTATION_PROMPT, parse_mode="Markdown", reply_markup=keyboard
+            CONSULTATION_PROMPT,
+            parse_mode="Markdown",
+            reply_markup=keyboard
         )
         context.user_data["request_type"] = REQUEST_TYPES["mtf_hrt"]
         return BotState.TYPING
     elif choice == "Я понимаю риски, скачать гайд":
         return await send_hrt_guide(update, context, "mtf")
-    await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
+    await update.message.reply_text(
+        "Пожалуйста, выберите опцию из меню\\.",
+        parse_mode="MarkdownV2"
+    )
     return BotState.MEDICAL_MTF_HRT
-
 
 async def send_hrt_guide(
     update: Update, context: ContextTypes.DEFAULT_TYPE, guide_type: str
 ) -> int:
-    """Отправляет PDF-гайд по HRT."""
     guide_path = os.getenv("DIY_HRT_GUIDE_PATH")
     if not guide_path:
         keyboard = ReplyKeyboardMarkup(
             [[f"Запросить консультацию по {'мужской' if guide_type == 'ftm' else 'женской'} ГТ"], [BACK_BUTTON]],
             resize_keyboard=True,
         )
-        await update.message.reply_text("Путь к файлу гайда не настроен.", reply_markup=keyboard)
+        await update.message.reply_text(
+            "Путь к файлу гайда не настроен\\.",
+            reply_markup=keyboard,
+            parse_mode="MarkdownV2"
+        )
         return BotState.MEDICAL_FTM_HRT if guide_type == "ftm" else BotState.MEDICAL_MTF_HRT
     try:
         with open(guide_path, "rb") as pdf_file:
@@ -170,34 +207,49 @@ async def send_hrt_guide(
             [[f"Запросить консультацию по {'мужской' if guide_type == 'ftm' else 'женской'} ГТ"], [BACK_BUTTON]],
             resize_keyboard=True,
         )
-        await update.message.reply_text("Файл гайда не найден.", reply_markup=keyboard)
+        await update.message.reply_text(
+            "Файл гайда не найден\\.",
+            reply_markup=keyboard,
+            parse_mode="MarkdownV2"
+        )
         return BotState.MEDICAL_FTM_HRT if guide_type == "ftm" else BotState.MEDICAL_MTF_HRT
     except TelegramError as e:
         keyboard = ReplyKeyboardMarkup(
             [[f"Запросить консультацию по {'мужской' if guide_type == 'ftm' else 'женской'} ГТ"], [BACK_BUTTON]],
             resize_keyboard=True,
         )
-        await update.message.reply_text(f"Произошла ошибка при отправке файла: {e}", reply_markup=keyboard)
+        await update.message.reply_text(
+            f"Произошла ошибка при отправке файла: {e}",
+            reply_markup=keyboard,
+            parse_mode="MarkdownV2"
+        )
         return BotState.MEDICAL_FTM_HRT if guide_type == "ftm" else BotState.MEDICAL_MTF_HRT
-
 
 async def medical_surgery_planning(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
-    """Обрабатывает запросы по планированию операций."""
+    if not await check_rate_limit(update, context):
+        return BotState.MEDICAL_SURGERY_PLANNING
     choice = update.message.text
     keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
     if choice == BACK_BUTTON:
         return await medical_menu(update, context)
     elif choice == "ФТМ Операции":
         await update.message.reply_text(
-            FTM_SURGERY_INFO, reply_markup=keyboard
+            FTM_SURGERY_INFO,
+            reply_markup=keyboard,
+            parse_mode="MarkdownV2"
         )
         return BotState.MEDICAL_SURGERY_PLANNING
     elif choice == "МТФ Операции":
         await update.message.reply_text(
-            MTF_SURGERY_INFO, reply_markup=keyboard
+            MTF_SURGERY_INFO,
+            reply_markup=keyboard,
+            parse_mode="MarkdownV2"
         )
         return BotState.MEDICAL_SURGERY_PLANNING
-    await update.message.reply_text("Пожалуйста, выберите опцию из меню.")
+    await update.message.reply_text(
+        "Пожалуйста, выберите опцию из меню\\.",
+        parse_mode="MarkdownV2"
+    )
     return BotState.MEDICAL_SURGERY_PLANNING
