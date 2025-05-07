@@ -1,5 +1,7 @@
 import os
 import logging
+import signal
+import asyncio
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import Application, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes, InlineQueryHandler
@@ -133,9 +135,20 @@ async def main() -> None:
     application.add_handler(InlineQueryHandler(inline_query))
     application.add_error_handler(error_handler)
 
+    async def shutdown(signum, frame):
+        logger.info("Received shutdown signal, stopping application...")
+        await application.stop()
+        await application.updater.stop()
+        logger.info("Application stopped gracefully.")
+
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, lambda: asyncio.create_task(shutdown(sig, None)))
+
     await application.bot.set_webhook(url="https://your-server.com/bot")
     async with application:
         await application.start()
+        logger.info("Webhook started on https://your-server.com/bot")
         await application.updater.start_webhook(
             listen="0.0.0.0",
             port=8443,
@@ -145,5 +158,4 @@ async def main() -> None:
         await application.updater.run_forever()
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())
