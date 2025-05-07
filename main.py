@@ -1,16 +1,19 @@
 import os
 import logging
 from dotenv import load_dotenv
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import Application, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineQueryResultArticle, InputTextMessageContent
+from telegram.ext import Application, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes, InlineQueryHandler
 from handlers.main_menu import start, main_menu
 from handlers.help_menu import help_menu, faq_legal
 from handlers.medical import medical_menu, medical_gender_therapy_menu, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning
 from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
 from handlers.anonymous import anonymous_message
-from utils.message_utils import error_handler, request_legal_docs_callback, plan_surgery_callback, handle_typing, feedback_handler
+from handlers.resources import resource_proposal, list_resources
+from utils.message_utils import error_handler, request_legal_docs_callback, plan_surgery_callback, handle_typing, feedback_handler, check_rate_limit
+from utils.resource_utils import load_resources, fetch_resources_from_post, update_telegram_post, approve_resource
 from utils.constants import BotState, check_env_vars
 from keyboards import MAIN_MENU_BUTTONS
+from bot_responses import BACK_TO_MAIN_MENU
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -21,7 +24,74 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-def main() -> None:
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text(
+        "Действие отменено.", reply_markup=ReplyKeyboardRemove()
+    )
+    context.user_data.clear()
+    await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=MAIN_MENU_BUTTONS, parse_mode="MarkdownV2")
+    return BotState.MAIN_MENU
+
+async def update_resources(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.effective_chat.id) != os.getenv("ADMIN_CHAT_ID"):
+        await update.message.reply_text("Доступ запрещён\\.", parse_mode="MarkdownV2")
+        return
+    resources = await fetch_resources_from_post(context.bot, "@tperehod", 9)
+    with open("data/resources.json", "w") as f:
+        json.dump(resources, f, indent=2)
+    await update.message.reply_text(f"Обновлено {len(resources)} ресурсов\\.", parse_mode="MarkdownV2")
+
+async def show_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.effective_chat.id) != os.getenv("ADMIN_CHAT_ID"):
+        await update.message.reply_text("Доступ запрещён\\.", parse_mode="MarkdownV2")
+        return
+    try:
+        with open("data/stats.json", "r") as f:
+            stats = json.load(f)
+        message = "*Статистика:*\n\n"
+        for user_id, actions in stats.items():
+            message += f"Пользователь {user_id}:\n"
+            for action, count in actions.items():
+                message += f"  {action}: {count}\n"
+        await update.message.reply_text(message, parse_mode="MarkdownV2")
+    except FileNotFoundError:
+        await update.message.reply_text("Статистика не найдена\\.", parse_mode="MarkdownV2")
+
+async def resource_moderation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    action, resource_id = query.data.split("_", 1)
+    resource_id = int(resource_id.split("_")[-1])
+    if action == "approve_resource":
+        resource = await approve_resource(resource_id)
+        if resource:
+            await query.message.edit_text(
+                f"*Ресурс одобрен:*\n\n*Название:* {resource['title']}\n*Описание:* {resource['description']}\n*Ссылка:* {resource['link']}",
+                parse_mode="MarkdownV2"
+            )
+            await update_telegram_post(context.bot, "@tperehod", 9)
+        else:
+            await query.message.edit_text("Ресурс не найден\\.", parse_mode="MarkdownV2")
+    elif action == "reject_resource":
+        await query.message.edit_text("Ресурс отклонён\\.", parse_mode="MarkdownV2")
+
+async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.inline_query.query
+    resources = load_resources()
+    results = [
+        InlineQueryResultArticle(
+            id=str(res["id"]),
+            title=res["title"],
+            input_message_content=InputTextMessageContent(
+                f"📚 *{res['title']}*\n{res['description']}\n🔗 {res['link']}",
+                parse_mode="MarkdownV2"
+            )
+        )
+        for res in resources if query.lower() in res["title"].lower() or query.lower() in res["description"].lower()
+    ]
+    await update.inline_query.answer(results)
+
+async def main() -> None:
     check_env_vars()
     application = Application.builder().token(os.getenv("BOT_TOKEN")).build()
 
@@ -46,6 +116,7 @@ def main() -> None:
             BotState.VOLUNTEER_HELP_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex("^(Отмена)$"), volunteer_contact_handler)],
             BotState.VOLUNTEER_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex("^(Отмена)$"), volunteer_finish_handler)],
             BotState.ANONYMOUS_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, anonymous_message)],
+            BotState.RESOURCE_PROPOSAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, resource_proposal)],
             BotState.DONE_STATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
@@ -55,19 +126,24 @@ def main() -> None:
     application.add_handler(CallbackQueryHandler(request_legal_docs_callback, pattern='^request_legal_docs$'))
     application.add_handler(CallbackQueryHandler(plan_surgery_callback, pattern='^plan_surgery$'))
     application.add_handler(CallbackQueryHandler(feedback_handler, pattern='^feedback_(good|bad)$'))
+    application.add_handler(CallbackQueryHandler(resource_moderation, pattern='^(approve|reject)_resource_'))
+    application.add_handler(CommandHandler("resources", list_resources))
+    application.add_handler(CommandHandler("updateresources", update_resources))
+    application.add_handler(CommandHandler("stats", show_stats))
+    application.add_handler(InlineQueryHandler(inline_query))
     application.add_error_handler(error_handler)
 
-    application.run_polling()
-
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Отменяет текущее действие и возвращает в главное меню."""
-    await update.message.reply_text(
-        "Действие отменено.", reply_markup=ReplyKeyboardRemove()
-    )
-    context.user_data.clear()
-    keyboard = ReplyKeyboardMarkup(MAIN_MENU_BUTTONS, resize_keyboard=True)
-    await update.message.reply_text("Вы вернулись в главное меню.", reply_markup=keyboard)
-    return BotState.MAIN_MENU
+    await application.bot.set_webhook(url="https://your-server.com/bot")
+    async with application:
+        await application.start()
+        await application.updater.start_webhook(
+            listen="0.0.0.0",
+            port=8443,
+            url_path="/bot",
+            webhook_url="https://your-server.com/bot"
+        )
+        await application.updater.run_forever()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
