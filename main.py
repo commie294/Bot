@@ -152,7 +152,7 @@ async def main() -> None:
     application.add_handler(InlineQueryHandler(inline_query))
     application.add_error_handler(error_handler)
 
-    webhook_url = "https://t64helper.com/bot"
+    webhook_url = "https://51.250.106.109/bot"
 
     logger.info("Checking webhook status...")
     webhook_info = await application.bot.get_webhook_info()
