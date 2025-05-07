@@ -16,6 +16,7 @@ from utils.resource_utils import load_resources, fetch_resources_from_post, upda
 from utils.constants import BotState, check_env_vars
 from keyboards import MAIN_MENU_BUTTONS
 from bot_responses import BACK_TO_MAIN_MENU
+import json
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -93,6 +94,22 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     await update.inline_query.answer(results)
 
+async def shutdown_application(application: Application):
+    logger.info("Initiating shutdown...")
+    try:
+        # Останавливаем вебхук
+        if application.updater.running:
+            await application.updater.stop()
+        # Останавливаем все задачи приложения
+        await application.stop()
+        # Удаляем вебхук
+        await application.bot.delete_webhook()
+        # Останавливаем диспетчер
+        await application.bot_session.close()
+        logger.info("Application stopped gracefully.")
+    except Exception as e:
+        logger.error(f"Error during shutdown: {e}")
+
 async def main() -> None:
     check_env_vars()
     application = Application.builder().token(os.getenv("BOT_TOKEN")).build()
@@ -135,27 +152,52 @@ async def main() -> None:
     application.add_handler(InlineQueryHandler(inline_query))
     application.add_error_handler(error_handler)
 
-    async def shutdown(signum, frame):
-        logger.info("Received shutdown signal, stopping application...")
-        await application.stop()
-        await application.updater.stop()
-        logger.info("Application stopped gracefully.")
+    webhook_url = "https://yourdomain.com/bot"
 
+    logger.info("Checking webhook status...")
+    webhook_info = await application.bot.get_webhook_info()
+    if webhook_info.url != webhook_url:
+        logger.info(f"Setting webhook to {webhook_url}")
+        await application.bot.delete_webhook()
+        await application.bot.set_webhook(url=webhook_url)
+    else:
+        logger.info("Webhook already set correctly.")
+
+    # Обработчик сигналов для graceful shutdown
     loop = asyncio.get_running_loop()
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(sig, lambda: asyncio.create_task(shutdown(sig, None)))
+    stop_event = asyncio.Event()
 
-    await application.bot.set_webhook(url="https://your-server.com/bot")
-    async with application:
+    async def handle_shutdown(signum, frame):
+        logger.info(f"Received signal {signum}, stopping application...")
+        stop_event.set()
+        await shutdown_application(application)
+
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, lambda s=sig: asyncio.create_task(handle_shutdown(s, None)))
+
+    try:
+        await application.initialize()
         await application.start()
-        logger.info("Webhook started on https://your-server.com/bot")
+        logger.info("Webhook started on https://yourdomain.com/bot")
         await application.updater.start_webhook(
             listen="0.0.0.0",
             port=8443,
             url_path="/bot",
-            webhook_url="https://your-server.com/bot"
+            webhook_url=webhook_url
         )
-        await application.updater.run_forever()
+        # Ожидаем сигнала остановки
+        await stop_event.wait()
+    finally:
+        # Гарантируем завершение
+        await shutdown_application(application)
+        # Закрываем цикл событий
+        loop.stop()
+        pending = asyncio.all_tasks(loop=loop)
+        for task in pending:
+            task.cancel()
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
+        logger.info("Event loop closed.")
 
 if __name__ == "__main__":
     asyncio.run(main())
