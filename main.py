@@ -15,7 +15,7 @@ from utils.message_utils import handle_typing, request_legal_docs_callback, plan
 from bot_responses import DONATE_MESSAGE
 from dotenv import load_dotenv
 from telegram.ext import Application
-from handlers.medical import medical_menu, handle_gender_therapy_choice, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning, send_hrt_guide
+from handlers.medical import medical_menu, handle_gender_therapy_choice, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning, send_hrt_guide, surgery_start, surgery_choice, surgery_budget, surgery_result
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -83,9 +83,22 @@ def main():
             BotState.MEDICAL_MTF_HRT: [
                 CallbackQueryHandler(medical_mtf_hrt),
             ],
+            
             BotState.MEDICAL_SURGERY_PLANNING: [
-                CallbackQueryHandler(medical_surgery_planning),
+            CallbackQueryHandler(medical_surgery_planning),
             ],
+            BotState.SURGERY_START: [
+            CallbackQueryHandler(surgery_start),
+            ],
+            BotState.SURGERY_CHOICE: [
+            CallbackQueryHandler(surgery_choice),
+            ],
+            BotState.SURGERY_BUDGET: [
+            CallbackQueryHandler(surgery_budget),
+            ],
+            BotState.SURGERY_RESULT: [
+            CallbackQueryHandler(surgery_result),
+            ],    
             BotState.TYPING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing),
                 MessageHandler(filters.Document.ALL, handle_typing),
