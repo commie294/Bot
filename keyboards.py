@@ -22,18 +22,22 @@ HELP_MENU_BUTTONS = InlineKeyboardMarkup([
 
 LEGAL_MENU_BUTTONS = [
     ["🏳️‍🌈 ЛГБТ+ семьи"],
-    ["📝 Как сменить документы"],
-    ["📢 Что такое пропаганда ЛГБТ?"],
-    ["🗣️ Юридическая консультация"],
-    ["🚨 Сообщить о нарушении"],
-]
+LEGAL_MENU_BUTTONS = InlineKeyboardMarkup([
+    [InlineKeyboardButton("🏳️‍🌈 ЛГБТ+ семьи", callback_data="legal_lgbt")],
+    [InlineKeyboardButton("📝 Как сменить документы", callback_data="legal_docs")],
+    [InlineKeyboardButton("📢 Что такое пропаганда ЛГБТ?", callback_data="legal_propaganda")],
+    [InlineKeyboardButton("🗣️ Юридическая консультация", callback_data="legal_consult")],
+    [InlineKeyboardButton("🚨 Сообщить о нарушении", callback_data="legal_abuse")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_help")]
+])
 
-MEDICAL_MENU_BUTTONS = [
-    ["🗣️ Медицинская консультация"],
-    ["💉HRT"],
-    ["❓ F64"],
-    ["⚕️ Операции"],
-]
+MEDICAL_MENU_BUTTONS = InlineKeyboardMarkup([
+    [InlineKeyboardButton("🗣️ Медицинская консультация", callback_data="medical_consult")],
+    [InlineKeyboardButton("💉HRT", callback_data="medical_hrt")],
+    [InlineKeyboardButton("❓ F64", callback_data="medical_f64")],
+    [InlineKeyboardButton("⚕️ Операции", callback_data="medical_surgery")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_help")]
+])
 
 GENDER_THERAPY_CHOICE_BUTTONS = [
     ["T"],
