@@ -76,3 +76,34 @@ REGIONS = [
     [InlineKeyboardButton("Беларусь", callback_data="region_беларусь"), InlineKeyboardButton("Казахстан", callback_data="region_казахстан")],
     [InlineKeyboardButton("Другой регион", callback_data="region_другой")]
 ]
+
+GENDER_CHOICE_KEYBOARD = InlineKeyboardMarkup([
+    [InlineKeyboardButton("ФТМ", callback_data="surgery_type_ftm")],
+    [InlineKeyboardButton("МТФ", callback_data="surgery_type_mtf")]
+])
+
+FTM_SURGERY_CHOICE_KEYBOARD = InlineKeyboardMarkup([
+    [InlineKeyboardButton("Топэктомия/Мастэктомия", callback_data="ftm_surgery_top")],
+    [InlineKeyboardButton("Гистерэктомия", callback_data="ftm_surgery_hyst")],
+    [InlineKeyboardButton("Овариэктомия", callback_data="ftm_surgery_ovar")],
+    [InlineKeyboardButton("Фаллопластика", callback_data="ftm_surgery_phallo")],
+    [InlineKeyboardButton("Метоидиопластика", callback_data="ftm_surgery_meta")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_surgery_start")],
+    [InlineKeyboardButton("Далее", callback_data="ftm_surgery_next_budget")]
+])
+
+MTF_SURGERY_CHOICE_KEYBOARD = InlineKeyboardMarkup([
+    [InlineKeyboardButton("Увеличение груди", callback_data="mtf_surgery_breast")],
+    [InlineKeyboardButton("Орхиэктомия", callback_data="mtf_surgery_orchi")],
+    [InlineKeyboardButton("Вагинопластика", callback_data="mtf_surgery_vagino")],
+    [InlineKeyboardButton("Феминизирующая пластика лица (ФФС)", callback_data="mtf_surgery_ffs")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_surgery_start")],
+    [InlineKeyboardButton("Далее", callback_data="mtf_surgery_next_budget")]
+])
+
+BUDGET_CHOICE_KEYBOARD = InlineKeyboardMarkup([
+    [InlineKeyboardButton("Эконом (до 5000 €)", callback_data="budget_economy")],
+    [InlineKeyboardButton("Средний (5000 - 15000 €)", callback_data="budget_medium")],
+    [InlineKeyboardButton("Премиум (от 15000 €)", callback_data="budget_premium")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_surgery_choice")]
+])
