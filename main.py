@@ -14,7 +14,6 @@ from utils.error_handler import error_handler
 from utils.message_utils import handle_typing, request_legal_docs_callback, plan_surgery_callback, feedback_handler
 from bot_responses import DONATE_MESSAGE, FAREWELL_MESSAGE
 from dotenv import load_dotenv
-from telegram.ext import Application
 from handlers.medical import medical_menu, handle_gender_therapy_choice, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning, send_hrt_guide, surgery_start, surgery_choice, surgery_budget, surgery_result
 
 load_dotenv()
@@ -148,7 +147,6 @@ def main():
     application.add_handler(CallbackQueryHandler(feedback_handler, pattern='^feedback_'))
     application.add_error_handler(error_handler)
 
-    # Добавление обработчиков без состояний (команды вне ConversationHandler)
     application.add_handler(CommandHandler("resources", list_resources))
 
     application.run_polling()
