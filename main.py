@@ -2,9 +2,9 @@ import os
 import logging
 import signal
 import asyncio
-import json  # Не забудьте импортировать json
+import json
 from dotenv import load_dotenv
-from telegram import Update, InlineQueryResultArticle, InputTextMessageContent, ReplyKeyboardRemove
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import Application, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes, InlineQueryHandler
 from handlers.main_menu import start, main_menu
 from handlers.help_menu import help_menu, faq_legal
@@ -14,9 +14,9 @@ from handlers.anonymous import anonymous_message
 from handlers.resources import resource_proposal, list_resources
 from utils.message_utils import error_handler, request_legal_docs_callback, plan_surgery_callback, handle_typing, feedback_handler, check_rate_limit
 from utils.resource_utils import load_resources, fetch_resources_from_post, update_telegram_post, approve_resource
-from utils.constants import BotState, check_env_vars
-from keyboards import MAIN_MENU_BUTTONS
-from bot_responses import *
+from utils.constants import BotState, MAIN_MENU_ACTIONS, REQUEST_TYPES, check_env_vars
+from keyboards import MAIN_MENU_BUTTONS, VOLUNTEER_START_KEYBOARD, BACK_BUTTON, DONE_BUTTON, HELP_MENU_BUTTONS
+from bot_responses import START_MESSAGE, CHOOSE_FROM_MENU, VOLUNTEER_MESSAGE, DONATE_MESSAGE, FAREWELL_MESSAGE
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -29,11 +29,10 @@ load_dotenv()
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        CANCEL_MESSAGE, reply_markup=ReplyKeyboardRemove()
+        FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove()
     )
     context.user_data.clear()
-    await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=MAIN_MENU_BUTTONS, parse_mode="MarkdownV2")
-    return BotState.MAIN_MENU
+    return ConversationHandler.END
 
 async def update_resources(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != os.getenv("ADMIN_CHAT_ID"):
