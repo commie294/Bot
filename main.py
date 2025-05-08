@@ -27,9 +27,7 @@ async def main() -> None:
     application.add_handler(CommandHandler("start", start))
 
     logger.info("Starting bot with polling...")
-    await application.initialize()
-    await application.start()
     await application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(main())
+    asyncio.run(main())
