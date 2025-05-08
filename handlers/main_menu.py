@@ -1,14 +1,16 @@
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes
+from telegram.utils.helpers import escape_markdown  # Добавляем импорт
 from bot_responses import START_MESSAGE, CHOOSE_FROM_MENU, VOLUNTEER_MESSAGE, DONATE_MESSAGE, FAREWELL_MESSAGE
-from keyboards import MAIN_MENU_BUTTONS, VOLUNTEER_START_KEYBOARD, BACK_BUTTON, DONE_BUTTON
+from keyboards import MAIN_MENU_BUTTONS, VOLUNTEER_START_KEYBOARD, BACK_BUTTON, DONE_BUTTON, HELP_MENU_BUTTONS
 from utils.constants import BotState, MAIN_MENU_ACTIONS, REQUEST_TYPES
 from utils.message_utils import check_rate_limit
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    region = escape_markdown("России и странах СНГ", version=2)  # Экранируем регион
     await update.message.reply_photo(
         photo="https://your-image-url.com/welcome.jpg",
-        caption=START_MESSAGE.format(region="России и странах СНГ"),
+        caption=START_MESSAGE.format(region=region),
         reply_markup=MAIN_MENU_BUTTONS,
         parse_mode="MarkdownV2"
     )
@@ -21,21 +23,21 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         user_choice = query.data
         if user_choice == "back_to_main":
             await query.message.edit_text(
-                "Вы вернулись в главное меню\\.",
+                escape_markdown("Вы вернулись в главное меню.", version=2),
                 reply_markup=MAIN_MENU_BUTTONS,
                 parse_mode="MarkdownV2"
             )
             return BotState.MAIN_MENU
         elif user_choice == "main_help":
             await query.message.edit_text(
-                "Выберите категорию помощи:",
+                escape_markdown("Выберите категорию помощи:", version=2),
                 reply_markup=HELP_MENU_BUTTONS,
                 parse_mode="MarkdownV2"
             )
             return BotState.HELP_MENU
         elif user_choice == "main_resource":
             await query.message.edit_text(
-                "Введите название ресурса:",
+                escape_markdown("Введите название ресурса:", version=2),
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]]),
                 parse_mode="MarkdownV2"
             )
@@ -58,7 +60,7 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         elif user_choice == "main_anonymous":
             keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
             await query.message.edit_text(
-                "Пожалуйста, напишите ваше анонимное сообщение:",
+                escape_markdown("Пожалуйста, напишите ваше анонимное сообщение:", version=2),
                 reply_markup=keyboard,
                 parse_mode="MarkdownV2"
             )
@@ -103,13 +105,13 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             await update.message.reply_text(
                 DONATE_MESSAGE,
                 reply_markup=MAIN_MENU_BUTTONS,
-                parse_mode="MarkdownV.ini"
+                parse_mode="MarkdownV2"  # Исправляем MarkdownV.ini на MarkdownV2
             )
             return BotState.MAIN_MENU
         elif user_choice == "✉️ Анонимное сообщение":
             keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
             await update.message.reply_text(
-                "Пожалуйста, напишите ваше анонимное сообщение:",
+                escape_markdown("Пожалуйста, напишите ваше анонимное сообщение:", version=2),
                 reply_markup=keyboard,
                 parse_mode="MarkdownV2"
             )
