@@ -2,17 +2,33 @@ import os
 import logging
 from telegram import Update, ReplyKeyboardRemove
 from telegram.ext import Application, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
-
 from handlers.main_menu import start, main_menu
 from handlers.help_menu import help_menu, faq_legal, medical_menu
 from handlers.resources import handle_resource_proposal, list_resources
 from handlers.anonymous import anonymous_message
 from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
-from handlers.donate import donate_info
 from handlers.farewell import farewell
 from utils.constants import BotState
 from utils.error_handler import error_handler
 from message_utils import handle_typing, request_legal_docs_callback, plan_surgery_callback, feedback_handler
+from bot_responses import DONATE_MESSAGE  
+
+async def donate_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Отправляет информацию о способах поддержки проекта."""
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        await query.message.edit_text(
+            DONATE_MESSAGE,
+            parse_mode="MarkdownV2",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]])
+        )
+    elif update.message:
+        await update.message.reply_text(
+            DONATE_MESSAGE,
+            parse_mode="MarkdownV2",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]])
+        )
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
