@@ -3,7 +3,7 @@ import logging
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes
 from telegram.error import TelegramError
-from telegram.utils.helpers import escape_markdown  # Добавляем импорт
+from telegram.helpers import escape_markdown
 from bot_responses import CANCEL_MESSAGE
 from keyboards import VOLUNTEER_START_KEYBOARD, VOLUNTEER_HELP_TYPE_KEYBOARD, FINISH_MENU_KEYBOARD, REGIONS
 from utils.message_utils import load_channels, update_stats, check_rate_limit
