@@ -1,8 +1,8 @@
 import os
 from enum import IntEnum
 from typing import Dict, Tuple
-from telegram import ReplyKeyboardMarkup
-from keyboards import MAIN_MENU_BUTTONS, HELP_MENU_BUTTONS, BACK_BUTTON, LEGAL_MENU_BUTTONS, MEDICAL_MENU_BUTTONS # GENDER_THERAPY_CHOICE_BUTTONS больше не нужен, используется InlineKeyboardMarkup
+from telegram import InlineKeyboardMarkup
+from keyboards import MAIN_MENU_BUTTONS, HELP_MENU_BUTTONS, BACK_BUTTON, LEGAL_MENU_BUTTONS, MEDICAL_MENU_BUTTONS
 from keyboards import VOLUNTEER_START_KEYBOARD
 
 class BotState(IntEnum):
@@ -19,7 +19,7 @@ class BotState(IntEnum):
     VOLUNTEER_CONTACT = 10
     VOLUNTEER_FINISH = 11
     ANONYMOUS_MESSAGE = 12
-    MEDICAL_GENDER_THERAPY_INLINE = 13 # Изменено название, чтобы отражать использование inline-кнопок
+    MEDICAL_GENDER_THERAPY_INLINE = 13
     MEDICAL_FTM_HRT = 14
     MEDICAL_MTF_HRT = 15
     MEDICAL_SURGERY_PLANNING = 16
@@ -42,16 +42,31 @@ REQUEST_TYPES = {
     "anonymous": "Анонимное сообщение",
 }
 
-MAIN_MENU_ACTIONS: Dict[str, Tuple[ReplyKeyboardMarkup, str, int]] = {
+MAIN_MENU_ACTIONS: Dict[str, Tuple[InlineKeyboardMarkup, str, int]] = {
     "🆘 Попросить о помощи": (
         HELP_MENU_BUTTONS,
         "Выберите категорию помощи:",
         BotState.HELP_MENU
     ),
     "➕ Предложить ресурс": (
-        ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
+        InlineKeyboardMarkup([[BACK_BUTTON]]),
         "Пожалуйста, напишите описание или ссылку на ресурс:",
-        BotState.RESOURCE_PROPOSAL # Теперь ведет сразу к предложению ресурса
+        BotState.RESOURCE_PROPOSAL
+    ),
+    "🤝 Стать волонтёром": (
+        VOLUNTEER_START_KEYBOARD,
+        "Стать волонтёром?",
+        BotState.VOLUNTEER_CONFIRM_START
+    ),
+    "💸 Поддержать проект": (
+        InlineKeyboardMarkup([[BACK_BUTTON]]),
+        "Информация о способах поддержки проекта:",
+        BotState.DONATE_INFO
+    ),
+    "✉️ Анонимное сообщение": (
+        InlineKeyboardMarkup([[BACK_BUTTON]]),
+        "Пожалуйста, напишите ваше анонимное сообщение:",
+        BotState.ANONYMOUS_MESSAGE
     ),
 }
 
