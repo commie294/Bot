@@ -2,19 +2,20 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import logging
-from telegram import Update, ReplyKeyboardRemove
+from telegram import Update, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from handlers.main_menu import start, main_menu
-from handlers.help_menu import help_menu, faq_legal, medical_menu
+from handlers.help_menu import help_menu, faq_legal
 from handlers.resources import handle_resource_proposal, list_resources
 from handlers.anonymous import anonymous_message
 from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
 from utils.constants import BotState
 from utils.error_handler import error_handler
 from utils.message_utils import handle_typing, request_legal_docs_callback, plan_surgery_callback, feedback_handler
-from bot_responses import DONATE_MESSAGE  
+from bot_responses import DONATE_MESSAGE
 from dotenv import load_dotenv
 from telegram.ext import Application
+from handlers.medical import medical_menu, handle_gender_therapy_choice, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -73,6 +74,18 @@ def main():
             BotState.MEDICAL_MENU: [
                 CallbackQueryHandler(medical_menu),
             ],
+            BotState.MEDICAL_GENDER_THERAPY_INLINE: [
+                CallbackQueryHandler(handle_gender_therapy_choice),
+            ],
+            BotState.MEDICAL_FTM_HRT: [
+                CallbackQueryHandler(medical_ftm_hrt),
+            ],
+            BotState.MEDICAL_MTF_HRT: [
+                CallbackQueryHandler(medical_mtf_hrt),
+            ],
+            BotState.MEDICAL_SURGERY_PLANNING: [
+                CallbackQueryHandler(medical_surgery_planning),
+            ],
             BotState.TYPING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing),
                 MessageHandler(filters.Document.ALL, handle_typing),
@@ -111,24 +124,6 @@ def main():
             ],
             BotState.FAREWELL: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, farewell),
-            ],
-            
-            BotState.MEDICAL_GENDER_THERAPY_MENU: [
-                # Обработчики для выбора T или E
-                CallbackQueryHandler(medical_menu), # Временный обработчик, нужно детализировать
-                CallbackQueryHandler(main_menu, pattern='^back_to_medical$'),
-            ],
-            BotState.MEDICAL_FTM_HRT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, medical_menu), # Временный
-                CallbackQueryHandler(medical_menu, pattern='^back_to_hrt$'),
-            ],
-            BotState.MEDICAL_MTF_HRT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, medical_menu), # Временный
-                CallbackQueryHandler(medical_menu, pattern='^back_to_hrt$'),
-            ],
-            BotState.MEDICAL_SURGERY_PLANNING: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, medical_menu), # Временный
-                CallbackQueryHandler(medical_menu, pattern='^back_to_medical$'),
             ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
