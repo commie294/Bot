@@ -3,7 +3,7 @@ from telegram.ext import ContextTypes, ConversationHandler
 from telegram.helpers import escape_markdown
 from utils.message_utils import load_channels
 from utils.resource_utils import load_resources
-from utils.constants import BotState, RESOURCE_PROPOSAL_STATES
+from utils.constants import BotState
 from bot_responses import MESSAGE_SENT_SUCCESS, BACK_TO_MAIN_MENU
 from keyboards import MAIN_MENU_BUTTONS, BACK_BUTTON, FINISH_MENU_KEYBOARD
 import json
@@ -26,7 +26,7 @@ async def resource_proposal_title(update: Update, context: ContextTypes.DEFAULT_
         reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
         parse_mode="MarkdownV2"
     )
-    return RESOURCE_PROPOSAL_STATES["description"]
+    return BotState.RESOURCE_PROPOSAL_DESCRIPTION
 
 async def resource_proposal_description(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_text = update.message.text
@@ -36,14 +36,14 @@ async def resource_proposal_description(update: Update, context: ContextTypes.DE
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
             parse_mode="MarkdownV2"
         )
-        return RESOURCE_PROPOSAL_STATES["title"]
+        return BotState.RESOURCE_PROPOSAL_TITLE
     context.user_data["resource_description"] = user_text
     await update.message.reply_text(
         escape_markdown("Введите ссылку на ресурс:", version=2),
         reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
         parse_mode="MarkdownV2"
     )
-    return RESOURCE_PROPOSAL_STATES["link"]
+    return BotState.RESOURCE_PROPOSAL_LINK
 
 async def resource_proposal_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_text = update.message.text
@@ -53,7 +53,7 @@ async def resource_proposal_link(update: Update, context: ContextTypes.DEFAULT_T
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
             parse_mode="MarkdownV2"
         )
-        return RESOURCE_PROPOSAL_STATES["description"]
+        return BotState.RESOURCE_PROPOSAL_DESCRIPTION
     resource = {
         "id": len(load_resources()) + 1,
         "title": context.user_data["resource_title"],
