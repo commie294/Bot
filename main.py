@@ -12,7 +12,7 @@ from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunte
 from utils.constants import BotState
 from utils.error_handler import error_handler
 from utils.message_utils import handle_typing, request_legal_docs_callback, plan_surgery_callback, feedback_handler
-from bot_responses import DONATE_MESSAGE
+from bot_responses import DONATE_MESSAGE, FAREWELL_MESSAGE
 from dotenv import load_dotenv
 from telegram.ext import Application
 from handlers.medical import medical_menu, handle_gender_therapy_choice, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning, send_hrt_guide, surgery_start, surgery_choice, surgery_budget, surgery_result
@@ -36,7 +36,6 @@ async def donate_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             parse_mode="MarkdownV2",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]])
         )
-from bot_responses import FAREWELL_MESSAGE
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -83,7 +82,7 @@ def main():
             BotState.MEDICAL_MTF_HRT: [
                 CallbackQueryHandler(medical_mtf_hrt),
             ],
-            
+
             BotState.MEDICAL_SURGERY_PLANNING: [
             CallbackQueryHandler(medical_surgery_planning),
             ],
@@ -98,7 +97,7 @@ def main():
             ],
             BotState.SURGERY_RESULT: [
             CallbackQueryHandler(surgery_result),
-            ],    
+            ],
             BotState.TYPING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing),
                 MessageHandler(filters.Document.ALL, handle_typing),
