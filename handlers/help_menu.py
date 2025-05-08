@@ -93,6 +93,10 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             context.user_data["request_type"] = REQUEST_TYPES["legal_abuse"]
             await context.bot.send_message(chat_id=query.message.chat_id, text=REPORT_ABUSE_MESSAGE, parse_mode="MarkdownV2", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
             return BotState.TYPING
+        elif choice == "back_to_legal":
+            await query.message.edit_text(escape_markdown("Выберите категорию юридической помощи:", version=2),reply_markup=LEGAL_MENU_BUTTONS,parse_mode="MarkdownV2")
+            return BotState.FAQ_LEGAL
+
     return BotState.FAQ_LEGAL
 
 async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
