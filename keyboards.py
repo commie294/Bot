@@ -1,4 +1,4 @@
-from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 BACK_BUTTON = "⬅️ Назад"
 DONE_BUTTON = "✅ Готово"
@@ -46,26 +46,33 @@ GENDER_THERAPY_CHOICE_KEYBOARD = InlineKeyboardMarkup([
 SURGERY_INFO_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton("🗓️ Спланировать операцию", callback_data='plan_surgery')],
     [InlineKeyboardButton("ФТМ Операции", callback_data='ftm_surgery')],
-    [InlineKeyboardButton("МТФ Операции", callback_data='mtf_surgery')]
+    [InlineKeyboardButton("МТФ Операции", callback_data='mtf_surgery')],
+    [InlineKeyboardButton("⬅️ Назад", callback_data='back_to_medical')] # Добавлена кнопка "Назад"
 ])
 
-VOLUNTEER_START_KEYBOARD = ReplyKeyboardMarkup([["Далее", "Отмена"]], resize_keyboard=True)
+VOLUNTEER_START_KEYBOARD = InlineKeyboardMarkup([
+    [InlineKeyboardButton("Далее", callback_data="volunteer_start")],
+    [InlineKeyboardButton("Отмена", callback_data="back_to_main")]
+])
 
 VOLUNTEER_HELP_TYPE_BUTTONS = [
-    ["Юридическая"],
-    ["Психологическая"],
-    ["Медицинская"],
-    ["Финансовая"],
-    ["Техническая"],
-    ["Другая помощь"]
+    [InlineKeyboardButton("Юридическая", callback_data="volunteer_help_юридическая")],
+    [InlineKeyboardButton("Психологическая", callback_data="volunteer_help_психологическая")],
+    [InlineKeyboardButton("Медицинская", callback_data="volunteer_help_медицинская")],
+    [InlineKeyboardButton("Финансовая", callback_data="volunteer_help_финансовая")],
+    [InlineKeyboardButton("Техническая", callback_data="volunteer_help_техническая")],
+    [InlineKeyboardButton("Другая помощь", callback_data="volunteer_help_другая")]
 ]
 
-VOLUNTEER_HELP_TYPE_KEYBOARD = ReplyKeyboardMarkup(VOLUNTEER_HELP_TYPE_BUTTONS, resize_keyboard=True)
+VOLUNTEER_HELP_TYPE_KEYBOARD = InlineKeyboardMarkup(VOLUNTEER_HELP_TYPE_BUTTONS)
 
-FINISH_MENU_KEYBOARD = ReplyKeyboardMarkup([[DONE_BUTTON, BACK_BUTTON]], resize_keyboard=True)
+FINISH_MENU_KEYBOARD = InlineKeyboardMarkup([
+    [InlineKeyboardButton(DONE_BUTTON, callback_data="volunteer_finish")],
+    [InlineKeyboardButton(BACK_BUTTON, callback_data="back_to_main")]
+])
 
 REGIONS = [
-    ["РФ", "Украина"],
-    ["Беларусь", "Казахстан"],
-    ["Другой регион"]
+    [InlineKeyboardButton("РФ", callback_data="region_рф"), InlineKeyboardButton("Украина", callback_data="region_украина")],
+    [InlineKeyboardButton("Беларусь", callback_data="region_беларусь"), InlineKeyboardButton("Казахстан", callback_data="region_казахстан")],
+    [InlineKeyboardButton("Другой регион", callback_data="region_другой")]
 ]
