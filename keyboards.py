@@ -37,10 +37,11 @@ MEDICAL_MENU_BUTTONS = InlineKeyboardMarkup([
     [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_help")]
 ])
 
-GENDER_THERAPY_CHOICE_BUTTONS = [
-    ["T"],
-    ["E"],
-]
+GENDER_THERAPY_CHOICE_KEYBOARD = InlineKeyboardMarkup([
+    [InlineKeyboardButton("T♂️", callback_data="hrt_t")],
+    [InlineKeyboardButton("E♀️", callback_data="hrt_e")],
+    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical")]
+])
 
 SURGERY_INFO_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton("🗓️ Спланировать операцию", callback_data='plan_surgery')],
