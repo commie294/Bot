@@ -177,9 +177,11 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     error_trace = "".join(traceback.format_exception(type(context.error), context.error, context.error.__traceback__))
     admin_chat_id = os.getenv("ADMIN_CHAT_ID")
     if admin_chat_id:
+        error_message = escape_markdown(str(context.error), version=2)
+        traceback_message = escape_markdown(error_trace[:4000], version=2)
         await context.bot.send_message(
             chat_id=admin_chat_id,
-            text=f"*⚠️ Ошибка:*\n\n{context.error}\n\n*Трассировка:*\n{error_trace[:4000]}",
+            text=f"*⚠️ Ошибка:*\n\n{error_message}\n\n*Трассировка:*\n{traceback_message}",
             parse_mode="MarkdownV2"
         )
     if update and update.message:
