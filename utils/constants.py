@@ -2,7 +2,8 @@ import os
 from enum import IntEnum
 from typing import Dict, Tuple
 from telegram import ReplyKeyboardMarkup
-from keyboards import MAIN_MENU_BUTTONS, HELP_MENU_BUTTONS, BACK_BUTTON, LEGAL_MENU_BUTTONS, MEDICAL_MENU_BUTTONS, GENDER_THERAPY_CHOICE_BUTTONS, VOLUNTEER_START_KEYBOARD
+from keyboards import MAIN_MENU_BUTTONS, HELP_MENU_BUTTONS, BACK_BUTTON, LEGAL_MENU_BUTTONS, MEDICAL_MENU_BUTTONS # GENDER_THERAPY_CHOICE_BUTTONS больше не нужен, используется InlineKeyboardMarkup
+from keyboards import VOLUNTEER_START_KEYBOARD
 
 class BotState(IntEnum):
     START = 0
@@ -18,13 +19,13 @@ class BotState(IntEnum):
     VOLUNTEER_CONTACT = 10
     VOLUNTEER_FINISH = 11
     ANONYMOUS_MESSAGE = 12
-    MEDICAL_GENDER_THERAPY_MENU = 13
+    MEDICAL_GENDER_THERAPY_INLINE = 13 # Изменено название, чтобы отражать использование inline-кнопок
     MEDICAL_FTM_HRT = 14
     MEDICAL_MTF_HRT = 15
     MEDICAL_SURGERY_PLANNING = 16
     DONE_STATE = 17
-    RESOURCE_PROPOSAL = 18 
-    DONATE_INFO =19
+    RESOURCE_PROPOSAL = 18
+    DONATE_INFO = 19
     FAREWELL = 20
 
 REQUEST_TYPES = {
