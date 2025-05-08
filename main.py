@@ -3,7 +3,7 @@ import logging
 import signal
 import asyncio
 from dotenv import load_dotenv
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineQueryResultArticle, InputTextMessageContent
+from telegram import Update
 from telegram.ext import Application, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes, InlineQueryHandler
 from handlers.main_menu import start, main_menu
 from handlers.help_menu import help_menu, faq_legal
@@ -15,8 +15,7 @@ from utils.message_utils import error_handler, request_legal_docs_callback, plan
 from utils.resource_utils import load_resources, fetch_resources_from_post, update_telegram_post, approve_resource
 from utils.constants import BotState, check_env_vars
 from keyboards import MAIN_MENU_BUTTONS
-from bot_responses import BACK_TO_MAIN_MENU
-import json
+from bot_responses import *
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -29,7 +28,7 @@ load_dotenv()
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        "Действие отменено.", reply_markup=ReplyKeyboardRemove()
+        CANCEL_MESSAGE, reply_markup=ReplyKeyboardRemove()
     )
     context.user_data.clear()
     await update.message.reply_text(BACK_TO_MAIN_MENU, reply_markup=MAIN_MENU_BUTTONS, parse_mode="MarkdownV2")
@@ -37,7 +36,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def update_resources(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != os.getenv("ADMIN_CHAT_ID"):
-        await update.message.reply_text("Доступ запрещён\\.", parse_mode="MarkdownV2")
+        await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="MarkdownV2")
         return
     resources = await fetch_resources_from_post(context.bot, "@tperehod", 9)
     with open("data/resources.json", "w") as f:
@@ -46,7 +45,7 @@ async def update_resources(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def show_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != os.getenv("ADMIN_CHAT_ID"):
-        await update.message.reply_text("Доступ запрещён\\.", parse_mode="MarkdownV2")
+        await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="MarkdownV2")
         return
     try:
         with open("data/stats.json", "r") as f:
@@ -97,10 +96,8 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def shutdown_application(application: Application):
     logger.info("Initiating shutdown...")
     try:
-        if application.updater.running:
-            await application.updater.stop()
-        await application.stop()
-        await application.bot.delete_webhook()
+        if application.running:
+            await application.stop()
         await application.bot_session.close()
         logger.info("Application stopped gracefully.")
     except Exception as e:
@@ -148,9 +145,11 @@ async def main() -> None:
     application.add_handler(InlineQueryHandler(inline_query))
     application.add_error_handler(error_handler)
 
-    # Удаляем вебхук, если он был установлен
-    logger.info("Removing webhook if set...")
-    await application.bot.delete_webhook()
+    # Удаляем вебхук и используем polling
+    logger.info("Starting bot with polling...")
+    await application.initialize()
+    await application.start()
+    await application.run_polling(allowed_updates=Update.ALL_TYPES)
 
     # Обработчик сигналов для graceful shutdown
     loop = asyncio.get_running_loop()
@@ -165,11 +164,6 @@ async def main() -> None:
         loop.add_signal_handler(sig, lambda s=sig: asyncio.create_task(handle_shutdown(s, None)))
 
     try:
-        await application.initialize()
-        await application.start()
-        logger.info("Starting bot in polling mode...")
-        await application.updater.start_polling()
-        # Ожидаем сигнала остановки
         await stop_event.wait()
     finally:
         await shutdown_application(application)
