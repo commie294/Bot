@@ -2,7 +2,7 @@ from telegram.helpers import escape_markdown
 
 START_MESSAGE = (
     f"""{escape_markdown("Привет! Мы — проект «Переход в неположенном месте». Этот бот создан для поддержки трансгендерных людей и их близких в ", version=2)}"""
-    f"""{{region}}{escape_markdown(".
+    f"""{{region}}{escape_markdown)".
 
 Здесь вы можете:
 
