@@ -16,13 +16,14 @@ class BotState(IntEnum):
     VOLUNTEER_REGION = 8
     VOLUNTEER_HELP_TYPE = 9
     VOLUNTEER_CONTACT = 10
-    ANONYMOUS_MESSAGE = 11
-    MEDICAL_GENDER_THERAPY_MENU = 12
-    MEDICAL_FTM_HRT = 13
-    MEDICAL_MTF_HRT = 14
-    MEDICAL_SURGERY_PLANNING = 15
-    DONE_STATE = 16
-    RESOURCE_PROPOSAL = 17 # Упрощенное состояние для предложения ресурса
+    VOLUNTEER_FINISH = 11
+    ANONYMOUS_MESSAGE = 12
+    MEDICAL_GENDER_THERAPY_MENU = 13
+    MEDICAL_FTM_HRT = 14
+    MEDICAL_MTF_HRT = 15
+    MEDICAL_SURGERY_PLANNING = 16
+    DONE_STATE = 17
+    RESOURCE_PROPOSAL = 18 # Упрощенное состояние для предложения ресурса
 
 REQUEST_TYPES = {
     "resource": "Ресурс",
