@@ -69,9 +69,12 @@ async def volunteer_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def donate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
+    donate_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]
+    ])
     await query.message.edit_text(
         DONATE_MESSAGE,
-        reply_markup=MAIN_MENU_BUTTONS,
+        reply_markup=donate_keyboard,
         parse_mode="MarkdownV2"
     )
     return BotState.MAIN_MENU
