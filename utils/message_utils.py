@@ -9,7 +9,7 @@ from telegram.helpers import escape_markdown
 from telegram.ext import ContextTypes
 from telegram.error import TelegramError, NetworkError, Forbidden
 from bot_responses import MESSAGE_SENT_SUCCESS, MESSAGE_SEND_ERROR, CONSULTATION_PROMPT, SURGERY_PLANNING_PROMPT
-from keyboards import MAIN_MENU_BUTTONS, BACK_BUTTON, FINISH_MENU_KEYBOARD
+from keyboards import BACK_BUTTON
 from utils.constants import BotState, REQUEST_TYPES
 import traceback
 
