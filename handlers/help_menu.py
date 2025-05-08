@@ -78,7 +78,7 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             await query.message.edit_text(LGBT_FAMILIES_INFO, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_legal")]]))
             return BotState.FAQ_LEGAL
         elif choice == "legal_docs":
-            await query.message.edit_text(DOCUMENTS_MESSAGE, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_legal")]]))", 
+            await query.message.edit_text(DOCUMENTS_MESSAGE,parse_mode="MarkdownV2",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_legal")]]))
         elif choice == "legal_propaganda":
             await query.message.edit_text(PROPAGANDA_MESSAGE, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_legal")]]))
             return BotState.FAQ_LEGAL
