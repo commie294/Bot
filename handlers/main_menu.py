@@ -31,58 +31,66 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
     logger.info(f"Handling main menu action for user {user_id}.")
     try:
-        query = update.callback_query
-        await query.answer()
-        user_choice = query.data
-        logger.info(f"Callback query '{user_choice}' from user {user_id}.")
-        if user_choice == "back_to_main":
-            await query.message.edit_text(
-                escape_markdown("Вы вернулись в главное меню.", version=2),
-                reply_markup=MAIN_MENU_BUTTONS,
-                parse_mode="MarkdownV2"
-            )
-            return BotState.MAIN_MENU
-        elif user_choice == "main_help":
-            await query.message.edit_text(
-                escape_markdown("Выберите категорию помощи:", version=2),
-                reply_markup=HELP_MENU_BUTTONS,
-                parse_mode="MarkdownV2"
-            )
-            return BotState.HELP_MENU
-        elif user_choice == "main_resource":
-            await query.message.edit_text(
-                escape_markdown("Опишите, какой ресурс вы хотите предложить:", version=2),
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]]),
-                parse_mode="MarkdownV2"
-            )
-            context.user_data["resource_step"] = "title"
-            return BotState.RESOURCE_PROPOSAL
-        elif user_choice == "main_volunteer":
-            await query.message.edit_text(
-                VOLUNTEER_MESSAGE,
-                reply_markup=VOLUNTEER_START_KEYBOARD,
-                parse_mode="MarkdownV2"
-            )
-            return BotState.VOLUNTEER_CONFIRM_START
-        elif user_choice == "main_donate":
-            await query.message.edit_text(
-                DONATE_MESSAGE,
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]]),
-                parse_mode="MarkdownV2"
-            )
-            return BotState.MAIN_MENU
-        elif user_choice == "main_anonymous":
-            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
-            await query.message.edit_text(
-                escape_markdown("Пожалуйста, напишите ваше анонимное сообщение:", version=2),
-                reply_markup=keyboard,
-                parse_mode="MarkdownV2"
-            )
-            context.user_data["request_type"] = REQUEST_TYPES["anonymous"]
-            return BotState.ANONYMOUS_MESSAGE
+        if update.callback_query:
+            query = update.callback_query
+            await query.answer()
+            user_choice = query.data
+            logger.info(f"Callback query '{user_choice}' from user {user_id}.")
+            if user_choice == "back_to_main":
+                await query.message.edit_text(
+                    escape_markdown("Вы вернулись в главное меню.", version=2),
+                    reply_markup=MAIN_MENU_BUTTONS,
+                    parse_mode="MarkdownV2"
+                )
+                return BotState.MAIN_MENU
+            elif user_choice == "main_help":
+                await query.message.edit_text(
+                    escape_markdown("Выберите категорию помощи:", version=2),
+                    reply_markup=HELP_MENU_BUTTONS,
+                    parse_mode="MarkdownV2"
+                )
+                return BotState.HELP_MENU
+            elif user_choice == "main_resource":
+                await query.message.edit_text(
+                    escape_markdown("Опишите, какой ресурс вы хотите предложить:", version=2),
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]]),
+                    parse_mode="MarkdownV2"
+                )
+                context.user_data["resource_step"] = "title"
+                return BotState.RESOURCE_PROPOSAL
+            elif user_choice == "main_volunteer":
+                await query.message.edit_text(
+                    VOLUNTEER_MESSAGE,
+                    reply_markup=VOLUNTEER_START_KEYBOARD,
+                    parse_mode="MarkdownV2"
+                )
+                return BotState.VOLUNTEER_CONFIRM_START
+            elif user_choice == "main_donate":
+                await query.message.edit_text(
+                    DONATE_MESSAGE,
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]]),
+                    parse_mode="MarkdownV2"
+                )
+                return BotState.MAIN_MENU
+            elif user_choice == "main_anonymous":
+                keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
+                await query.message.edit_text(
+                    escape_markdown("Пожалуйста, напишите ваше анонимное сообщение:", version=2),
+                    reply_markup=keyboard,
+                    parse_mode="MarkdownV2"
+                )
+                context.user_data["request_type"] = REQUEST_TYPES["anonymous"]
+                return BotState.ANONYMOUS_MESSAGE
+            else:
+                await query.message.reply_text(
+                    CHOOSE_FROM_MENU,
+                    parse_mode="MarkdownV2"
+                )
+                return BotState.MAIN_MENU
         else:
-            await query.message.reply_text(
+            await update.message.reply_text(
                 CHOOSE_FROM_MENU,
+                reply_markup=MAIN_MENU_BUTTONS,
                 parse_mode="MarkdownV2"
             )
             return BotState.MAIN_MENU
