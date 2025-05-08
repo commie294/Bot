@@ -49,14 +49,8 @@ MAIN_MENU_ACTIONS: Dict[str, Tuple[ReplyKeyboardMarkup, str, int]] = {
     "➕ Предложить ресурс": (
         ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
         "Опишите, какой ресурс вы хотите предложить:",
-        BotState.TYPING
+        BotState.RESOURCE_PROPOSAL_TITLE # Используем первое состояние ConversationHandler
     ),
-}
-
-RESOURCE_PROPOSAL_STATES = {
-    "title": 1,
-    "description": 2,
-    "link": 3
 }
 
 def check_env_vars():
