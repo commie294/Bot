@@ -1,4 +1,4 @@
-from telegram.utils.helpers import escape_markdown
+from telegram.helpers import escape_markdown
 
 # Экранируем текст для MarkdownV2
 START_MESSAGE = escape_markdown(
