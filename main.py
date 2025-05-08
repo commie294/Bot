@@ -7,7 +7,6 @@ from handlers.help_menu import help_menu, faq_legal, medical_menu
 from handlers.resources import handle_resource_proposal, list_resources
 from handlers.anonymous import anonymous_message
 from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
-from handlers.farewell import farewell
 from utils.constants import BotState
 from utils.error_handler import error_handler
 from message_utils import handle_typing, request_legal_docs_callback, plan_surgery_callback, feedback_handler
@@ -29,6 +28,7 @@ async def donate_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             parse_mode="MarkdownV2",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]])
         )
+from bot_responses import FAREWELL_MESSAGE
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -41,6 +41,11 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         "Действие отменено.", reply_markup=ReplyKeyboardRemove()
     )
+    return ConversationHandler.END
+async def farewell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Обрабатывает прощальные сообщения."""
+    if update.message:
+        await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove(), parse_mode="MarkdownV2")
     return ConversationHandler.END
 
 def main() -> None:
@@ -101,10 +106,7 @@ def main() -> None:
             BotState.FAREWELL: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, farewell),
             ],
-            BotState.LIST_RESOURCES: [
-                CallbackQueryHandler(list_resources, pattern='^main_list_resources$'),
-                CallbackQueryHandler(main_menu, pattern='^back_to_main$'),
-            ],
+            
             BotState.MEDICAL_GENDER_THERAPY_MENU: [
                 # Обработчики для выбора T или E
                 CallbackQueryHandler(medical_menu), # Временный обработчик, нужно детализировать
