@@ -24,94 +24,101 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             return BotState.MAIN_MENU
         elif user_choice == "help_emergency":
             context.user_data["request_type"] = REQUEST_TYPES["emergency"]
-            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
             await query.message.edit_text(
                 EMERGENCY_MESSAGE.format(emergency_number="112"),
-                reply_markup=keyboard,
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_help")]]),
                 parse_mode="MarkdownV2"
             )
             return BotState.TYPING
         elif user_choice == "help_housing":
             context.user_data["request_type"] = REQUEST_TYPES["housing"]
-            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
             await query.message.edit_text(
                 HOUSING_FINANCE_PROMPT,
-                reply_markup=keyboard,
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_help")]]),
                 parse_mode="MarkdownV2"
             )
             return BotState.TYPING
         elif user_choice == "help_psych":
             context.user_data["request_type"] = REQUEST_TYPES["psych"]
-            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
             await query.message.edit_text(
                 PSYCHOLOGICAL_HELP_PROMPT,
-                reply_markup=keyboard,
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_help")]]),
                 parse_mode="MarkdownV2"
             )
             return BotState.TYPING
         elif user_choice == "help_medical":
-            keyboard = ReplyKeyboardMarkup(MEDICAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
             await query.message.edit_text(
                 escape_markdown("Выберите категорию медицинской помощи:", version=2),
-                reply_markup=keyboard,
+                reply_markup=MEDICAL_MENU_BUTTONS,
                 parse_mode="MarkdownV2"
             )
             return BotState.MEDICAL_MENU
         elif user_choice == "help_legal":
-            keyboard = ReplyKeyboardMarkup(LEGAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
             await query.message.edit_text(
                 escape_markdown("Выберите категорию юридической помощи:", version=2),
-                reply_markup=keyboard,
+                reply_markup=LEGAL_MENU_BUTTONS,
                 parse_mode="MarkdownV2"
             )
             return BotState.FAQ_LEGAL
-    else:
-        if not await check_rate_limit(update, context):
+    return BotState.HELP_MENU
+
+async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        choice = query.data
+        if choice == "back_to_help":
+            await query.message.edit_text(
+                escape_markdown("Выберите категорию помощи:", version=2),
+                reply_markup=HELP_MENU_BUTTONS,
+                parse_mode="MarkdownV2"
+            )
             return BotState.HELP_MENU
-        user_choice = update.message.text
-        if user_choice == BACK_BUTTON:
-            keyboard = MAIN_MENU_BUTTONS
-            await update.message.reply_text(
-                escape_markdown("Вы вернулись в главное меню.", version=2),
-                reply_markup=keyboard,
-                parse_mode="MarkdownV2"
-            )
-            return BotState.MAIN_MENU
-        elif user_choice == "🚨 Срочная помощь":
-            context.user_data["request_type"] = REQUEST_TYPES["emergency"]
-            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
-            await update.message.reply_text(
-                EMERGENCY_MESSAGE.format(emergency_number="112"),
-                reply_markup=keyboard,
-                parse_mode="MarkdownV2"
-            )
+        elif choice == "legal_lgbt":
+            await query.message.edit_text(LGBT_FAMILIES_INFO, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_legal")]]))
+            return BotState.FAQ_LEGAL
+        elif choice == "legal_docs":
+            await query.message.edit_text(DOCUMENTS_MESSAGE, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Запросить консультацию", callback_data='request_legal_docs'), [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_legal")]]))
+            return BotState.FAQ_LEGAL
+        elif choice == "legal_propaganda":
+            await query.message.edit_text(PROPAGANDA_MESSAGE, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_legal")]]))
+            return BotState.FAQ_LEGAL
+        elif choice == "legal_consult":
+            context.user_data["request_type"] = REQUEST_TYPES["legal_consult"]
+            await context.bot.send_message(chat_id=query.message.chat_id, text=CONSULTATION_PROMPT, parse_mode="MarkdownV2", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
             return BotState.TYPING
-        elif user_choice == "🏠 Жилье/финансы":
-            context.user_data["request_type"] = REQUEST_TYPES["housing"]
-            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
-            await update.message.reply_text(
-                HOUSING_FINANCE_PROMPT,
-                reply_markup=keyboard,
-                parse_mode="MarkdownV2"
-            )
+        elif choice == "legal_abuse":
+            context.user_data["request_type"] = REQUEST_TYPES["legal_abuse"]
+            await context.bot.send_message(chat_id=query.message.chat_id, text=REPORT_ABUSE_MESSAGE, parse_mode="MarkdownV2", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
             return BotState.TYPING
-        elif user_choice == "🧠 Психологическая помощь":
-            context.user_data["request_type"] = REQUEST_TYPES["psych"]
-            keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
-            await update.message.reply_text(
-                PSYCHOLOGICAL_HELP_PROMPT,
-                reply_markup=keyboard,
+    return BotState.FAQ_LEGAL
+
+async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        choice = query.data
+        if choice == "back_to_help":
+            await query.message.edit_text(
+                escape_markdown("Выберите категорию помощи:", version=2),
+                reply_markup=HELP_MENU_BUTTONS,
                 parse_mode="MarkdownV2"
             )
+            return BotState.HELP_MENU
+        elif choice == "medical_consult":
+            context.user_data["request_type"] = REQUEST_TYPES["medical_consult"]
+            await context.bot.send_message(chat_id=query.message.chat_id, text=CONSULTATION_PROMPT, parse_mode="MarkdownV2", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
             return BotState.TYPING
-        elif user_choice == "🩺 Медицинская помощь":
-            keyboard = ReplyKeyboardMarkup(MEDICAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
-            await update.message.reply_text(
-                escape_markdown("Выберите категорию медицинской помощи:", version=2),
-                reply_markup=keyboard,
-                parse_mode="MarkdownV2"
-            )
+        elif choice == "medical_hrt":
+            await query.message.edit_text(GENDER_THERAPY_MESSAGE, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("T", callback_data="hrt_t"), [InlineKeyboardButton("E", callback_data="hrt_e")], [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical")]]))
+            return BotState.MEDICAL_GENDER_THERAPY_MENU
+        elif choice == "medical_f64":
+            await query.message.edit_text(F64_MESSAGE, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical")]]))
             return BotState.MEDICAL_MENU
+        elif choice == "medical_surgery":
+            await query.message.edit_text(SURGERY_INFO_MESSAGE, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🗓️ Спланировать операцию", callback_data='plan_surgery'), [InlineKeyboardButton("ФТМ Операции", callback_data='ftm_surgery')], [InlineKeyboardButton("МТФ Операции", callback_data='mtf_surgery')], [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical")]]))
+            return BotState.MEDICAL_SURGERY_PLANNING
+    return BotState.MEDICAL_MENU
         elif user_choice == "⚖️ Юридическая помощь":
             keyboard = ReplyKeyboardMarkup(LEGAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
             await update.message.reply_text(
