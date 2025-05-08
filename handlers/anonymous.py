@@ -2,7 +2,7 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import TelegramError, BadRequest, Forbidden
 import logging
-from telegram.utils.helpers import escape_markdown  # Добавляем импорт
+from telegram.helpers import escape_markdown
 from bot_responses import ANONYMOUS_CONFIRMATION
 from keyboards import MAIN_MENU_BUTTONS, BACK_BUTTON, FINISH_MENU_KEYBOARD
 from utils.message_utils import generate_message_id, load_channels, update_stats, check_rate_limit
