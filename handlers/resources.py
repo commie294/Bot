@@ -4,7 +4,8 @@ from telegram.helpers import escape_markdown
 from utils.message_utils import load_channels
 from utils.constants import BotState
 from bot_responses import MESSAGE_SENT_SUCCESS, BACK_TO_MAIN_MENU
-from keyboards import MAIN_MENU_BUTTONS, FINISH_MENU_KEYBOARD
+from keyboards import MAIN_MENU_BUTTONS, FINISH_MENU_KEYBOARD, BACK_BUTTON
+
 import logging
 
 logger = logging.getLogger(__name__)
