@@ -12,9 +12,8 @@ from handlers.help_menu import help_menu, faq_legal
 from handlers.medical import medical_menu, medical_gender_therapy_menu, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning
 from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
 from handlers.anonymous import anonymous_message
-from handlers.resources import list_resources, handle_resource_proposal  # Изменен импорт
-from utils.message_utils import error_handler, request_legal_docs_callback, plan_surgery_callback, handle_typing, feedback_handler, check_rate_limit, load_channels
-from utils.resource_utils import load_resources, fetch_resources_from_post, update_telegram_post
+from handlers.resources import handle_resource_proposal, list_resources # Обновлен импорт
+from utils.message_utils import error_handler, request_legal_docs_callback, plan_surgery_callback, handle_typing, feedback_handler, check_rate_limit, load_channels # Импорт load_channels
 from utils.constants import BotState, check_env_vars
 from keyboards import MAIN_MENU_BUTTONS, VOLUNTEER_START_KEYBOARD, BACK_BUTTON, DONE_BUTTON, HELP_MENU_BUTTONS
 from bot_responses import VOLUNTEER_MESSAGE, DONATE_MESSAGE, FAREWELL_MESSAGE, CHOOSE_FROM_MENU, RESOURCE_PROMPT_MESSAGE, ANONYMOUS_CONFIRMATION
@@ -55,7 +54,7 @@ async def resource_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         reply_markup=keyboard,
         parse_mode="MarkdownV2"
     )
-    return BotState.RESOURCE_PROPOSAL  # Введем новое состояние
+    return BotState.RESOURCE_PROPOSAL
 
 async def volunteer_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
@@ -105,42 +104,16 @@ async def update_resources(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != os.getenv("ADMIN_CHAT_ID"):
         await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="MarkdownV2")
         return
-    resources = await fetch_resources_from_post(context.bot, "-1002457776742", 9)
-    with open("data/resources.json", "w") as f:
-        json.dump(resources, f, indent=2)
-    await update.message.reply_text(f"Обновлено {len(resources)} ресурсов\\.", parse_mode="MarkdownV2")
+    await update.message.reply_text("Функция обновления ресурсов временно отключена.", parse_mode="MarkdownV2")
 
 async def show_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != os.getenv("ADMIN_CHAT_ID"):
         await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="MarkdownV2")
         return
-    try:
-        with open("data/stats.json", "r") as f:
-            stats = json.load(f)
-        message = "*Статистика:*\n\n"
-        for user_id, actions in stats.items():
-            message += f"Пользователь {user_id}:\n"
-            for action, count in actions.items():
-                message += f"  {action}: {count}\n"
-        await update.message.reply_text(message, parse_mode="MarkdownV2")
-    except FileNotFoundError:
-        await update.message.reply_text("Статистика не найдена\\.", parse_mode="MarkdownV2")
+    await update.message.reply_text("Функция статистики временно отключена.", parse_mode="MarkdownV2")
 
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.inline_query.query
-    resources = load_resources()
-    results = [
-        InlineQueryResultArticle(
-            id=str(res["id"]),
-            title=res["title"],
-            input_message_content=InputTextMessageContent(
-                f"📚 *{res['title']}*\n{res['description']}\n🔗 {res['link']}",
-                parse_mode="MarkdownV2"
-            )
-        )
-        for res in resources if query.lower() in res["title"].lower() or query.lower() in res["description"].lower()
-    ]
-    await update.inline_query.answer(results)
+    await update.inline_query.answer([]) # Отключаем inline-поиск ресурсов
 
 async def main() -> None:
     check_env_vars()
@@ -150,17 +123,6 @@ async def main() -> None:
         return
 
     application = Application.builder().token(token).build()
-
-    # resource_conv_handler больше не нужен
-    # resource_conv_handler = ConversationHandler(
-    #     entry_points=[CallbackQueryHandler(resource_callback, pattern='^main_resource$')],
-    #     states={
-    #         BotState.RESOURCE_PROPOSAL_TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, resource_proposal_title)],
-    #         BotState.RESOURCE_PROPOSAL_DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, resource_proposal_description)],
-    #         BotState.RESOURCE_PROPOSAL_LINK: [MessageHandler(filters.TEXT & ~filters.COMMAND, resource_proposal_link)],
-    #     },
-    #     fallbacks=[CallbackQueryHandler(back_to_main_callback, pattern='^back_to_main$')],
-    # )
 
     main_conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
@@ -184,13 +146,12 @@ async def main() -> None:
             BotState.VOLUNTEER_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex("^(Отмена)$"), volunteer_finish_handler)],
             BotState.ANONYMOUS_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, anonymous_message)],
             BotState.DONE_STATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, lambda update, context: BotState.MAIN_MENU)],
-            BotState.RESOURCE_PROPOSAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_resource_proposal)], # Новое состояние
+            BotState.RESOURCE_PROPOSAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_resource_proposal)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
 
     application.add_handler(main_conv_handler)
-    # application.add_handler(resource_conv_handler) # Удаляем обработчик
     application.add_handler(CallbackQueryHandler(help_callback, pattern='^main_help$'))
     application.add_handler(CallbackQueryHandler(volunteer_callback, pattern='^main_volunteer$'))
     application.add_handler(CallbackQueryHandler(donate_callback, pattern='^main_donate$'))
@@ -198,7 +159,6 @@ async def main() -> None:
     application.add_handler(CallbackQueryHandler(request_legal_docs_callback, pattern='^request_legal_docs$'))
     application.add_handler(CallbackQueryHandler(plan_surgery_callback, pattern='^plan_surgery$'))
     application.add_handler(CallbackQueryHandler(feedback_handler, pattern='^feedback_(good|bad)$'))
-    # application.add_handler(CallbackQueryHandler(resource_moderation, pattern='^(approve|reject)_resource_')) # Удаляем модерацию
     application.add_handler(CommandHandler("resources", list_resources))
     application.add_handler(CommandHandler("updateresources", update_resources))
     application.add_handler(CommandHandler("stats", show_stats))
