@@ -26,7 +26,11 @@ class BotState(IntEnum):
     DONE_STATE = 17
     RESOURCE_PROPOSAL = 18
     DONATE_INFO = 19
-    FAREWELL = 20
+    SURGERY_START = 20
+    SURGERY_CHOICE = 21
+    SURGERY_BUDGET = 22
+    SURGERY_RESULT = 23
+    FAREWELL = 24
 
 REQUEST_TYPES = {
     "resource": "Ресурс",
