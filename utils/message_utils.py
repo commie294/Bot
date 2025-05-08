@@ -5,6 +5,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.helpers import escape_markdown
 from telegram.ext import ContextTypes
 from telegram.error import TelegramError, NetworkError, Forbidden
 from bot_responses import MESSAGE_SENT_SUCCESS, MESSAGE_SEND_ERROR, CONSULTATION_PROMPT, SURGERY_PLANNING_PROMPT
