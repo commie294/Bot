@@ -51,6 +51,12 @@ MAIN_MENU_ACTIONS: Dict[str, Tuple[ReplyKeyboardMarkup, str, int]] = {
     ),
 }
 
+RESOURCE_PROPOSAL_STATES = {
+    "title": 1,
+    "description": 2,
+    "link": 3
+}
+
 def check_env_vars():
     required_vars = ["BOT_TOKEN", "ADMIN_CHAT_ID", "HASH_SALT", "DIY_HRT_GUIDE_PATH"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
