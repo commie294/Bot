@@ -24,7 +24,8 @@ class BotState(IntEnum):
     MEDICAL_SURGERY_PLANNING = 16
     DONE_STATE = 17
     RESOURCE_PROPOSAL = 18 
-    DONATE_INFO = 19
+    DONATE_INFO =19
+    FAREWELL = 20
 
 REQUEST_TYPES = {
     "resource": "Ресурс",
