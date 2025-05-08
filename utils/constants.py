@@ -22,9 +22,7 @@ class BotState(IntEnum):
     MEDICAL_MTF_HRT = 14
     MEDICAL_SURGERY_PLANNING = 15
     DONE_STATE = 16
-    RESOURCE_PROPOSAL_TITLE = 17
-    RESOURCE_PROPOSAL_DESCRIPTION = 18
-    RESOURCE_PROPOSAL_LINK = 19
+    RESOURCE_PROPOSAL = 17 # Упрощенное состояние для предложения ресурса
 
 REQUEST_TYPES = {
     "resource": "Ресурс",
@@ -48,8 +46,8 @@ MAIN_MENU_ACTIONS: Dict[str, Tuple[ReplyKeyboardMarkup, str, int]] = {
     ),
     "➕ Предложить ресурс": (
         ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
-        "Опишите, какой ресурс вы хотите предложить:",
-        BotState.RESOURCE_PROPOSAL_TITLE # Используем первое состояние ConversationHandler
+        "Пожалуйста, напишите описание или ссылку на ресурс:",
+        BotState.RESOURCE_PROPOSAL # Теперь ведет сразу к предложению ресурса
     ),
 }
 
