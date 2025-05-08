@@ -243,3 +243,9 @@ F64_MESSAGE = escape_markdown(
 )
 
 SURGERY_PLANNING_PROMPT = escape_markdown("Пожалуйста, опишите, какую операцию вы планируете, в какой стране и примерные сроки.", version=2)
+SURGERY_BUDGET_CLINICS_INTRO = "На основе ваших предпочтений, вот несколько возможных клиник:\n\n"
+SURGERY_BUDGET_CLINIC_FORMAT = "- {clinic_name} ({clinic_country}): {clinic_description}\n  Подробнее: <a href='{clinic_url}'>{clinic_url}</a>\n"
+SURGERY_BUDGET_CLINIC_DETAILS_FORMAT = "  Подробнее о {surgery}: <a href='{clinic_details_url}'>{clinic_details_url}</a>\n"
+SURGERY_BUDGET_DISCLAIMER = "\n**ВНИМАНИЕ:** Информация о клиниках в Турции требует ПРОВЕРКИ. Свяжитесь с выбранной клиникой напрямую, чтобы уточнить, проводят ли они нужные вам операции, узнать цены и другие детали.\n"
+SURGERY_BUDGET_NO_CLINICS = "К сожалению, на данный момент мы не можем предложить клиники, полностью соответствующие вашим критериям."
+SURGERY_BUDGET_BACK_TO_MAIN = "\n\nВы можете вернуться в главное меню."
