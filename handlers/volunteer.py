@@ -3,6 +3,7 @@ import logging
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes
 from telegram.error import TelegramError
+from telegram.utils.helpers import escape_markdown  # Добавляем импорт
 from bot_responses import CANCEL_MESSAGE
 from keyboards import VOLUNTEER_START_KEYBOARD, VOLUNTEER_HELP_TYPE_KEYBOARD, FINISH_MENU_KEYBOARD, REGIONS
 from utils.message_utils import load_channels, update_stats, check_rate_limit
@@ -14,7 +15,7 @@ async def ask_volunteer_name(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if not await check_rate_limit(update, context):
         return BotState.VOLUNTEER_CONFIRM_START
     await update.message.reply_text(
-        "📋 *Шаг 1/4:* Пожалуйста, введите ваше имя\\.",
+        escape_markdown("📋 *Шаг 1/4:* Пожалуйста, введите ваше имя.", version=2),
         reply_markup=ReplyKeyboardMarkup([["Отмена"]], resize_keyboard=True),
         parse_mode="MarkdownV2"
     )
@@ -27,7 +28,7 @@ async def get_volunteer_region(update: Update, context: ContextTypes.DEFAULT_TYP
     if not name:
         keyboard = ReplyKeyboardMarkup([["Отмена"]], resize_keyboard=True)
         await update.message.reply_text(
-            "Пожалуйста, введите ваше имя\\.",
+            escape_markdown("Пожалуйста, введите ваше имя.", version=2),
             reply_markup=keyboard,
             parse_mode="MarkdownV2"
         )
@@ -35,7 +36,7 @@ async def get_volunteer_region(update: Update, context: ContextTypes.DEFAULT_TYP
     context.user_data["volunteer_data"] = {"name": name}
     keyboard = ReplyKeyboardMarkup(REGIONS + [["Отмена"]], resize_keyboard=True)
     await update.message.reply_text(
-        "📍 *Шаг 2/4:* Из какого вы региона\\?",
+        escape_markdown("📍 *Шаг 2/4:* Из какого вы региона?", version=2),
         reply_markup=keyboard,
         parse_mode="MarkdownV2"
     )
@@ -56,14 +57,14 @@ async def volunteer_help_type_handler(update: Update, context: ContextTypes.DEFA
     if not region:
         keyboard = ReplyKeyboardMarkup([["Отмена"]], resize_keyboard=True)
         await update.message.reply_text(
-            "Пожалуйста, введите ваш регион\\.",
+            escape_markdown("Пожалуйста, введите ваш регион.", version=2),
             reply_markup=keyboard,
             parse_mode="MarkdownV2"
         )
         return BotState.VOLUNTEER_REGION
     context.user_data["volunteer_data"]["region"] = region
     await update.message.reply_text(
-        "🤝 *Шаг 3/4:* Чем вы готовы помочь\\?",
+        escape_markdown("🤝 *Шаг 3/4:* Чем вы готовы помочь?", version=2),
         reply_markup=VOLUNTEER_HELP_TYPE_KEYBOARD,
         parse_mode="MarkdownV2"
     )
@@ -86,7 +87,7 @@ async def volunteer_contact_handler(update: Update, context: ContextTypes.DEFAUL
     context.user_data["volunteer_data"]["contact"] = f"@{user_contact}" if user_contact else "не указан"
     keyboard = ReplyKeyboardMarkup([["Отмена"]], resize_keyboard=True)
     await update.message.reply_text(
-        "📞 *Шаг 4/4:* Как с вами можно связаться \\(Telegram, email\\)\\?",
+        escape_markdown("📞 *Шаг 4/4:* Как с вами можно связаться (Telegram, email)?", version=2),
         reply_markup=keyboard,
         parse_mode="MarkdownV2"
     )
@@ -107,19 +108,25 @@ async def volunteer_finish_handler(update: Update, context: ContextTypes.DEFAULT
     if not contact_other:
         keyboard = ReplyKeyboardMarkup([["Отмена"]], resize_keyboard=True)
         await update.message.reply_text(
-            "Пожалуйста, введите ваши контактные данные\\.",
+            escape_markdown("Пожалуйста, введите ваши контактные данные.", version=2),
             reply_markup=keyboard,
             parse_mode="MarkdownV2"
         )
         return BotState.VOLUNTEER_CONTACT
     context.user_data["volunteer_data"]["contact_other"] = contact_other
     user_id = update.effective_user.id
+    # Экранируем все данные, которые могут содержать специальные символы
+    name = escape_markdown(context.user_data["volunteer_data"].get("name", "не указано"), version=2)
+    region = escape_markdown(context.user_data["volunteer_data"].get("region", "не указано"), version=2)
+    help_type = escape_markdown(context.user_data["volunteer_data"].get("help_type", "не указано"), version=2)
+    contact = escape_markdown(context.user_data["volunteer_data"].get("contact", "не указано"), version=2)
+    contact_other = escape_markdown(contact_other, version=2)
     volunteer_info = f"""*Новый волонтёр!*
 *ID:* {user_id}
-*Имя:* {context.user_data["volunteer_data"].get("name", "не указано")}
-*Регион:* {context.user_data["volunteer_data"].get("region", "не указано")}
-*Тип помощи:* {context.user_data["volunteer_data"].get("help_type", "не указано")}
-*Контакт \\(Telegram\\):* {context.user_data["volunteer_data"].get("contact", "не указано")}
+*Имя:* {name}
+*Регион:* {region}
+*Тип помощи:* {help_type}
+*Контакт \\(Telegram\\):* {contact}
 *Контакт \\(Другое\\):* {contact_other}"""
 
     channels = load_channels()
@@ -136,9 +143,9 @@ async def volunteer_finish_handler(update: Update, context: ContextTypes.DEFAULT
     }
 
     tasks = [context.bot.send_message(chat_id=channels["t64_admin"], text=volunteer_info, parse_mode="MarkdownV2")]
-    help_type = context.user_data["volunteer_data"].get("help_type", "").lower()
+    help_type_lower = context.user_data["volunteer_data"].get("help_type", "").lower()
     for keyword, channel_name in channel_map.items():
-        if keyword in help_type:
+        if keyword in help_type_lower:
             tasks.append(context.bot.send_message(chat_id=channels[channel_name], text=volunteer_info, parse_mode="MarkdownV2"))
 
     try:
@@ -148,7 +155,7 @@ async def volunteer_finish_handler(update: Update, context: ContextTypes.DEFAULT
         logger.error(f"Ошибка отправки данных волонтёра: {e}", exc_info=True)
 
     await update.message.reply_text(
-        "Спасибо за вашу готовность помочь\\! Ваша заявка принята и будет рассмотрена\\.",
+        escape_markdown("Спасибо за вашу готовность помочь! Ваша заявка принята и будет рассмотрена.", version=2),
         reply_markup=FINISH_MENU_KEYBOARD,
         parse_mode="MarkdownV2"
     )
