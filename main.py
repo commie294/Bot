@@ -15,7 +15,7 @@ from utils.message_utils import handle_typing, request_legal_docs_callback, plan
 from bot_responses import DONATE_MESSAGE
 from dotenv import load_dotenv
 from telegram.ext import Application
-from handlers.medical import medical_menu, handle_gender_therapy_choice, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning
+from handlers.medical import medical_menu, handle_gender_therapy_choice, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning, send_hrt_guide
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -106,17 +106,16 @@ def main():
                 MessageHandler(filters.TEXT & ~filters.COMMAND, ask_volunteer_name),
             ],
             BotState.VOLUNTEER_REGION: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_volunteer_region),
+                CallbackQueryHandler(get_volunteer_region, pattern='^region_'),
             ],
             BotState.VOLUNTEER_HELP_TYPE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_help_type_handler),
+                CallbackQueryHandler(volunteer_help_type_handler, pattern='^volunteer_help_'),
             ],
             BotState.VOLUNTEER_CONTACT: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_contact_handler),
             ],
             BotState.VOLUNTEER_FINISH: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_finish_handler),
-                CallbackQueryHandler(main_menu, pattern='^back_to_main$'),
+                CallbackQueryHandler(volunteer_finish_handler, pattern='^volunteer_finish$|^back_to_main$'),
             ],
             BotState.DONATE_INFO: [
                 CallbackQueryHandler(donate_info, pattern='^main_donate$'),
