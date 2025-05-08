@@ -1,16 +1,19 @@
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, ConversationHandler
 from telegram.error import TelegramError
 import os
 from telegram.helpers import escape_markdown
 from bot_responses import (
     CONSULTATION_PROMPT, GENDER_THERAPY_MESSAGE, MASCULINIZING_HRT_INFO, FEMINIZING_HRT_INFO,
-    DIY_HRT_WARNING, F64_MESSAGE, SURGERY_INFO_MESSAGE, FTM_SURGERY_INFO, MTF_SURGERY_INFO
+    DIY_HRT_WARNING, F64_MESSAGE, SURGERY_INFO_MESSAGE, FTM_SURGERY_INFO, MTF_SURGERY_INFO,
+    SURGERY_BUDGET_CLINICS_INTRO, SURGERY_BUDGET_CLINIC_FORMAT, SURGERY_BUDGET_CLINIC_DETAILS_FORMAT,
+    SURGERY_BUDGET_DISCLAIMER, SURGERY_BUDGET_NO_CLINICS, SURGERY_BUDGET_BACK_TO_MAIN
 )
-from keyboards import MEDICAL_MENU_BUTTONS, SURGERY_INFO_KEYBOARD, BACK_BUTTON, HELP_MENU_BUTTONS, GENDER_THERAPY_CHOICE_KEYBOARD, GENDER_CHOICE_KEYBOARD, FTM_SURGERY_CHOICE_KEYBOARD, MTF_SURGERY_CHOICE_KEYBOARD, BUDGET_CHOICE_KEYBOARD
+from keyboards import MEDICAL_MENU_BUTTONS, SURGERY_INFO_KEYBOARD, BACK_BUTTON, HELP_MENU_BUTTONS, GENDER_THERAPY_CHOICE_KEYBOARD, GENDER_CHOICE_KEYBOARD, FTM_SURGERY_CHOICE_KEYBOARD, MTF_SURGERY_CHOICE_KEYBOARD, BUDGET_CHOICE_KEYBOARD, MAIN_MENU_BUTTONS
 from utils.constants import BotState, REQUEST_TYPES
 from utils.message_utils import check_rate_limit
 import logging
+from data.clinics import CLINICS_DATA
 
 logger = logging.getLogger(__name__)
 
@@ -214,14 +217,30 @@ async def medical_surgery_planning(
                 parse_mode="MarkdownV2"
             )
             return BotState.MEDICAL_MENU
-        elif choice == "plan_surgery":
-    await query.message.edit_text(
-        "Какое направление вас интересует?",
-        reply_markup=GENDER_CHOICE_KEYBOARD,
-        parse_mode="MarkdownV2"
-    )
-    return BotState.SURGERY_START
-    async def surgery_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+        elif query.data == "plan_surgery":
+            await query.message.edit_text(
+                "Какое направление вас интересует?",
+                reply_markup=GENDER_CHOICE_KEYBOARD,
+                parse_mode="MarkdownV2"
+            )
+            return BotState.SURGERY_START
+        elif query.data == "ftm_surgery":
+            await query.message.edit_text(
+                FTM_SURGERY_INFO,
+                parse_mode="MarkdownV2",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical")]])
+            )
+            return BotState.MEDICAL_SURGERY_PLANNING
+        elif query.data == "mtf_surgery":
+            await query.message.edit_text(
+                MTF_SURGERY_INFO,
+                parse_mode="MarkdownV2",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical")]])
+            )
+            return BotState.MEDICAL_SURGERY_PLANNING
+    return BotState.MEDICAL_SURGERY_PLANNING
+
+async def surgery_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     gender = query.data.split("_")[-1]
@@ -302,27 +321,38 @@ async def surgery_budget(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     gender = context.user_data.get("surgery_gender")
     selected_surgeries = context.user_data.get("selected_surgeries", [])
 
-    # --- ЛОГИКА ПОДБОРА КЛИНИК ---
     suggested_clinics = []
 
-    # Примерная логика (нужно будет доработать с реальными данными о клиниках)
-    if gender == "ftm" and "top" in selected_surgeries and budget == "economy":
-        suggested_clinics.append("Возможно, Urodoc Clinic")
-    elif gender == "mtf" and "breast" in selected_surgeries and budget == "medium":
-        suggested_clinics.append("Возможно, Kamol Hospital")
-    elif budget == "premium":
-        suggested_clinics.append("Возможно, Yanhee International Hospital")
+    for surgery in selected_surgeries:
+        if gender in CLINICS_DATA and surgery in CLINICS_DATA[gender]:
+            for clinic in CLINICS_DATA[gender][surgery]:
+                #  Filter clinics based on budget if needed (you'll need to define budget ranges)
+                suggested_clinics.append(clinic)
 
     if suggested_clinics:
-        response = "На основе ваших предпочтений, вот несколько возможных клиник:\n" + "\n".join(suggested_clinics)
+        response = SURGERY_BUDGET_CLINICS_INTRO
+        for clinic in suggested_clinics:
+            response += SURGERY_BUDGET_CLINIC_FORMAT.format(
+                clinic_name=clinic['name'],
+                clinic_country=clinic['country'],
+                clinic_description=clinic['description'],
+                clinic_url=clinic['url']
+            )
+            if 'details_url' in clinic:
+                response += SURGERY_BUDGET_CLINIC_DETAILS_FORMAT.format(
+                    surgery=surgery,
+                    clinic_details_url=clinic['details_url']
+                )
+            response += "\n"
+        response += SURGERY_BUDGET_DISCLAIMER
     else:
-        response = "К сожалению, на данный момент мы не можем предложить клиники, полностью соответствующие вашим критериям."
+        response = SURGERY_BUDGET_NO_CLINICS
 
-    response += "\n\nВы можете вернуться в главное меню."
+    response += SURGERY_BUDGET_BACK_TO_MAIN
     await query.message.edit_text(
         response,
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад в главное меню", callback_data="back_to_main")]]) if query.message else None,
-        parse_mode="MarkdownV2"
+        parse_mode="HTML"
     )
     return BotState.SURGERY_RESULT # Или BotState.MAIN_MENU
 
@@ -337,20 +367,3 @@ async def surgery_result(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         return BotState.MAIN_MENU
     return ConversationHandler.END
-
-
-        elif query.data == "ftm_surgery":
-            await query.message.edit_text(
-                FTM_SURGERY_INFO,
-                parse_mode="MarkdownV2",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical")]])
-            )
-            return BotState.MEDICAL_SURGERY_PLANNING
-        elif query.data == "mtf_surgery":
-            await query.message.edit_text(
-                MTF_SURGERY_INFO,
-                parse_mode="MarkdownV2",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical")]])
-            )
-            return BotState.MEDICAL_SURGERY_PLANNING
-    return BotState.MEDICAL_SURGERY_PLANNING
