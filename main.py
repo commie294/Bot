@@ -1,7 +1,5 @@
 import os
 import logging
-import signal
-import asyncio
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes, InlineQueryHandler
@@ -93,16 +91,6 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     await update.inline_query.answer(results)
 
-async def shutdown_application(application: Application):
-    logger.info("Initiating shutdown...")
-    try:
-        if application.running:
-            await application.stop()
-        await application.bot_session.close()
-        logger.info("Application stopped gracefully.")
-    except Exception as e:
-        logger.error(f"Error during shutdown: {e}")
-
 async def main() -> None:
     check_env_vars()
     application = Application.builder().token(os.getenv("BOT_TOKEN")).build()
@@ -151,20 +139,6 @@ async def main() -> None:
     await application.start()
     await application.run_polling(allowed_updates=Update.ALL_TYPES)
 
-    # Обработчик сигналов для graceful shutdown (теперь запускается внутри текущего event loop)
-    loop = asyncio.get_running_loop()
-    stop_event = asyncio.Event()
-
-    async def handle_shutdown(signum, frame):
-        logger.info(f"Received signal {signum}, stopping application...")
-        stop_event.set()
-        await shutdown_application(application)
-
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(sig, lambda s=sig: asyncio.create_task(handle_shutdown(s, None)))
-
-    await stop_event.wait()
-    await application.shutdown() # Используем application.shutdown() для корректной остановки
-
 if __name__ == "__main__":
+    import asyncio
     asyncio.run(main())
