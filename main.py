@@ -2,7 +2,6 @@ import os
 import logging
 import signal
 import asyncio
-import telegram.utils
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes, InlineQueryHandler
