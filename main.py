@@ -82,21 +82,20 @@ def main():
             BotState.MEDICAL_MTF_HRT: [
                 CallbackQueryHandler(medical_mtf_hrt),
             ],
-
             BotState.MEDICAL_SURGERY_PLANNING: [
-            CallbackQueryHandler(medical_surgery_planning),
+                CallbackQueryHandler(medical_surgery_planning),
             ],
             BotState.SURGERY_START: [
-            CallbackQueryHandler(surgery_start),
+                CallbackQueryHandler(surgery_start),
             ],
             BotState.SURGERY_CHOICE: [
-            CallbackQueryHandler(surgery_choice),
+                CallbackQueryHandler(surgery_choice),
             ],
             BotState.SURGERY_BUDGET: [
-            CallbackQueryHandler(surgery_budget),
+                CallbackQueryHandler(surgery_budget),
             ],
             BotState.SURGERY_RESULT: [
-            CallbackQueryHandler(surgery_result),
+                CallbackQueryHandler(surgery_result),
             ],
             BotState.TYPING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing),
@@ -141,6 +140,11 @@ def main():
     )
 
     application.add_handler(conv_handler)
+
+    # **ADD THIS LINE:** This will catch any callback queries within the conversation
+    # and route them to the appropriate state handler.
+    application.add_handler(CallbackQueryHandler(conv_handler.handle_update))
+
     application.add_handler(CallbackQueryHandler(request_legal_docs_callback, pattern='^request_legal_docs$'))
     application.add_handler(CallbackQueryHandler(plan_surgery_callback, pattern='^plan_surgery$'))
     application.add_handler(CallbackQueryHandler(feedback_handler, pattern='^feedback_'))
