@@ -7,7 +7,7 @@ from handlers.main_menu import start, main_menu
 from handlers.help_menu import help_menu, faq_legal, medical_menu
 from handlers.resources import handle_resource_proposal, list_resources
 from handlers.anonymous import anonymous_message
-from handlers.volunteer import volunteer_start, ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
+from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
 from handlers.donate import donate_info
 from handlers.farewell import farewell
 from utils.constants import BotState
