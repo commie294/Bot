@@ -139,14 +139,18 @@ def main():
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
+
     application.add_handler(conv_handler)
-    application.add_handler(CallbackQueryHandler(conv_handler.handle_update))
-    logger.info("CallbackQueryHandler(conv_handler.handle_update) added") # ADDED
+    logger.info("ConversationHandler added")
+
     application.add_handler(CallbackQueryHandler(request_legal_docs_callback, pattern='^request_legal_docs$'))
     application.add_handler(CallbackQueryHandler(plan_surgery_callback, pattern='^plan_surgery$'))
     application.add_handler(CallbackQueryHandler(feedback_handler, pattern='^feedback_'))
     application.add_error_handler(error_handler)
+
+    # Добавление обработчиков без состояний (команды вне ConversationHandler)
     application.add_handler(CommandHandler("resources", list_resources))
+
     application.run_polling()
 
 if __name__ == "__main__":
