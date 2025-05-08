@@ -248,14 +248,29 @@ async def surgery_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     if gender == "ftm":
         await query.message.edit_text(
             "Какие операции вас интересуют?",
-            reply_markup=FTM_SURGERY_CHOICE_KEYBOARD,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Топэктомия/Мастэктомия", callback_data="ftm_surgery_top")],
+                [InlineKeyboardButton("Гистерэктомия", callback_data="ftm_surgery_hysterectomy")],
+                [InlineKeyboardButton("Овариэктомия", callback_data="ftm_surgery_oophorectomy")],
+                [InlineKeyboardButton("Фаллопластика", callback_data="ftm_surgery_phalloplasty")],
+                [InlineKeyboardButton("Метоидиопластика", callback_data="ftm_surgery_metoidioplasty")],
+                [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_surgery_start")],
+                [InlineKeyboardButton("Далее", callback_data="ftm_surgery_next_budget")]
+            ]),
             parse_mode="MarkdownV2"
         )
         return BotState.SURGERY_CHOICE
     elif gender == "mtf":
         await query.message.edit_text(
             "Какие операции вас интересуют?",
-            reply_markup=MTF_SURGERY_CHOICE_KEYBOARD,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Вагинопластика", callback_data="mtf_surgery_vaginoplasty")],
+                [InlineKeyboardButton("Увеличение груди", callback_data="mtf_surgery_breast")],
+                [InlineKeyboardButton("Феминизирующая хирургия лица (FFS)", callback_data="mtf_surgery_ffs")],
+                [InlineKeyboardButton("Орхиэктомия", callback_data="mtf_surgery_orchiectomy")],
+                [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_surgery_start")],
+                [InlineKeyboardButton("Далее", callback_data="mtf_surgery_next_budget")]
+            ]),
             parse_mode="MarkdownV2"
         )
         return BotState.SURGERY_CHOICE
@@ -283,8 +298,8 @@ async def surgery_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return BotState.SURGERY_START
 
     if gender == "ftm" and choice == "ftm_surgery_next_budget":
-        selected_surgeries = [cb.data.split("_")[-1] for cb in query.message.reply_markup.inline_keyboard[:-2]] # Get all surgery options
-        context.user_data["selected_surgeries"] = context.user_data.get("selected_surgeries", []) + [s for s in selected_surgeries if s.startswith("ftm_surgery_")]
+                selected_surgeries = [cb.data.split("_")[-1] for row in query.message.reply_markup.inline_keyboard[:-2] for cb in row]
+        context.user_data["selected_surgeries"] = context.user_data.get("selected_surgeries", []) + [s for s in selected_surgeries if s.startswith(f"{gender}_surgery_")]
         await query.message.edit_text(
             "Какой у вас бюджет?",
             reply_markup=BUDGET_CHOICE_KEYBOARD,
@@ -292,8 +307,8 @@ async def surgery_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         return BotState.SURGERY_BUDGET
     elif gender == "mtf" and choice == "mtf_surgery_next_budget":
-        selected_surgeries = [cb.data.split("_")[-1] for cb in query.message.reply_markup.inline_keyboard[:-2]] # Get all surgery options
-        context.user_data["selected_surgeries"] = context.user_data.get("selected_surgeries", []) + [s for s in selected_surgeries if s.startswith("mtf_surgery_")]
+        selected_surgeries = [cb.data.split("_")[-1] for row in query.message.reply_markup.inline_keyboard[:-2] for cb in row]
+        context.user_data["selected_surgeries"] = context.user_data.get("selected_surgeries", []) + [s for s in selected_surgeries if s.startswith(f"{gender}_surgery_")]
         await query.message.edit_text(
             "Какой у вас бюджет?",
             reply_markup=BUDGET_CHOICE_KEYBOARD,
@@ -301,16 +316,15 @@ async def surgery_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         return BotState.SURGERY_BUDGET
 
-    # Обработка выбора конкретных операций (пока просто сохраняем)
     if "selected_surgeries" not in context.user_data:
         context.user_data["selected_surgeries"] = []
-    if gender == "ftm" and choice.startswith("ftm_surgery_"):
-        context.user_data["selected_surgeries"].append(choice.split("_")[-1])
-    elif gender == "mtf" and choice.startswith("mtf_surgery_"):
-        context.user_data["selected_surgeries"].append(choice.split("_")[-1])
 
-    # You might want to provide visual feedback to the user about their selections
-    # For simplicity, we'll proceed to the budget choice after the "Далее" button
+    surgery_type = choice.split("_")[-1]
+    if gender == "ftm" and choice.startswith("ftm_surgery_") and surgery_type not in context.user_data["selected_surgeries"]:
+        context.user_data["selected_surgeries"].append(surgery_type)
+    elif gender == "mtf" and choice.startswith("mtf_surgery_") and surgery_type not in context.user_data["selected_surgeries"]:
+        context.user_data["selected_surgeries"].append(surgery_type)
+
     return BotState.SURGERY_CHOICE
 
 async def surgery_budget(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -326,7 +340,6 @@ async def surgery_budget(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     for surgery in selected_surgeries:
         if gender in CLINICS_DATA and surgery in CLINICS_DATA[gender]:
             for clinic in CLINICS_DATA[gender][surgery]:
-                #  Filter clinics based on budget if needed (you'll need to define budget ranges)
                 suggested_clinics.append(clinic)
 
     if suggested_clinics:
@@ -354,7 +367,7 @@ async def surgery_budget(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад в главное меню", callback_data="back_to_main")]]) if query.message else None,
         parse_mode="HTML"
     )
-    return BotState.SURGERY_RESULT # Или BotState.MAIN_MENU
+    return BotState.SURGERY_RESULT
 
 async def surgery_result(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
