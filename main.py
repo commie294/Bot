@@ -13,6 +13,11 @@ from utils.constants import BotState
 from utils.error_handler import error_handler
 from utils.message_utils import handle_typing, request_legal_docs_callback, plan_surgery_callback, feedback_handler
 from bot_responses import DONATE_MESSAGE  
+from dotenv import load_dotenv
+from telegram.ext import Application
+
+load_dotenv()
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 async def donate_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Отправляет информацию о способах поддержки проекта."""
@@ -50,9 +55,8 @@ async def farewell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove(), parse_mode="MarkdownV2")
     return ConversationHandler.END
 
-def main() -> None:
-    """Start the bot."""
-    application = Application.builder().token(os.getenv("BOT_TOKEN")).build()
+def main():
+    application = Application.builder().token(BOT_TOKEN).build()
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
