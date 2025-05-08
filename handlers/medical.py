@@ -297,7 +297,7 @@ async def surgery_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         return BotState.SURGERY_START
 
-        if gender == "ftm" and choice == "ftm_surgery_next_budget":
+    if gender == "ftm" and choice == "ftm_surgery_next_budget":
         selected_surgeries = [cb.data.split("_")[-1] for row in query.message.reply_markup.inline_keyboard[:-2] for cb in row]
         context.user_data["selected_surgeries"] = context.user_data.get("selected_surgeries", []) + [s for s in selected_surgeries if s.startswith(f"{gender}_surgery_")]
         await query.message.edit_text(
