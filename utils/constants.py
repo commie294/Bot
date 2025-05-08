@@ -23,7 +23,8 @@ class BotState(IntEnum):
     MEDICAL_MTF_HRT = 15
     MEDICAL_SURGERY_PLANNING = 16
     DONE_STATE = 17
-    RESOURCE_PROPOSAL = 18 # Упрощенное состояние для предложения ресурса
+    RESOURCE_PROPOSAL = 18 
+    DONATE_INFO = 19
 
 REQUEST_TYPES = {
     "resource": "Ресурс",
