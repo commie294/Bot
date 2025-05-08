@@ -1,5 +1,6 @@
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ContextTypes
+from telegram.utils.helpers import escape_markdown  # Добавляем импорт
 from bot_responses import (
     HELP_MENU_MESSAGE, EMERGENCY_MESSAGE, HOUSING_FINANCE_PROMPT, PSYCHOLOGICAL_HELP_PROMPT,
     CHOOSE_HELP_CATEGORY, LGBT_FAMILIES_INFO, DOCUMENTS_MESSAGE, PROPAGANDA_MESSAGE,
@@ -16,7 +17,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         user_choice = query.data
         if user_choice == "back_to_main":
             await query.message.edit_text(
-                "Вы вернулись в главное меню\\.",
+                escape_markdown("Вы вернулись в главное меню.", version=2),
                 reply_markup=MAIN_MENU_BUTTONS,
                 parse_mode="MarkdownV2"
             )
@@ -51,7 +52,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         elif user_choice == "help_medical":
             keyboard = ReplyKeyboardMarkup(MEDICAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
             await query.message.edit_text(
-                "Выберите категорию медицинской помощи:",
+                escape_markdown("Выберите категорию медицинской помощи:", version=2),
                 reply_markup=keyboard,
                 parse_mode="MarkdownV2"
             )
@@ -59,7 +60,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         elif user_choice == "help_legal":
             keyboard = ReplyKeyboardMarkup(LEGAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
             await query.message.edit_text(
-                "Выберите категорию юридической помощи:",
+                escape_markdown("Выберите категорию юридической помощи:", version=2),
                 reply_markup=keyboard,
                 parse_mode="MarkdownV2"
             )
@@ -71,7 +72,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if user_choice == BACK_BUTTON:
             keyboard = MAIN_MENU_BUTTONS
             await update.message.reply_text(
-                "Вы вернулись в главное меню.",
+                escape_markdown("Вы вернулись в главное меню.", version=2),
                 reply_markup=keyboard,
                 parse_mode="MarkdownV2"
             )
@@ -106,7 +107,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         elif user_choice == "🩺 Медицинская помощь":
             keyboard = ReplyKeyboardMarkup(MEDICAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
             await update.message.reply_text(
-                "Выберите категорию медицинской помощи:",
+                escape_markdown("Выберите категорию медицинской помощи:", version=2),
                 reply_markup=keyboard,
                 parse_mode="MarkdownV2"
             )
@@ -114,7 +115,7 @@ async def help_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         elif user_choice == "⚖️ Юридическая помощь":
             keyboard = ReplyKeyboardMarkup(LEGAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
             await update.message.reply_text(
-                "Выберите категорию юридической помощи:",
+                escape_markdown("Выберите категорию юридической помощи:", version=2),
                 reply_markup=keyboard,
                 parse_mode="MarkdownV2"
             )
@@ -141,7 +142,7 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     elif choice == "🏳️‍🌈 ЛГБТ+ семьи":
         await update.message.reply_text(
             LGBT_FAMILIES_INFO,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         return BotState.FAQ_LEGAL
@@ -151,21 +152,21 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         ])
         await update.message.reply_text(
             DOCUMENTS_MESSAGE,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard_inline
         )
         return BotState.FAQ_LEGAL
     elif choice == "📢 Что такое пропаганда ЛГБТ?":
         await update.message.reply_text(
             PROPAGANDA_MESSAGE,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         return BotState.FAQ_LEGAL
     elif choice == "🗣️ Юридическая консультация":
         await update.message.reply_text(
             CONSULTATION_PROMPT,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         context.user_data["request_type"] = REQUEST_TYPES["legal_consult"]
@@ -173,13 +174,13 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     elif choice == "🚨 Сообщить о нарушении":
         await update.message.reply_text(
             REPORT_ABUSE_MESSAGE,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         context.user_data["request_type"] = REQUEST_TYPES["legal_abuse"]
         return BotState.TYPING
     await update.message.reply_text(
-        "Пожалуйста, выберите опцию из меню\\.",
+        escape_markdown("Пожалуйста, выберите опцию из меню.", version=2),
         parse_mode="MarkdownV2"
     )
     return BotState.FAQ_LEGAL
