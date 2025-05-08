@@ -59,7 +59,7 @@ def main() -> None:
                 MessageHandler(filters.COMMAND, main_menu),
             ],
             BotState.VOLUNTEER_CONFIRM_START: [
-                CallbackQueryHandler(volunteer_start, pattern='^volunteer_start$'),
+                CallbackQueryHandler(ask_volunteer_name, pattern='^volunteer_start$'),
                 CallbackQueryHandler(main_menu, pattern='^back_to_main$'),
             ],
             BotState.VOLUNTEER_NAME: [
