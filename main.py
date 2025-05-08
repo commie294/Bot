@@ -26,7 +26,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def donate_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Отправляет информацию о способах поддержки проекта."""
+    logger.info("donate_info: called")
     if update.callback_query:
         query = update.callback_query
         await query.answer()
@@ -43,7 +43,7 @@ async def donate_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         )
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Cancels and ends the conversation."""
+    logger.info("cancel: called")
     user = update.effective_user
     await update.message.reply_text(
         "Действие отменено.", reply_markup=ReplyKeyboardRemove()
@@ -51,7 +51,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 async def farewell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Обрабатывает прощальные сообщения."""
+    logger.info("farewell: called")
     if update.message:
         await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove(), parse_mode="MarkdownV2")
     return ConversationHandler.END
