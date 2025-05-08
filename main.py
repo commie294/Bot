@@ -181,7 +181,7 @@ async def main() -> None:
     main_conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            BotState.MAIN_MENU: [CallbackQueryHandler(main_menu)], # Обрабатываем callback_query в главном меню
+            BotState.MAIN_MENU: [CallbackQueryHandler(main_menu), MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
             BotState.HELP_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_menu)],
             BotState.TYPING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing),
