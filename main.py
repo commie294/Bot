@@ -38,7 +38,7 @@ async def update_resources(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != os.getenv("ADMIN_CHAT_ID"):
         await update.message.reply_text(CHOOSE_FROM_MENU, parse_mode="MarkdownV2")
         return
-    resources = await fetch_resources_from_post(context.bot, "@tperehod", 9)
+    resources = await fetch_resources_from_post(context.bot, "-1002457776742", 9)
     with open("data/resources.json", "w") as f:
         json.dump(resources, f, indent=2)
     await update.message.reply_text(f"Обновлено {len(resources)} ресурсов\\.", parse_mode="MarkdownV2")
