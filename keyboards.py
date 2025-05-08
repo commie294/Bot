@@ -20,8 +20,6 @@ HELP_MENU_BUTTONS = InlineKeyboardMarkup([
     [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]
 ])
 
-LEGAL_MENU_BUTTONS = [
-    ["🏳️‍🌈 ЛГБТ+ семьи"],
 LEGAL_MENU_BUTTONS = InlineKeyboardMarkup([
     [InlineKeyboardButton("🏳️‍🌈 ЛГБТ+ семьи", callback_data="legal_lgbt")],
     [InlineKeyboardButton("📝 Как сменить документы", callback_data="legal_docs")],
