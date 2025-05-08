@@ -12,7 +12,7 @@ from handlers.help_menu import help_menu, faq_legal
 from handlers.medical import medical_menu, medical_gender_therapy_menu, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning
 from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
 from handlers.anonymous import anonymous_message
-from handlers.resources import resource_proposal_title, resource_proposal_description, resource_proposal_link, list_resources, RESOURCE_PROPOSAL_STATES
+from handlers.resources import resource_proposal_title, resource_proposal_description, resource_proposal_link, list_resources
 from utils.message_utils import error_handler, request_legal_docs_callback, plan_surgery_callback, handle_typing, feedback_handler, check_rate_limit
 from utils.resource_utils import load_resources, fetch_resources_from_post, update_telegram_post, approve_resource
 from utils.constants import BotState, check_env_vars
@@ -54,7 +54,7 @@ async def resource_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]]),
         parse_mode="MarkdownV2"
     )
-    return RESOURCE_PROPOSAL_STATES["title"] # Начало ConversationHandler для ресурсов
+    return BotState.RESOURCE_PROPOSAL_TITLE
 
 async def volunteer_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
@@ -171,9 +171,9 @@ async def main() -> None:
     resource_conv_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(resource_callback, pattern='^main_resource$')],
         states={
-            RESOURCE_PROPOSAL_STATES["title"]: [MessageHandler(filters.TEXT & ~filters.COMMAND, resource_proposal_title)],
-            RESOURCE_PROPOSAL_STATES["description"]: [MessageHandler(filters.TEXT & ~filters.COMMAND, resource_proposal_description)],
-            RESOURCE_PROPOSAL_STATES["link"]: [MessageHandler(filters.TEXT & ~filters.COMMAND, resource_proposal_link)],
+            BotState.RESOURCE_PROPOSAL_TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, resource_proposal_title)],
+            BotState.RESOURCE_PROPOSAL_DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, resource_proposal_description)],
+            BotState.RESOURCE_PROPOSAL_LINK: [MessageHandler(filters.TEXT & ~filters.COMMAND, resource_proposal_link)],
         },
         fallbacks=[CallbackQueryHandler(back_to_main_callback, pattern='^back_to_main$')],
     )
