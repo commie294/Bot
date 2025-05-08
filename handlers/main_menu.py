@@ -1,4 +1,4 @@
-from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ContextTypes, ConversationHandler
 from telegram.helpers import escape_markdown
 from bot_responses import START_MESSAGE, CHOOSE_FROM_MENU, VOLUNTEER_MESSAGE, DONATE_MESSAGE, FAREWELL_MESSAGE
@@ -71,12 +71,11 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]]),
                     parse_mode="MarkdownV2"
                 )
-                return BotState.MAIN_MENU
+                return BotState.DONATE_INFO # Изменено на правильное состояние
             elif user_choice == "main_anonymous":
-                keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
                 await query.message.edit_text(
                     escape_markdown("Пожалуйста, напишите ваше анонимное сообщение:", version=2),
-                    reply_markup=keyboard,
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]]),
                     parse_mode="MarkdownV2"
                 )
                 context.user_data["request_type"] = REQUEST_TYPES["anonymous"]
