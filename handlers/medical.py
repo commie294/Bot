@@ -289,6 +289,12 @@ async def surgery_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     choice = query.data
     gender = context.user_data.get("surgery_gender")
 
+    logger.info(f"surgery_choice: choice={choice}, gender={gender}")
+
+    if not update.callback_query:
+        logger.warning("surgery_choice: update.callback_query is None")
+        return ConversationHandler.END
+
     if choice == "back_to_surgery_start":
         await query.message.edit_text(
             "Какое направление вас интересует?",
@@ -326,6 +332,7 @@ async def surgery_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data["selected_surgeries"].append(surgery_type)
 
     return BotState.SURGERY_CHOICE
+
 async def surgery_budget(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
