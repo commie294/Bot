@@ -1,4 +1,4 @@
-from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 from bot_responses import (
@@ -87,11 +87,13 @@ async def faq_legal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             return BotState.FAQ_LEGAL
         elif choice == "legal_consult":
             context.user_data["request_type"] = REQUEST_TYPES["legal_consult"]
-            await context.bot.send_message(chat_id=query.message.chat_id, text=CONSULTATION_PROMPT, parse_mode="MarkdownV2", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+            await context.bot.send_message(chat_id=query.message.chat_id, text=CONSULTATION_PROMPT, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_legal")]])
+            )
             return BotState.TYPING
         elif choice == "legal_abuse":
             context.user_data["request_type"] = REQUEST_TYPES["legal_abuse"]
-            await context.bot.send_message(chat_id=query.message.chat_id, text=REPORT_ABUSE_MESSAGE, parse_mode="MarkdownV2", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+            await context.bot.send_message(chat_id=query.message.chat_id, text=REPORT_ABUSE_MESSAGE, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_legal")]])
+            )
             return BotState.TYPING
         elif choice == "back_to_legal":
             await query.message.edit_text(escape_markdown("Выберите категорию юридической помощи:", version=2),reply_markup=LEGAL_MENU_BUTTONS,parse_mode="MarkdownV2")
@@ -113,19 +115,20 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             return BotState.HELP_MENU
         elif choice == "medical_consult":
             context.user_data["request_type"] = REQUEST_TYPES["medical_consult"]
-            await context.bot.send_message(chat_id=query.message.chat_id, text=CONSULTATION_PROMPT, parse_mode="MarkdownV2", reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True))
+            await context.bot.send_message(chat_id=query.message.chat_id, text=CONSULTATION_PROMPT, parse_mode="MarkdownV2", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical")]])
+            )
             return BotState.TYPING
         elif choice == "medical_hrt":
             await query.message.edit_text(
                 GENDER_THERAPY_MESSAGE,
                 parse_mode="MarkdownV2",
                 reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton("T", callback_data="hrt_t"),
-                    InlineKeyboardButton("E", callback_data="hrt_e"),
+                    InlineKeyboardButton("T♂️", callback_data="hrt_t"),
+                    InlineKeyboardButton("E♀️", callback_data="hrt_e"),
                     InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical")
                 ]])
             )
-            return BotState.MEDICAL_GENDER_THERAPY_MENU
+            return BotState.MEDICAL_GENDER_THERAPY_INLINE # Исправлено состояние
         elif choice == "medical_f64":
             await query.message.edit_text(
                 F64_MESSAGE,
