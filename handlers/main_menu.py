@@ -13,9 +13,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     logger.info(f"User {update.effective_user.id} initiated /start.")
     try:
         region = escape_markdown("России и странах СНГ", version=2)
-        await update.message.reply_photo(
-            photo="https://your-image-url.com/welcome.jpg",
-            caption=START_MESSAGE.format(region=region),
+        await update.message.reply_text(
+            START_MESSAGE.format(region=region),
             reply_markup=MAIN_MENU_BUTTONS,
             parse_mode="MarkdownV2"
         )
