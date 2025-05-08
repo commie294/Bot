@@ -7,7 +7,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG,  # Изменили уровень логирования на DEBUG
+    level=logging.DEBUG,
     handlers=[logging.FileHandler("bot.log"), logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
@@ -31,13 +31,11 @@ async def main() -> None:
     application.add_handler(CommandHandler("start", start))
     logger.info("Обработчик /start добавлен.")
 
-    logger.info("Запуск polling...")
-    try:
-        await application.run_polling(allowed_updates=Update.ALL_TYPES)
-    except Exception as e:
-        logger.error(f"Произошла ошибка при запуске polling: {e}")
-    finally:
-        logger.info("Polling завершен.")
+    logger.info("Запуск polling в текущем event loop...")
+    await application.initialize()
+    await application.start()
+    await application.updater.start_polling()
+    await asyncio.Future()  # Держим event loop запущенным
 
 if __name__ == "__main__":
     asyncio.run(main())
