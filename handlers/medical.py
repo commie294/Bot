@@ -2,6 +2,7 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.error import TelegramError
 import os
+from telegram.utils.helpers import escape_markdown  # Добавляем импорт
 from bot_responses import (
     CONSULTATION_PROMPT, GENDER_THERAPY_MESSAGE, MASCULINIZING_HRT_INFO, FEMINIZING_HRT_INFO,
     DIY_HRT_WARNING, F64_MESSAGE, SURGERY_INFO_MESSAGE, FTM_SURGERY_INFO, MTF_SURGERY_INFO
@@ -20,7 +21,7 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     if choice == BACK_BUTTON:
         keyboard = HELP_MENU_BUTTONS
         await update.message.reply_text(
-            "Выберите категорию помощи:",
+            escape_markdown("Выберите категорию помощи:", version=2),
             reply_markup=keyboard,
             parse_mode="MarkdownV2"
         )
@@ -28,7 +29,7 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     elif choice == "🩺 Медицинская помощь":
         keyboard = ReplyKeyboardMarkup(MEDICAL_MENU_BUTTONS + [[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
-            "Выберите категорию медицинской помощи:",
+            escape_markdown("Выберите категорию медицинской помощи:", version=2),
             reply_markup=keyboard,
             parse_mode="MarkdownV2"
         )
@@ -48,7 +49,7 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         )
         await update.message.reply_text(
             GENDER_THERAPY_MESSAGE,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         return BotState.MEDICAL_GENDER_THERAPY_MENU
@@ -56,19 +57,19 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             F64_MESSAGE,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         return BotState.MEDICAL_MENU
     elif choice == "⚕️ Операции":
         await update.message.reply_text(
             SURGERY_INFO_MESSAGE,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=SURGERY_INFO_KEYBOARD
         )
         return BotState.MEDICAL_SURGERY_PLANNING
     await update.message.reply_text(
-        "Пожалуйста, выберите опцию из меню\\.",
+        escape_markdown("Пожалуйста, выберите опцию из меню.", version=2),
         parse_mode="MarkdownV2"
     )
     return BotState.MEDICAL_MENU
@@ -88,7 +89,7 @@ async def medical_gender_therapy_menu(
         )
         await update.message.reply_text(
             MASCULINIZING_HRT_INFO,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         return BotState.MEDICAL_FTM_HRT
@@ -99,12 +100,12 @@ async def medical_gender_therapy_menu(
         )
         await update.message.reply_text(
             FEMINIZING_HRT_INFO,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         return BotState.MEDICAL_MTF_HRT
     await update.message.reply_text(
-        "Пожалуйста, выберите опцию из меню\\.",
+        escape_markdown("Пожалуйста, выберите опцию из меню.", version=2),
         parse_mode="MarkdownV2"
     )
     return BotState.MEDICAL_GENDER_THERAPY_MENU
@@ -121,7 +122,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
         await update.message.reply_text(
             DIY_HRT_WARNING,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         return BotState.MEDICAL_FTM_HRT
@@ -129,7 +130,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             CONSULTATION_PROMPT,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         context.user_data["request_type"] = REQUEST_TYPES["ftm_hrt"]
@@ -137,7 +138,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     elif choice == "Я понимаю риски, скачать гайд":
         return await send_hrt_guide(update, context, "ftm")
     await update.message.reply_text(
-        "Пожалуйста, выберите опцию из меню\\.",
+        escape_markdown("Пожалуйста, выберите опцию из меню.", version=2),
         parse_mode="MarkdownV2"
     )
     return BotState.MEDICAL_FTM_HRT
@@ -154,7 +155,7 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
         await update.message.reply_text(
             DIY_HRT_WARNING,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         return BotState.MEDICAL_MTF_HRT
@@ -162,7 +163,7 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         keyboard = ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True)
         await update.message.reply_text(
             CONSULTATION_PROMPT,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",  # Меняем на MarkdownV2
             reply_markup=keyboard
         )
         context.user_data["request_type"] = REQUEST_TYPES["mtf_hrt"]
@@ -170,7 +171,7 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     elif choice == "Я понимаю риски, скачать гайд":
         return await send_hrt_guide(update, context, "mtf")
     await update.message.reply_text(
-        "Пожалуйста, выберите опцию из меню\\.",
+        escape_markdown("Пожалуйста, выберите опцию из меню.", version=2),
         parse_mode="MarkdownV2"
     )
     return BotState.MEDICAL_MTF_HRT
@@ -185,7 +186,7 @@ async def send_hrt_guide(
             resize_keyboard=True,
         )
         await update.message.reply_text(
-            "Путь к файлу гайда не настроен\\.",
+            escape_markdown("Путь к файлу гайда не настроен.", version=2),
             reply_markup=keyboard,
             parse_mode="MarkdownV2"
         )
@@ -208,7 +209,7 @@ async def send_hrt_guide(
             resize_keyboard=True,
         )
         await update.message.reply_text(
-            "Файл гайда не найден\\.",
+            escape_markdown("Файл гайда не найден.", version=2),
             reply_markup=keyboard,
             parse_mode="MarkdownV2"
         )
@@ -219,7 +220,7 @@ async def send_hrt_guide(
             resize_keyboard=True,
         )
         await update.message.reply_text(
-            f"Произошла ошибка при отправке файла: {e}",
+            escape_markdown(f"Произошла ошибка при отправке файла: {str(e)}", version=2),
             reply_markup=keyboard,
             parse_mode="MarkdownV2"
         )
@@ -249,7 +250,7 @@ async def medical_surgery_planning(
         )
         return BotState.MEDICAL_SURGERY_PLANNING
     await update.message.reply_text(
-        "Пожалуйста, выберите опцию из меню\\.",
+        escape_markdown("Пожалуйста, выберите опцию из меню.", version=2),
         parse_mode="MarkdownV2"
     )
     return BotState.MEDICAL_SURGERY_PLANNING
