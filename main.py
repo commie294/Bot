@@ -11,7 +11,7 @@ from handlers.anonymous import anonymous_message
 from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
 from utils.constants import BotState
 from utils.error_handler import error_handler
-from message_utils import handle_typing, request_legal_docs_callback, plan_surgery_callback, feedback_handler
+from utils.message_utils import handle_typing, request_legal_docs_callback, plan_surgery_callback, feedback_handler
 from bot_responses import DONATE_MESSAGE  
 
 async def donate_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
