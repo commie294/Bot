@@ -1,5 +1,6 @@
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ContextTypes
+from telegram.utils.helpers import escape_markdown  # Добавляем импорт
 from utils.message_utils import load_channels
 from utils.resource_utils import load_resources
 from utils.constants import BotState
@@ -21,7 +22,7 @@ async def resource_proposal(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         context.user_data["resource_title"] = user_text
         context.user_data["resource_step"] = "description"
         await update.message.reply_text(
-            "Введите описание ресурса:",
+            escape_markdown("Введите описание ресурса:", version=2),
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
             parse_mode="MarkdownV2"
         )
@@ -30,7 +31,7 @@ async def resource_proposal(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         context.user_data["resource_description"] = user_text
         context.user_data["resource_step"] = "link"
         await update.message.reply_text(
-            "Введите ссылку на ресурс:",
+            escape_markdown("Введите ссылку на ресурс:", version=2),
             reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
             parse_mode="MarkdownV2"
         )
@@ -48,9 +49,13 @@ async def resource_proposal(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             json.dump(resource, f)
             f.write("\n")
         channels = load_channels()
+        # Экранируем пользовательский ввод
+        title = escape_markdown(resource["title"], version=2)
+        description = escape_markdown(resource["description"], version=2)
+        link = escape_markdown(resource["link"], version=2)
         await context.bot.send_message(
             chat_id=channels["t64_admin"],
-            text=f"*Новый ресурс на модерацию:*\n\n*Название:* {resource['title']}\n*Описание:* {resource['description']}\n*Ссылка:* {resource['link']}",
+            text=f"*Новый ресурс на модерацию:*\n\n*Название:* {title}\n*Описание:* {description}\n*Ссылка:* {link}",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("✅ Одобрить", callback_data=f"approve_resource_{resource['id']}")],
                 [InlineKeyboardButton("❌ Отклонить", callback_data=f"reject_resource_{resource['id']}")]
@@ -70,14 +75,17 @@ async def list_resources(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     resources = load_resources()
     if not resources:
         await update.message.reply_text(
-            "Ресурсы не найдены\\.",
+            escape_markdown("Ресурсы не найдены.", version=2),
             reply_markup=MAIN_MENU_BUTTONS,
             parse_mode="MarkdownV2"
         )
         return BotState.MAIN_MENU
     message = "*Доступные ресурсы:*\n\n"
     for res in resources:
-        message += f"📚 *{res['title']}*\n{res['description']}\n🔗 {res['link']}\n\n"
+        title = escape_markdown(res["title"], version=2)
+        description = escape_markdown(res["description"], version=2)
+        link = escape_markdown(res["link"], version=2)
+        message += f"📚 *{title}*\n{description}\n🔗 {link}\n\n"
     await update.message.reply_text(
         message,
         reply_markup=MAIN_MENU_BUTTONS,
