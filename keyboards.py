@@ -83,22 +83,22 @@ GENDER_CHOICE_KEYBOARD = InlineKeyboardMarkup([
 ])
 
 FTM_SURGERY_CHOICE_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton("Топэктомия/Мастэктомия", callback_data="ftm_surgery_top")],
-    [InlineKeyboardButton("Гистерэктомия", callback_data="ftm_surgery_hyst")],
-    [InlineKeyboardButton("Овариэктомия", callback_data="ftm_surgery_ovar")],
-    [InlineKeyboardButton("Фаллопластика", callback_data="ftm_surgery_phallo")],
-    [InlineKeyboardButton("Метоидиопластика", callback_data="ftm_surgery_meta")],
+    [InlineKeyboardButton("✅ Топэктомия/Мастэктомия", callback_data="ftm_surgery_top")],
+    [InlineKeyboardButton("✅ Гистерэктомия", callback_data="ftm_surgery_hyst")],
+    [InlineKeyboardButton("✅ Овариэктомия", callback_data="ftm_surgery_ovar")],
+    [InlineKeyboardButton("✅ Фаллопластика", callback_data="ftm_surgery_phallo")],
+    [InlineKeyboardButton("✅ Метоидиопластика", callback_data="ftm_surgery_meta")],
     [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_surgery_start")],
-    [InlineKeyboardButton("Далее", callback_data="ftm_surgery_next_budget")]
+    [InlineKeyboardButton("Далее ➡️", callback_data="ftm_surgery_next_budget")]
 ])
 
 MTF_SURGERY_CHOICE_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton("Увеличение груди", callback_data="mtf_surgery_breast")],
-    [InlineKeyboardButton("Орхиэктомия", callback_data="mtf_surgery_orchi")],
-    [InlineKeyboardButton("Вагинопластика", callback_data="mtf_surgery_vagino")],
-    [InlineKeyboardButton("Феминизирующая пластика лица (ФФС)", callback_data="mtf_surgery_ffs")],
+    [InlineKeyboardButton("✅ Увеличение груди", callback_data="mtf_surgery_breast")],
+    [InlineKeyboardButton("✅ Орхиэктомия", callback_data="mtf_surgery_orchi")],
+    [InlineKeyboardButton("✅ Вагинопластика", callback_data="mtf_surgery_vagino")],
+    [InlineKeyboardButton("✅ ФФС (лицо)", callback_data="mtf_surgery_ffs")],
     [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_surgery_start")],
-    [InlineKeyboardButton("Далее", callback_data="mtf_surgery_next_budget")]
+    [InlineKeyboardButton("Далее ➡️", callback_data="mtf_surgery_next_budget")]
 ])
 
 BUDGET_CHOICE_KEYBOARD = InlineKeyboardMarkup([
