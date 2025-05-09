@@ -4,7 +4,7 @@ from telegram.helpers import escape_markdown
 from utils.message_utils import load_channels
 from utils.constants import BotState
 from bot_responses import MESSAGE_SENT_SUCCESS, BACK_TO_MAIN_MENU
-from keyboards import MAIN_MENU_BUTTONS, BACK_BUTTON
+from keyboards import MAIN_MENU_BUTTONS, FINISH_MENU_KEYBOARD, BACK_BUTTON
 
 import logging
 
@@ -30,7 +30,7 @@ async def handle_resource_proposal(update: Update, context: ContextTypes.DEFAULT
             )
             await update.message.reply_text(
                 MESSAGE_SENT_SUCCESS,
-                reply_markup=MAIN_MENU_BUTTONS,
+                reply_markup=FINISH_MENU_KEYBOARD,
                 parse_mode="MarkdownV2"
             )
             return BotState.MAIN_MENU
