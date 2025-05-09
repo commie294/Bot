@@ -378,6 +378,9 @@ async def surgery_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         choice = query.data
         gender = context.user_data.get("surgery_gender")
 
+        logger.info(f"Surgery choice: {choice}, gender: {gender}")
+
+        # Обработка кнопки "Назад"
         if choice == "back_to_surgery_start":
             await query.message.edit_text(
                 "Какое направление вас интересует?",
@@ -386,7 +389,15 @@ async def surgery_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             )
             return BotState.SURGERY_START
 
-        if (gender == "ftm" and choice == "ftm_surgery_next_budget") or (gender == "mtf" and choice == "mtf_surgery_next_budget"):
+        # Обработка кнопки "Далее"
+        if (gender == "ftm" and choice == "ftm_surgery_next_budget") or \
+           (gender == "mtf" and choice == "mtf_surgery_next_budget"):
+            
+            # Проверяем, что выбрана хотя бы одна операция
+            if "selected_surgeries" not in context.user_data or not context.user_data["selected_surgeries"]:
+                await query.answer("Пожалуйста, выберите хотя бы одну операцию", show_alert=True)
+                return BotState.SURGERY_CHOICE
+                
             await query.message.edit_text(
                 "Какой у вас бюджет?",
                 reply_markup=BUDGET_CHOICE_KEYBOARD,
@@ -394,14 +405,44 @@ async def surgery_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             )
             return BotState.SURGERY_BUDGET
 
-        if "selected_surgeries" not in context.user_data:
-            context.user_data["selected_surgeries"] = []
+        # Обработка выбора конкретной операции
+        if gender == "ftm" and choice.startswith("ftm_surgery_"):
+            surgery_type = choice.split("_")[-1]
+            if "selected_surgeries" not in context.user_data:
+                context.user_data["selected_surgeries"] = []
+            
+            # Переключаем выбор операции (добавляем/удаляем из списка)
+            if surgery_type in context.user_data["selected_surgeries"]:
+                context.user_data["selected_surgeries"].remove(surgery_type)
+            else:
+                context.user_data["selected_surgeries"].append(surgery_type)
+            
+            # Обновляем сообщение с новым состоянием кнопок
+            keyboard = FTM_SURGERY_CHOICE_KEYBOARD
+            await query.message.edit_text(
+                "Какие операции вас интересуют? (Выбрано: {})".format(len(context.user_data["selected_surgeries"])),
+                reply_markup=keyboard,
+                parse_mode="MarkdownV2"
+            )
+            return BotState.SURGERY_CHOICE
 
-        surgery_type = choice.split("_")[-1]
-        if gender == "ftm" and choice.startswith("ftm_surgery_") and surgery_type not in context.user_data["selected_surgeries"]:
-            context.user_data["selected_surgeries"].append(surgery_type)
-        elif gender == "mtf" and choice.startswith("mtf_surgery_") and surgery_type not in context.user_data["selected_surgeries"]:
-            context.user_data["selected_surgeries"].append(surgery_type)
+        elif gender == "mtf" and choice.startswith("mtf_surgery_"):
+            surgery_type = choice.split("_")[-1]
+            if "selected_surgeries" not in context.user_data:
+                context.user_data["selected_surgeries"] = []
+            
+            if surgery_type in context.user_data["selected_surgeries"]:
+                context.user_data["selected_surgeries"].remove(surgery_type)
+            else:
+                context.user_data["selected_surgeries"].append(surgery_type)
+            
+            keyboard = MTF_SURGERY_CHOICE_KEYBOARD
+            await query.message.edit_text(
+                "Какие операции вас интересуют? (Выбрано: {})".format(len(context.user_data["selected_surgeries"])),
+                reply_markup=keyboard,
+                parse_mode="MarkdownV2"
+            )
+            return BotState.SURGERY_CHOICE
 
         return BotState.SURGERY_CHOICE
 
