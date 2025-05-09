@@ -44,7 +44,6 @@ GENDER_THERAPY_CHOICE_KEYBOARD = InlineKeyboardMarkup([
 ])
 
 SURGERY_INFO_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton("🗓️ Спланировать операцию", callback_data='plan_surgery')],
     [InlineKeyboardButton("ФТМ Операции", callback_data='ftm_surgery')],
     [InlineKeyboardButton("МТФ Операции", callback_data='mtf_surgery')],
     [InlineKeyboardButton("⬅️ Назад", callback_data='back_to_medical')]
