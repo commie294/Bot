@@ -1,6 +1,5 @@
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import logging
 from telegram import Update, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
@@ -11,11 +10,12 @@ from handlers.anonymous import anonymous_message
 from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
 from utils.constants import BotState
 from utils.error_handler import error_handler
-from utils.message_utils import handle_typing, request_legal_docs_callback, plan_surgery_callback, feedback_handler
+from utils.message_utils import handle_typing, request_legal_docs_callback, feedback_handler
 from bot_responses import DONATE_MESSAGE, FAREWELL_MESSAGE
 from dotenv import load_dotenv
-from handlers.medical import medical_menu, handle_gender_therapy_choice, medical_ftm_hrt, medical_mtf_hrt, medical_surgery_planning, send_hrt_guide, surgery_start, surgery_choice, surgery_budget, surgery_result
+from handlers.medical import medical_menu, handle_gender_therapy_choice, medical_ftm_hrt, medical_mtf_hrt, handle_surgery_info, send_hrt_guide
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
@@ -25,7 +25,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def donate_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    logger.info("donate_info: called")
     if update.callback_query:
         query = update.callback_query
         await query.answer()
@@ -42,15 +41,10 @@ async def donate_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         )
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    logger.info("cancel: called")
-    user = update.effective_user
-    await update.message.reply_text(
-        "Действие отменено.", reply_markup=ReplyKeyboardRemove()
-    )
+    await update.message.reply_text("Действие отменено.", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 async def farewell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    logger.info("farewell: called")
     if update.message:
         await update.message.reply_text(FAREWELL_MESSAGE, reply_markup=ReplyKeyboardRemove(), parse_mode="MarkdownV2")
     return ConversationHandler.END
@@ -61,42 +55,14 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            BotState.MAIN_MENU: [
-                CallbackQueryHandler(main_menu),
-            ],
-            BotState.HELP_MENU: [
-                CallbackQueryHandler(help_menu),
-            ],
-            BotState.FAQ_LEGAL: [
-                CallbackQueryHandler(faq_legal),
-            ],
-            BotState.MEDICAL_MENU: [
-                CallbackQueryHandler(medical_menu),
-            ],
-            BotState.MEDICAL_GENDER_THERAPY_INLINE: [
-                CallbackQueryHandler(handle_gender_therapy_choice),
-            ],
-            BotState.MEDICAL_FTM_HRT: [
-                CallbackQueryHandler(medical_ftm_hrt),
-            ],
-            BotState.MEDICAL_MTF_HRT: [
-                CallbackQueryHandler(medical_mtf_hrt),
-            ],
-            BotState.MEDICAL_SURGERY_PLANNING: [
-                CallbackQueryHandler(medical_surgery_planning),
-            ],
-            BotState.SURGERY_START: [
-                CallbackQueryHandler(surgery_start),
-            ],
-            BotState.SURGERY_CHOICE: [
-                CallbackQueryHandler(surgery_choice),
-            ],
-            BotState.SURGERY_BUDGET: [
-                CallbackQueryHandler(surgery_budget),
-            ],
-            BotState.SURGERY_RESULT: [
-                CallbackQueryHandler(surgery_result),
-            ],
+            BotState.MAIN_MENU: [CallbackQueryHandler(main_menu)],
+            BotState.HELP_MENU: [CallbackQueryHandler(help_menu)],
+            BotState.FAQ_LEGAL: [CallbackQueryHandler(faq_legal)],
+            BotState.MEDICAL_MENU: [CallbackQueryHandler(medical_menu)],
+            BotState.MEDICAL_GENDER_THERAPY_INLINE: [CallbackQueryHandler(handle_gender_therapy_choice)],
+            BotState.MEDICAL_FTM_HRT: [CallbackQueryHandler(medical_ftm_hrt)],
+            BotState.MEDICAL_MTF_HRT: [CallbackQueryHandler(medical_mtf_hrt)],
+            BotState.MEDICAL_SURGERY_INFO: [CallbackQueryHandler(handle_surgery_info)],
             BotState.TYPING: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_typing),
                 MessageHandler(filters.Document.ALL, handle_typing),
@@ -113,18 +79,10 @@ def main():
                 CallbackQueryHandler(ask_volunteer_name, pattern='^volunteer_start$'),
                 CallbackQueryHandler(main_menu, pattern='^back_to_main$'),
             ],
-            BotState.VOLUNTEER_NAME: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, ask_volunteer_name),
-            ],
-            BotState.VOLUNTEER_REGION: [
-                CallbackQueryHandler(get_volunteer_region, pattern='^region_'),
-            ],
-            BotState.VOLUNTEER_HELP_TYPE: [
-                CallbackQueryHandler(volunteer_help_type_handler, pattern='^volunteer_help_'),
-            ],
-            BotState.VOLUNTEER_CONTACT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_contact_handler),
-            ],
+            BotState.VOLUNTEER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_volunteer_name)],
+            BotState.VOLUNTEER_REGION: [CallbackQueryHandler(get_volunteer_region, pattern='^region_')],
+            BotState.VOLUNTEER_HELP_TYPE: [CallbackQueryHandler(volunteer_help_type_handler, pattern='^volunteer_help_')],
+            BotState.VOLUNTEER_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, volunteer_contact_handler)],
             BotState.VOLUNTEER_FINISH: [
                 CallbackQueryHandler(volunteer_finish_handler, pattern='^volunteer_finish$|^back_to_main$'),
             ],
@@ -132,21 +90,15 @@ def main():
                 CallbackQueryHandler(donate_info, pattern='^main_donate$'),
                 CallbackQueryHandler(main_menu, pattern='^back_to_main$'),
             ],
-            BotState.FAREWELL: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, farewell),
-            ],
+            BotState.FAREWELL: [MessageHandler(filters.TEXT & ~filters.COMMAND, farewell)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
 
     application.add_handler(conv_handler)
-    logger.info("ConversationHandler added")
-
     application.add_handler(CallbackQueryHandler(request_legal_docs_callback, pattern='^request_legal_docs$'))
-    application.add_handler(CallbackQueryHandler(plan_surgery_callback, pattern='^plan_surgery$'))
     application.add_handler(CallbackQueryHandler(feedback_handler, pattern='^feedback_'))
     application.add_error_handler(error_handler)
-
     application.add_handler(CommandHandler("resources", list_resources))
 
     application.run_polling()
