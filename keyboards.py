@@ -63,7 +63,7 @@ VOLUNTEER_HELP_TYPE_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton("Другая помощь", callback_data="volunteer_help_другая")]
 ])
 
-VOLUNTEER_REGION_KEYBOARD = InlineKeyboardMarkup([
+REGIONS = InlineKeyboardMarkup([
     [InlineKeyboardButton("РФ", callback_data="region_рф"), InlineKeyboardButton("Украина", callback_data="region_украина")],
     [InlineKeyboardButton("Беларусь", callback_data="region_беларусь"), InlineKeyboardButton("Казахстан", callback_data="region_казахстан")],
     [InlineKeyboardButton("Другой регион", callback_data="region_другой")]
