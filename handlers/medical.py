@@ -91,7 +91,7 @@ async def handle_gender_therapy_choice(update: Update, context: ContextTypes.DEF
                 [InlineKeyboardButton("DIY", callback_data="diy_ftm"),
                  InlineKeyboardButton("Запросить консультацию", callback_data="consult_ftm")],
                 [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical_inline")]
-            )
+            ])
             await query.message.edit_text(
                 MASCULINIZING_HRT_INFO,
                 parse_mode="MarkdownV2",
@@ -104,7 +104,7 @@ async def handle_gender_therapy_choice(update: Update, context: ContextTypes.DEF
                 [InlineKeyboardButton("DIY", callback_data="diy_mtf"),
                  InlineKeyboardButton("Запросить консультацию", callback_data="consult_mtf")],
                 [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical_inline")]
-            )
+            ])
             await query.message.edit_text(
                 FEMINIZING_HRT_INFO,
                 parse_mode="MarkdownV2",
@@ -148,7 +148,7 @@ async def medical_ftm_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 keyboard = InlineKeyboardMarkup([
                     [InlineKeyboardButton("Я понимаю риски, скачать гайд", callback_data="guide_ftm")],
                     [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical_inline")]
-                )
+                ])
                 await query.message.edit_text(
                     DIY_HRT_WARNING,
                     parse_mode="MarkdownV2",
@@ -197,7 +197,7 @@ async def medical_mtf_hrt(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 keyboard = InlineKeyboardMarkup([
                     [InlineKeyboardButton("Я понимаю риски, скачать гайд", callback_data="guide_mtf")],
                     [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical_inline")]
-                )
+                ])
                 await query.message.edit_text(
                     DIY_HRT_WARNING,
                     parse_mode="MarkdownV2",
