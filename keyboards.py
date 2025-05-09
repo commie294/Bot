@@ -75,6 +75,6 @@ VOLUNTEER_FINISH_KEYBOARD = InlineKeyboardMarkup([
 ])
 
 FINISH_MENU_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton(DONE_BUTTON_TEXT, callback_data="volunteer_finish")],
-    [InlineKeyboardButton(BACK_BUTTON_TEXT, callback_data="back_to_main")]
+    [InlineKeyboardButton(DONE_BUTTON, callback_data="volunteer_finish")],
+    [InlineKeyboardButton(BACK_BUTTON, callback_data="back_to_main")]
 ])
