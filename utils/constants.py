@@ -1,5 +1,4 @@
 from enum import IntEnum
-from typing import Dict
 
 class BotState(IntEnum):
     START = 0
@@ -33,7 +32,7 @@ REQUEST_TYPES = {
     "legal_abuse": "Сообщение о нарушении",
     "medical_consult": "Медицинская консультация",
     "ftm_hrt": "Консультация по мужской ГТ",
-    "mtf_hrt": "Консультация по женской ГТ", 
+    "mtf_hrt": "Консультация по женской ГТ",
     "ftm_surgery": "Консультация по ФТМ операциям",
     "mtf_surgery": "Консультация по МТФ операциям",
     "anonymous": "Анонимное сообщение"
