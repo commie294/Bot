@@ -6,6 +6,7 @@ from telegram.helpers import escape_markdown
 from bot_responses import (
     CONSULTATION_PROMPT, GENDER_THERAPY_MESSAGE, MASCULINIZING_HRT_INFO, FEMINIZING_HRT_INFO,
     DIY_HRT_WARNING, F64_MESSAGE, SURGERY_INFO_MESSAGE, FTM_SURGERY_INFO, MTF_SURGERY_INFO
+)
 from keyboards import (
     MEDICAL_MENU_BUTTONS, SURGERY_INFO_KEYBOARD, BACK_BUTTON, HELP_MENU_BUTTONS,
     GENDER_THERAPY_CHOICE_KEYBOARD, GENDER_CHOICE_KEYBOARD, MAIN_MENU_BUTTONS
@@ -62,7 +63,7 @@ async def medical_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                     parse_mode="MarkdownV2",
                     reply_markup=SURGERY_INFO_KEYBOARD
                 )
-                return BotState.MEDICAL_SURGERY_PLANNING
+                return BotState.MEDICAL_SURGERY_INFO
 
         return BotState.MEDICAL_MENU
 
@@ -275,3 +276,81 @@ async def send_hrt_guide(update: Update, context: ContextTypes.DEFAULT_TYPE, gui
         )
         return BotState.MEDICAL_FTM_HRT if guide_type == "ftm" else BotState.MEDICAL_MTF_HRT
 
+async def handle_surgery_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    try:
+        query = update.callback_query
+        await query.answer()
+        choice = query.data
+
+        if choice == "surgery_ftm":
+            await query.message.edit_text(
+                FTM_SURGERY_INFO,
+                parse_mode="MarkdownV2",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Запросить консультацию", callback_data="consult_ftm_surgery")],
+                    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_surgery_menu")]
+                ])
+            )
+            return BotState.MEDICAL_SURGERY_INFO
+            
+        elif choice == "surgery_mtf":
+            await query.message.edit_text(
+                MTF_SURGERY_INFO,
+                parse_mode="MarkdownV2",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Запросить консультацию", callback_data="consult_mtf_surgery")],
+                    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_surgery_menu")]
+                ])
+            )
+            return BotState.MEDICAL_SURGERY_INFO
+            
+        elif choice == "back_to_medical":
+            await query.message.edit_text(
+                escape_markdown("Выберите категорию медицинской помощи:", version=2),
+                reply_markup=MEDICAL_MENU_BUTTONS,
+                parse_mode="MarkdownV2"
+            )
+            return BotState.MEDICAL_MENU
+            
+        elif choice in ("consult_ftm_surgery", "consult_mtf_surgery"):
+            context.user_data["request_type"] = REQUEST_TYPES["ftm_surgery"] if choice == "consult_ftm_surgery" else REQUEST_TYPES["mtf_surgery"]
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text=CONSULTATION_PROMPT,
+                parse_mode="MarkdownV2",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Назад", callback_data="back_to_surgery_info")]])
+            )
+            return BotState.TYPING
+            
+        elif choice == "back_to_surgery_menu":
+            await query.message.edit_text(
+                SURGERY_INFO_MESSAGE,
+                parse_mode="MarkdownV2",
+                reply_markup=SURGERY_INFO_KEYBOARD
+            )
+            return BotState.MEDICAL_SURGERY_INFO
+            
+        elif choice == "back_to_surgery_info":
+            if "request_type" in context.user_data:
+                request_type = context.user_data["request_type"]
+                if "ftm_surgery" in request_type:
+                    return await handle_surgery_info(update, context)
+                elif "mtf_surgery" in request_type:
+                    return await handle_surgery_info(update, context)
+            
+            await query.message.edit_text(
+                SURGERY_INFO_MESSAGE,
+                parse_mode="MarkdownV2",
+                reply_markup=SURGERY_INFO_KEYBOARD
+            )
+            return BotState.MEDICAL_SURGERY_INFO
+
+        return BotState.MEDICAL_SURGERY_INFO
+
+    except Exception as e:
+        logger.error(f"Error in handle_surgery_info: {e}", exc_info=True)
+        await query.message.reply_text(
+            "Произошла ошибка. Пожалуйста, попробуйте позже.",
+            parse_mode="MarkdownV2"
+        )
+        return BotState.MEDICAL_MENU
