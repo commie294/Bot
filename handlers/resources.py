@@ -30,7 +30,7 @@ async def handle_resource_proposal(update: Update, context: ContextTypes.DEFAULT
             )
             await update.message.reply_text(
                 MESSAGE_SENT_SUCCESS,
-                reply_markup=FINISH_MENU_KEYBOARD,
+                reply_markup=MAIN_MENU_BUTTONS,
                 parse_mode="MarkdownV2"
             )
             return BotState.MAIN_MENU
