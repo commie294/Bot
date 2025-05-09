@@ -5,7 +5,7 @@ from telegram import Update, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKe
 from telegram.ext import Application, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from handlers.main_menu import start, main_menu
 from handlers.help_menu import help_menu, faq_legal
-from handlers.resources import handle_resource_proposal, list_resources 
+from handlers.resources import handle_resource_proposal, list_resources
 from handlers.anonymous import anonymous_message
 from handlers.volunteer import ask_volunteer_name, get_volunteer_region, volunteer_help_type_handler, volunteer_contact_handler, volunteer_finish_handler
 from utils.constants import BotState
