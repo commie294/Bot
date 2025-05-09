@@ -17,7 +17,7 @@ HELP_MENU_BUTTONS = InlineKeyboardMarkup([
     [InlineKeyboardButton("🩺 Медицинская помощь", callback_data="help_medical")],
     [InlineKeyboardButton("🏠 Жилье/финансы", callback_data="help_housing")],
     [InlineKeyboardButton("🧠 Психологическая помощь", callback_data="help_psych")],
-    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_main")]
+    [InlineKeyboardButton(BACK_BUTTON, callback_data="back_to_main")]
 ])
 
 LEGAL_MENU_BUTTONS = InlineKeyboardMarkup([
@@ -26,27 +26,27 @@ LEGAL_MENU_BUTTONS = InlineKeyboardMarkup([
     [InlineKeyboardButton("📢 Что такое пропаганда ЛГБТ?", callback_data="legal_propaganda")],
     [InlineKeyboardButton("🗣️ Юридическая консультация", callback_data="legal_consult")],
     [InlineKeyboardButton("🚨 Сообщить о нарушении", callback_data="legal_abuse")],
-    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_help")]
+    [InlineKeyboardButton(BACK_BUTTON, callback_data="back_to_help")]
 ])
 
 MEDICAL_MENU_BUTTONS = InlineKeyboardMarkup([
     [InlineKeyboardButton("🗣️ Медицинская консультация", callback_data="medical_consult")],
-    [InlineKeyboardButton("💉HRT", callback_data="medical_hrt")],
+    [InlineKeyboardButton("💉 HRT", callback_data="medical_hrt")],
     [InlineKeyboardButton("❓ F64", callback_data="medical_f64")],
     [InlineKeyboardButton("⚕️ Операции", callback_data="medical_surgery")],
-    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_help")]
+    [InlineKeyboardButton(BACK_BUTTON, callback_data="back_to_help")]
 ])
 
 GENDER_THERAPY_CHOICE_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton("T♂️", callback_data="hrt_t")],
     [InlineKeyboardButton("E♀️", callback_data="hrt_e")],
-    [InlineKeyboardButton("⬅️ Назад", callback_data="back_to_medical")]
+    [InlineKeyboardButton(BACK_BUTTON, callback_data="back_to_medical")]
 ])
 
 SURGERY_INFO_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton("ФТМ Операции", callback_data='ftm_surgery')],
-    [InlineKeyboardButton("МТФ Операции", callback_data='mtf_surgery')],
-    [InlineKeyboardButton("⬅️ Назад", callback_data='back_to_medical')]
+    [InlineKeyboardButton("ФТМ Операции", callback_data="surgery_ftm")],
+    [InlineKeyboardButton("МТФ Операции", callback_data="surgery_mtf")],
+    [InlineKeyboardButton(BACK_BUTTON, callback_data="back_to_medical")]
 ])
 
 VOLUNTEER_START_KEYBOARD = InlineKeyboardMarkup([
@@ -54,29 +54,22 @@ VOLUNTEER_START_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton("Отмена", callback_data="back_to_main")]
 ])
 
-VOLUNTEER_HELP_TYPE_BUTTONS = [
+VOLUNTEER_HELP_TYPE_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton("Юридическая", callback_data="volunteer_help_юридическая")],
     [InlineKeyboardButton("Психологическая", callback_data="volunteer_help_психологическая")],
     [InlineKeyboardButton("Медицинская", callback_data="volunteer_help_медицинская")],
     [InlineKeyboardButton("Финансовая", callback_data="volunteer_help_финансовая")],
     [InlineKeyboardButton("Техническая", callback_data="volunteer_help_техническая")],
     [InlineKeyboardButton("Другая помощь", callback_data="volunteer_help_другая")]
-]
-
-VOLUNTEER_HELP_TYPE_KEYBOARD = InlineKeyboardMarkup(VOLUNTEER_HELP_TYPE_BUTTONS)
-
-FINISH_MENU_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton(DONE_BUTTON, callback_data="volunteer_finish")],
-    [InlineKeyboardButton(BACK_BUTTON, callback_data="back_to_main")]
 ])
 
-REGIONS = [
+VOLUNTEER_REGION_KEYBOARD = InlineKeyboardMarkup([
     [InlineKeyboardButton("РФ", callback_data="region_рф"), InlineKeyboardButton("Украина", callback_data="region_украина")],
     [InlineKeyboardButton("Беларусь", callback_data="region_беларусь"), InlineKeyboardButton("Казахстан", callback_data="region_казахстан")],
     [InlineKeyboardButton("Другой регион", callback_data="region_другой")]
-]
+])
 
-GENDER_CHOICE_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton("ФТМ", callback_data="surgery_type_ftm")],
-    [InlineKeyboardButton("МТФ", callback_data="surgery_type_mtf")]
+VOLUNTEER_FINISH_KEYBOARD = InlineKeyboardMarkup([
+    [InlineKeyboardButton(DONE_BUTTON, callback_data="volunteer_finish")],
+    [InlineKeyboardButton(BACK_BUTTON, callback_data="back_to_main")]
 ])
