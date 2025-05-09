@@ -8,7 +8,7 @@ from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKe
 from telegram.helpers import escape_markdown
 from telegram.ext import ContextTypes
 from telegram.error import TelegramError, NetworkError, Forbidden
-from bot_responses import MESSAGE_SENT_SUCCESS, MESSAGE_SEND_ERROR, CONSULTATION_PROMPT, SURGERY_PLANNING_PROMPT
+from bot_responses import MESSAGE_SENT_SUCCESS, MESSAGE_SEND_ERROR, CONSULTATION_PROMPT
 from keyboards import BACK_BUTTON
 from utils.constants import BotState, REQUEST_TYPES
 import traceback
@@ -122,7 +122,6 @@ async def handle_typing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         REQUEST_TYPES["medical_consult"]: "t64_gen",
         REQUEST_TYPES["ftm_hrt"]: "t64_gen",
         REQUEST_TYPES["mtf_hrt"]: "t64_gen",
-        REQUEST_TYPES["surgery"]: "t64_gen",
         REQUEST_TYPES["psych"]: "t64_psych",
         REQUEST_TYPES["housing"]: "t64_gen",
     }
@@ -199,18 +198,6 @@ async def request_legal_docs_callback(update: Update, context: ContextTypes.DEFA
         text=CONSULTATION_PROMPT,
         parse_mode="Markdown",
         reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
-    )
-    return BotState.TYPING
-
-async def plan_surgery_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    context.user_data["request_type"] = REQUEST_TYPES["surgery"]
-    await context.bot.send_message(
-        chat_id=query.message.chat_id,
-        text=SURGERY_PLANNING_PROMPT,
-        reply_markup=ReplyKeyboardMarkup([[BACK_BUTTON]], resize_keyboard=True),
-        parse_mode="MarkdownV2"
     )
     return BotState.TYPING
 
