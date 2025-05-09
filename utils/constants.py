@@ -38,36 +38,3 @@ REQUEST_TYPES = {
     "mtf_surgery": "Консультация по МТФ операциям",
     "anonymous": "Анонимное сообщение"
 }
-MAIN_MENU_ACTIONS: Dict[str, Tuple[InlineKeyboardMarkup, str, int]] = {
-    "🆘 Попросить о помощи": (
-        HELP_MENU_BUTTONS,
-        "Выберите категорию помощи:",
-        BotState.HELP_MENU
-    ),
-    "➕ Предложить ресурс": (
-        InlineKeyboardMarkup([[BACK_BUTTON]]),
-        "Пожалуйста, напишите описание или ссылку на ресурс:",
-        BotState.RESOURCE_PROPOSAL
-    ),
-    "🤝 Стать волонтёром": (
-        VOLUNTEER_START_KEYBOARD,
-        "Стать волонтёром?",
-        BotState.VOLUNTEER_CONFIRM_START
-    ),
-    "💸 Поддержать проект": (
-        InlineKeyboardMarkup([[BACK_BUTTON]]),
-        "Информация о способах поддержки проекта:",
-        BotState.DONATE_INFO
-    ),
-    "✉️ Анонимное сообщение": (
-        InlineKeyboardMarkup([[BACK_BUTTON]]),
-        "Пожалуйста, напишите ваше анонимное сообщение:",
-        BotState.ANONYMOUS_MESSAGE
-    ),
-}
-
-def check_env_vars():
-    required_vars = ["BOT_TOKEN", "ADMIN_CHAT_ID", "HASH_SALT", "DIY_HRT_GUIDE_PATH"]
-    missing_vars = [var for var in required_vars if not os.getenv(var)]
-    if missing_vars:
-        raise EnvironmentError(f"Отсутствуют переменные окружения: {', '.join(missing_vars)}")
